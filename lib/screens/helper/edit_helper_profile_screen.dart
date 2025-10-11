@@ -16,20 +16,19 @@ import '../../utils/validators/form_validators.dart';
 class EditHelperProfileScreen extends StatefulWidget {
   final Helper helper;
 
-  const EditHelperProfileScreen({
-    super.key,
-    required this.helper,
-  });
+  const EditHelperProfileScreen({super.key, required this.helper});
 
   @override
-  State<EditHelperProfileScreen> createState() => _EditHelperProfileScreenState();
+  State<EditHelperProfileScreen> createState() =>
+      _EditHelperProfileScreenState();
 }
 
 class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  
+
+  String? _selectedMunicipality;
   String? _selectedSkill;
   String? _selectedExperience;
   String? _selectedBarangay;
@@ -38,6 +37,8 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
   String? _profilePictureBase64;
   bool _isLoading = false;
   bool _hasChanges = false;
+  List<String> _barangayList = [];
+  final muniList = LocationConstants.getSortedMunicipalities();
 
   @override
   void initState() {
@@ -50,10 +51,15 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
     _lastNameController.text = widget.helper.lastName;
     _selectedSkill = widget.helper.skill;
     _selectedExperience = widget.helper.experience;
+    _selectedMunicipality = widget.helper.municipality;
     _selectedBarangay = widget.helper.barangay;
     _barangayClearanceBase64 = widget.helper.barangayClearanceBase64;
     _profilePictureBase64 = widget.helper.profilePictureBase64;
-    
+
+    // *** FIX: set barangayList based on initial municipality ***
+    _barangayList =
+        LocationConstants.municipalityBarangays[_selectedMunicipality] ?? [];
+
     // Add listeners to detect changes
     _firstNameController.addListener(_onFieldChanged);
     _lastNameController.addListener(_onFieldChanged);
@@ -72,12 +78,14 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     super.dispose();
+
+    print(widget.helper.barangay);
   }
 
   Future<void> _pickBarangayClearance() async {
     try {
       final result = await FilePickerService.pickImageWithBase64();
-      
+
       if (result != null && mounted) {
         setState(() {
           _barangayClearanceFileName = result.fileName;
@@ -114,26 +122,29 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
     try {
       final result = await HelperAuthService.updateHelperProfile(
         id: widget.helper.id,
-        firstName: _firstNameController.text.trim() != widget.helper.firstName 
-            ? _firstNameController.text.trim() 
+        firstName: _firstNameController.text.trim() != widget.helper.firstName
+            ? _firstNameController.text.trim()
             : null,
-        lastName: _lastNameController.text.trim() != widget.helper.lastName 
-            ? _lastNameController.text.trim() 
+        lastName: _lastNameController.text.trim() != widget.helper.lastName
+            ? _lastNameController.text.trim()
             : null,
-        skill: _selectedSkill != widget.helper.skill 
-            ? _selectedSkill 
+        skill: _selectedSkill != widget.helper.skill ? _selectedSkill : null,
+        experience: _selectedExperience != widget.helper.experience
+            ? _selectedExperience
             : null,
-        experience: _selectedExperience != widget.helper.experience 
-            ? _selectedExperience 
+        municipality: _selectedMunicipality != widget.helper.municipality
+            ? _selectedMunicipality
             : null,
-        barangay: _selectedBarangay != widget.helper.barangay 
-            ? _selectedBarangay 
+        barangay: _selectedBarangay != widget.helper.barangay
+            ? _selectedBarangay
             : null,
-        barangayClearanceBase64: _barangayClearanceBase64 != widget.helper.barangayClearanceBase64 
-            ? _barangayClearanceBase64 
+        barangayClearanceBase64:
+            _barangayClearanceBase64 != widget.helper.barangayClearanceBase64
+            ? _barangayClearanceBase64
             : null,
-        profilePictureBase64: _profilePictureBase64 != widget.helper.profilePictureBase64 
-            ? _profilePictureBase64 
+        profilePictureBase64:
+            _profilePictureBase64 != widget.helper.profilePictureBase64
+            ? _profilePictureBase64
             : null,
       );
 
@@ -150,7 +161,10 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
           ),
         );
 
-        Navigator.pop(context, true); // Return true to indicate changes were saved
+        Navigator.pop(
+          context,
+          true,
+        ); // Return true to indicate changes were saved
       } else {
         _showErrorMessage(result['message']);
       }
@@ -166,10 +180,7 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
 
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -263,10 +274,7 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Helper Profile',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -299,14 +307,16 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                 controller: _firstNameController,
                 label: 'First Name',
                 hint: 'Enter your first name',
-                validator: (value) => FormValidators.validateRequired(value, 'first name'),
+                validator: (value) =>
+                    FormValidators.validateRequired(value, 'first name'),
               ),
 
               CustomTextField(
                 controller: _lastNameController,
                 label: 'Last Name',
                 hint: 'Enter your last name',
-                validator: (value) => FormValidators.validateRequired(value, 'last name'),
+                validator: (value) =>
+                    FormValidators.validateRequired(value, 'last name'),
               ),
 
               const SizedBox(height: 24),
@@ -353,18 +363,56 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
               const SizedBox(height: 16),
 
               BarangayDropdown(
-                selectedBarangay: _selectedBarangay,
-                barangayList: LocationConstants.getSortedLocations(),
-                label: 'Location in Bohol',
-                hint: 'Select your location in Bohol',
+                selectedBarangay:
+                    (_selectedMunicipality != null &&
+                        muniList.contains(_selectedMunicipality))
+                    ? _selectedMunicipality
+                    : null,
+                barangayList: LocationConstants.getSortedMunicipalities(),
+                label: 'Select Municipality',
+                hint: 'Select your Municipality',
                 onChanged: (String? value) {
                   setState(() {
-                    _selectedBarangay = value;
-                    _hasChanges = true;
+                    _selectedMunicipality = value;
+                    // Update barangay list based on selected municipality
+                    _barangayList =
+                        LocationConstants.municipalityBarangays[value] ?? [];
+                    _selectedBarangay = null; // reset barangay selection
                   });
                 },
               ),
 
+              BarangayDropdown(
+                selectedBarangay:
+                    _selectedBarangay != null &&
+                        _barangayList.contains(_selectedBarangay)
+                    ? _selectedBarangay
+                    : null,
+                barangayList: _barangayList,
+                label: 'Select Barangay',
+                hint: 'Select your barangay',
+                onChanged: (String? value) {
+                  setState(() {
+                    // Only allow values that exist in _barangayList
+                    if (value == null || _barangayList.contains(value)) {
+                      _selectedBarangay = value;
+                    }
+                  });
+                },
+              ),
+
+              // BarangayDropdown(
+              //   selectedBarangay: _selectedBarangay,
+              //   barangayList: LocationConstants.getSortedMunicipalities(),
+              //   label: 'Location in Bohol',
+              //   hint: 'Select your location in Bohol',
+              //   onChanged: (String? value) {
+              //     setState(() {
+              //       _selectedBarangay = value;
+              //       _hasChanges = true;
+              //     });
+              //   },
+              // ),
               const SizedBox(height: 24),
 
               // Documents Section
@@ -373,8 +421,11 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
 
               FileUploadField(
                 label: 'Barangay Clearance Image',
-                fileName: _barangayClearanceFileName ?? 
-                    (widget.helper.barangayClearanceBase64 != null ? 'Current document' : null),
+                fileName:
+                    _barangayClearanceFileName ??
+                    (widget.helper.barangayClearanceBase64 != null
+                        ? 'Current document'
+                        : null),
                 onTap: _pickBarangayClearance,
                 placeholder: 'Upload Barangay Clearance Image (JPG, PNG)',
               ),
@@ -402,7 +453,9 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Text(
@@ -459,10 +512,7 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
             ),
             child: Text(
               value,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ),
         ],

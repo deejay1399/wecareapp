@@ -30,18 +30,11 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
 
     try {
       final currentUserId = await SessionService.getCurrentUserId();
-      print('🔍 [Employer Active Jobs] Current User ID: $currentUserId');
-      
       if (currentUserId == null) {
         throw Exception('User session not found');
       }
 
       final jobs = await JobPostingService.getInProgressJobsForEmployer(currentUserId);
-      print('🔍 [Employer Active Jobs] Found ${jobs.length} jobs');
-      
-      for (var job in jobs) {
-        print('   - Job: ${job.title}, Status: ${job.status}, Employer ID: ${job.employerId}');
-      }
       
       if (mounted) {
         setState(() {
@@ -50,7 +43,6 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
         });
       }
     } catch (e) {
-      print('❌ [Employer Active Jobs] Error: $e');
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to load active jobs: $e';

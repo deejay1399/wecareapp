@@ -4,17 +4,58 @@ import '../models/subscription_plan.dart';
 import '../models/usage_tracking.dart';
 import '../utils/constants/subscription_constants.dart';
 import 'session_service.dart';
+import 'supabase_service.dart';
 
 class SubscriptionService {
+  // Save subscription to Supabase
+  static Future<void> saveSubscriptionToSupabase({
+    required String userId,
+    required DateTime expiryDate,
+    required String planName,
+    required num planAmount,
+    required bool status,
+  }) async {
+    final createdAt = DateTime.now().toUtc();
+    await SupabaseService.client.from('subscriptions').insert({
+      'user_id': userId,
+      'expiry_date': expiryDate.toIso8601String(),
+      'plan_name': planName,
+      'amount': planAmount,
+      'created_at': createdAt.toIso8601String(),
+      'status': status,
+    });
+  }
+
+  static Future<void> saveCurrentUserSubscriptionToSupabase(
+    SubscriptionPlan plan,
+  ) async {
+    final userId = await SessionService.getCurrentUserId();
+    print(userId);
+    print(plan.name);
+    print(plan.price);
+    if (userId == null) return;
+    final expiryDate = DateTime.now().add(Duration(days: plan.durationInDays));
+    await saveSubscriptionToSupabase(
+      userId: userId,
+      expiryDate: expiryDate,
+      planName: plan.name,
+      planAmount: plan.price,
+      status: true,
+    );
+  }
+
   static const String _keyUsageTracking = 'usage_tracking_';
   static const String _keySubscription = 'subscription_';
 
   // Get user usage tracking
-  static Future<UsageTracking?> getUserUsageTracking(String userId, String userType) async {
+  static Future<UsageTracking?> getUserUsageTracking(
+    String userId,
+    String userType,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keyUsageTracking$userId';
     final jsonString = prefs.getString(key);
-    
+
     if (jsonString != null) {
       try {
         final Map<String, dynamic> data = {
@@ -22,9 +63,15 @@ class SubscriptionService {
           'user_id': userId,
           'user_type': userType,
           'usage_count': prefs.getInt('${key}_count') ?? 0,
-          'trial_limit': SubscriptionConstants.getTrialLimitForUserType(userType),
-          'last_used_at': prefs.getString('${key}_last_used') ?? DateTime.now().toIso8601String(),
-          'created_at': prefs.getString('${key}_created') ?? DateTime.now().toIso8601String(),
+          'trial_limit': SubscriptionConstants.getTrialLimitForUserType(
+            userType,
+          ),
+          'last_used_at':
+              prefs.getString('${key}_last_used') ??
+              DateTime.now().toIso8601String(),
+          'created_at':
+              prefs.getString('${key}_created') ??
+              DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
         };
         return UsageTracking.fromMap(data);
@@ -36,11 +83,14 @@ class SubscriptionService {
   }
 
   // Initialize usage tracking for new user
-  static Future<UsageTracking> initializeUsageTracking(String userId, String userType) async {
+  static Future<UsageTracking> initializeUsageTracking(
+    String userId,
+    String userType,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keyUsageTracking$userId';
     final now = DateTime.now();
-    
+
     final tracking = UsageTracking(
       id: userId,
       userId: userId,
@@ -53,24 +103,33 @@ class SubscriptionService {
     );
 
     await prefs.setInt('${key}_count', tracking.usageCount);
-    await prefs.setString('${key}_last_used', tracking.lastUsedAt.toIso8601String());
-    await prefs.setString('${key}_created', tracking.createdAt.toIso8601String());
-    
+    await prefs.setString(
+      '${key}_last_used',
+      tracking.lastUsedAt.toIso8601String(),
+    );
+    await prefs.setString(
+      '${key}_created',
+      tracking.createdAt.toIso8601String(),
+    );
+
     return tracking;
   }
 
   // Increment usage count
-  static Future<UsageTracking> incrementUsage(String userId, String userType) async {
+  static Future<UsageTracking> incrementUsage(
+    String userId,
+    String userType,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keyUsageTracking$userId';
-    
+
     final currentCount = prefs.getInt('${key}_count') ?? 0;
     final newCount = currentCount + 1;
     final now = DateTime.now();
-    
+
     await prefs.setInt('${key}_count', newCount);
     await prefs.setString('${key}_last_used', now.toIso8601String());
-    
+
     final tracking = UsageTracking(
       id: userId,
       userId: userId,
@@ -78,10 +137,12 @@ class SubscriptionService {
       usageCount: newCount,
       trialLimit: SubscriptionConstants.getTrialLimitForUserType(userType),
       lastUsedAt: now,
-      createdAt: DateTime.parse(prefs.getString('${key}_created') ?? now.toIso8601String()),
+      createdAt: DateTime.parse(
+        prefs.getString('${key}_created') ?? now.toIso8601String(),
+      ),
       updatedAt: now,
     );
-    
+
     return tracking;
   }
 
@@ -107,7 +168,7 @@ class SubscriptionService {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keySubscription$userId';
     final jsonString = prefs.getString(key);
-    
+
     if (jsonString != null) {
       try {
         final Map<String, dynamic> data = {
@@ -117,7 +178,9 @@ class SubscriptionService {
           'plan_type': prefs.getString('${key}_plan_type') ?? '',
           'is_active': prefs.getBool('${key}_active') ?? false,
           'expiry_date': prefs.getString('${key}_expiry'),
-          'created_at': prefs.getString('${key}_created') ?? DateTime.now().toIso8601String(),
+          'created_at':
+              prefs.getString('${key}_created') ??
+              DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
         };
         return Subscription.fromMap(data);
@@ -138,7 +201,7 @@ class SubscriptionService {
     final key = '$_keySubscription$userId';
     final now = DateTime.now();
     final expiryDate = now.add(Duration(days: plan.durationInDays));
-    
+
     final subscription = Subscription(
       id: '${userId}_${plan.id}_${now.millisecondsSinceEpoch}',
       userId: userId,
@@ -154,9 +217,15 @@ class SubscriptionService {
     await prefs.setString('${key}_user_type', subscription.userType);
     await prefs.setString('${key}_plan_type', subscription.planType);
     await prefs.setBool('${key}_active', subscription.isActive);
-    await prefs.setString('${key}_expiry', subscription.expiryDate!.toIso8601String());
-    await prefs.setString('${key}_created', subscription.createdAt.toIso8601String());
-    
+    await prefs.setString(
+      '${key}_expiry',
+      subscription.expiryDate!.toIso8601String(),
+    );
+    await prefs.setString(
+      '${key}_created',
+      subscription.createdAt.toIso8601String(),
+    );
+
     return subscription;
   }
 
@@ -164,7 +233,7 @@ class SubscriptionService {
   static Future<Map<String, dynamic>> getCurrentUserSubscriptionStatus() async {
     final userId = await SessionService.getCurrentUserId();
     final userType = await SessionService.getCurrentUserType();
-    
+
     if (userId == null || userType == null) {
       return {
         'canUse': false,
@@ -176,7 +245,7 @@ class SubscriptionService {
 
     final subscription = await getUserSubscription(userId);
     final hasValidSubscription = subscription?.isValidSubscription ?? false;
-    
+
     if (hasValidSubscription) {
       return {
         'canUse': true,
@@ -188,7 +257,8 @@ class SubscriptionService {
 
     // Check trial status
     final canUse = await canUserUseApp(userId, userType);
-    final usage = await getUserUsageTracking(userId, userType) ??
+    final usage =
+        await getUserUsageTracking(userId, userType) ??
         await initializeUsageTracking(userId, userType);
 
     return {
@@ -204,7 +274,7 @@ class SubscriptionService {
   static Future<void> recordAppUsage() async {
     final userId = await SessionService.getCurrentUserId();
     final userType = await SessionService.getCurrentUserType();
-    
+
     if (userId == null || userType == null) return;
 
     // Check if user has active subscription
@@ -222,7 +292,7 @@ class SubscriptionService {
     final prefs = await SharedPreferences.getInstance();
     final subscriptionKey = '$_keySubscription$userId';
     final usageKey = '$_keyUsageTracking$userId';
-    
+
     // Clear subscription data
     await prefs.remove('${subscriptionKey}_id');
     await prefs.remove('${subscriptionKey}_user_type');
@@ -230,7 +300,7 @@ class SubscriptionService {
     await prefs.remove('${subscriptionKey}_active');
     await prefs.remove('${subscriptionKey}_expiry');
     await prefs.remove('${subscriptionKey}_created');
-    
+
     // Clear usage tracking
     await prefs.remove('${usageKey}_count');
     await prefs.remove('${usageKey}_last_used');

@@ -8,10 +8,7 @@ import '../../utils/constants/payment_frequency_constants.dart';
 class ApplyJobScreen extends StatefulWidget {
   final JobPosting jobPosting;
 
-  const ApplyJobScreen({
-    super.key,
-    required this.jobPosting,
-  });
+  const ApplyJobScreen({super.key, required this.jobPosting});
 
   @override
   State<ApplyJobScreen> createState() => _ApplyJobScreenState();
@@ -59,15 +56,16 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
   bool _validateForm() {
     bool isValid = true;
-    
+
     setState(() {
       _coverLetterError = null;
 
       if (_characterCount == 0) {
-        _coverLetterError = 'Cover letter is required';
+        _coverLetterError = 'Applicant\'s message is required';
         isValid = false;
       } else if (_characterCount < 50) {
-        _coverLetterError = 'Cover letter must be at least 50 characters';
+        _coverLetterError =
+            'Applicant\'s message must be at least 50 characters';
         isValid = false;
       }
     });
@@ -126,10 +124,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,10 +152,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
               const SizedBox(width: 6),
               Text(
                 widget.jobPosting.barangay,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
               const Spacer(),
               Text(
@@ -173,11 +165,11 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
               ),
               const SizedBox(width: 4),
               Text(
-                PaymentFrequencyConstants.frequencyLabels[widget.jobPosting.paymentFrequency] ?? widget.jobPosting.paymentFrequency,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                PaymentFrequencyConstants.frequencyLabels[widget
+                        .jobPosting
+                        .paymentFrequency] ??
+                    widget.jobPosting.paymentFrequency,
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -220,7 +212,10 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
             runSpacing: 8,
             children: widget.jobPosting.requiredSkills.map((skill) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF8F00).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -251,10 +246,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,16 +262,13 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
           const SizedBox(height: 8),
           const Text(
             'Tell the employer why you\'re the perfect fit for this job.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF6B7280),
-            ),
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 24),
 
           // Cover Letter
           const Text(
-            'Cover Letter',
+            'Applicant\'s message',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -291,9 +280,9 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _coverLetterError != null 
-                  ? Colors.red.shade400 
-                  : const Color(0xFFD1D5DB),
+                color: _coverLetterError != null
+                    ? Colors.red.shade400
+                    : const Color(0xFFD1D5DB),
                 width: 1,
               ),
               color: Colors.white,
@@ -306,26 +295,18 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
                 contentPadding: EdgeInsets.all(16),
                 border: InputBorder.none,
                 counterText: '', // Hide the built-in counter
-                hintText: 'Explain your experience, skills, and why you\'re interested in this position. Include relevant achievements and what makes you stand out...',
-                hintStyle: TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontSize: 16,
-                ),
+                hintText:
+                    'Explain your experience, skills, and why you\'re interested in this position. Include relevant achievements and what makes you stand out...',
+                hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 16),
               ),
-              style: const TextStyle(
-                color: Color(0xFF374151),
-                fontSize: 16,
-              ),
+              style: const TextStyle(color: Color(0xFF374151), fontSize: 16),
             ),
           ),
           if (_coverLetterError != null) ...[
             const SizedBox(height: 8),
             Text(
               _coverLetterError!,
-              style: TextStyle(
-                color: Colors.red.shade600,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.red.shade600, fontSize: 14),
             ),
           ],
           const SizedBox(height: 12),
@@ -333,9 +314,9 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
             '$_characterCount/500 characters (minimum 50)',
             style: TextStyle(
               fontSize: 12,
-              color: _characterCount < 50 
-                ? Colors.orange.shade600 
-                : const Color(0xFF6B7280),
+              color: _characterCount < 50
+                  ? Colors.orange.shade600
+                  : const Color(0xFF6B7280),
             ),
           ),
         ],
@@ -352,10 +333,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFFFF8F00),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8F00)),
         ),
         title: const Text(
           'Apply for Job',
@@ -375,14 +353,14 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
             children: [
               // Job information
               _buildJobInfo(),
-              
+
               const SizedBox(height: 24),
-              
+
               // Application form
               _buildApplicationForm(),
-              
+
               const SizedBox(height: 32),
-              
+
               // Submit button
               SizedBox(
                 width: double.infinity,

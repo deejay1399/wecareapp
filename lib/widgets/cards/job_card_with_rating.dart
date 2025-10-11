@@ -37,6 +37,8 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
     if (widget.showEmployerRating) {
       _loadEmployerRatingStats();
     }
+    print("print(widget.job.employer?.firstName);");
+    print(widget.job.employer?.firstName);
   }
 
   Future<void> _loadEmployerRatingStats() async {
@@ -45,7 +47,7 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
         widget.job.employerId,
         'employer',
       );
-      
+
       if (mounted) {
         setState(() {
           _employerRatingStats = stats;
@@ -59,7 +61,7 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date).inDays;
-    
+
     if (difference == 0) return 'today';
     if (difference == 1) return 'yesterday';
     if (difference < 7) return '$difference days ago';
@@ -83,10 +85,7 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               color: Colors.white,
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,7 +95,7 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                   children: [
                     Expanded(
                       child: Text(
-                        widget.job.title,
+                        widget.job.employer?.fullName ?? '',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -104,6 +103,8 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 12),
                     Text(
                       '₱${widget.job.salary.toStringAsFixed(2)}',
                       style: const TextStyle(
@@ -121,15 +122,17 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: widget.isSaved 
+                            color: widget.isSaved
                                 ? const Color(0xFFFF8A50).withValues(alpha: 0.1)
                                 : Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
-                            widget.isSaved ? Icons.bookmark : Icons.bookmark_border,
+                            widget.isSaved
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
                             size: 20,
-                            color: widget.isSaved 
+                            color: widget.isSaved
                                 ? const Color(0xFFFF8A50)
                                 : const Color(0xFF6B7280),
                           ),
@@ -138,14 +141,27 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                     ],
                   ],
                 ),
-
+                const SizedBox(height: 12),
+                Text(
+                  "Age: ${widget.job.employer?.age ?? 'N/A'}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 8),
 
                 // Payment frequency and location
                 Row(
                   children: [
                     Text(
-                      PaymentFrequencyConstants.frequencyLabels[widget.job.paymentFrequency] ?? widget.job.paymentFrequency,
+                      PaymentFrequencyConstants.frequencyLabels[widget
+                              .job
+                              .paymentFrequency] ??
+                          widget.job.paymentFrequency,
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6B7280),
@@ -160,19 +176,29 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                     const SizedBox(width: 4),
                     Text(
                       widget.job.barangay,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 12),
 
-                // Description
+                // title
                 Text(
-                  widget.job.description,
+                  "Job title: ${widget.job.title}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 12),
+
+                Text(
+                  "Job description: ${widget.job.description}",
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -186,7 +212,8 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
 
                 // Employer rating (if enabled)
                 if (widget.showEmployerRating) ...[
-                  if (_employerRatingStats != null && _employerRatingStats!.hasRatings) ...[
+                  if (_employerRatingStats != null &&
+                      _employerRatingStats!.hasRatings) ...[
                     Row(
                       children: [
                         const Icon(
@@ -250,7 +277,10 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                     runSpacing: 6,
                     children: widget.job.requiredSkills.take(3).map((skill) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -275,16 +305,18 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                   children: [
                     Text(
                       'Posted ${_formatDate(widget.job.createdAt)}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                     widget.hasApplied
                         ? Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: const Color(0xFF10B981),
@@ -305,7 +337,10 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFFF8A50),
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/subscription_plan.dart';
 import '../../utils/constants/subscription_constants.dart';
+import '../../screens/subscription/subscription_success_screen.dart';
 
 class SubscriptionPlanCard extends StatelessWidget {
   final SubscriptionPlan plan;
@@ -18,18 +19,30 @@ class SubscriptionPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final planColor = Color(SubscriptionConstants.planColors[plan.id] ?? 0xFF2196F3);
+    final planColor = Color(
+      SubscriptionConstants.planColors[plan.id] ?? 0xFF2196F3,
+    );
+
+    void _handleSubscribe(BuildContext context) {
+      onSubscribe();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SubscriptionSuccessScreen(plan: plan),
+        ),
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: isPopular 
+        border: isPopular
             ? Border.all(color: planColor, width: 2)
             : Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -64,7 +77,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                 ),
               ),
             ),
-          
+
           // Card content
           Padding(
             padding: EdgeInsets.fromLTRB(20, isPopular ? 40 : 20, 20, 20),
@@ -78,7 +91,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: planColor.withValues(alpha: 0.1),
+                        color: planColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
@@ -133,10 +146,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       '/ ${plan.formattedDuration}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -148,7 +158,9 @@ class SubscriptionPlanCard extends StatelessWidget {
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: isLoading ? null : onSubscribe,
+                    onPressed: isLoading
+                        ? null
+                        : () => _handleSubscribe(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: planColor,
                       foregroundColor: Colors.white,
@@ -156,7 +168,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
-                      disabledBackgroundColor: planColor.withValues(alpha: 0.6),
+                      disabledBackgroundColor: planColor.withOpacity(0.6),
                     ),
                     child: isLoading
                         ? const SizedBox(
@@ -164,7 +176,9 @@ class SubscriptionPlanCard extends StatelessWidget {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : Text(

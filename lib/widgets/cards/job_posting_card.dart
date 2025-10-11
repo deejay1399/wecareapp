@@ -5,11 +5,7 @@ class JobPostingCard extends StatelessWidget {
   final JobPosting jobPosting;
   final VoidCallback? onTap;
 
-  const JobPostingCard({
-    super.key,
-    required this.jobPosting,
-    this.onTap,
-  });
+  const JobPostingCard({super.key, required this.jobPosting, this.onTap});
 
   Color _getStatusColor() {
     switch (jobPosting.status) {
@@ -27,7 +23,7 @@ class JobPostingCard extends StatelessWidget {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date).inDays;
-    
+
     if (difference == 0) return 'Today';
     if (difference == 1) return 'Yesterday';
     return '$difference days ago';
@@ -53,10 +49,7 @@ class JobPostingCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               color: Colors.white,
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +59,7 @@ class JobPostingCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        jobPosting.title,
+                        jobPosting.employer?.fullName.toString() ?? '',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -75,7 +68,10 @@ class JobPostingCard extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: _getStatusColor().withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
@@ -95,12 +91,9 @@ class JobPostingCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                
                 const SizedBox(height: 12),
-                
-                // Description
                 Text(
-                  jobPosting.description,
+                  'Age: ${jobPosting.employer?.age.toString() ?? ''}',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -109,9 +102,33 @@ class JobPostingCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                
+                const SizedBox(height: 12),
+                Text(
+                  'Job title: ${jobPosting.title}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+
+                // Description
+                Text(
+                  'Job description: ${jobPosting.description}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
                 const SizedBox(height: 16),
-                
+
                 // Location and salary row
                 Row(
                   children: [
@@ -132,7 +149,10 @@ class JobPostingCard extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1565C0).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -148,9 +168,9 @@ class JobPostingCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Bottom row with applications and date
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -175,10 +195,7 @@ class JobPostingCard extends StatelessWidget {
                     ),
                     Text(
                       _formatDate(jobPosting.postedDate),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[500],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                     ),
                   ],
                 ),

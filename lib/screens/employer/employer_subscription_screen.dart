@@ -11,10 +11,12 @@ class EmployerSubscriptionScreen extends StatefulWidget {
   const EmployerSubscriptionScreen({super.key});
 
   @override
-  State<EmployerSubscriptionScreen> createState() => _EmployerSubscriptionScreenState();
+  State<EmployerSubscriptionScreen> createState() =>
+      _EmployerSubscriptionScreenState();
 }
 
-class _EmployerSubscriptionScreenState extends State<EmployerSubscriptionScreen> {
+class _EmployerSubscriptionScreenState
+    extends State<EmployerSubscriptionScreen> {
   Map<String, dynamic>? _subscriptionStatus;
   bool _isLoading = true;
   String? _selectedPlanId;
@@ -27,7 +29,8 @@ class _EmployerSubscriptionScreenState extends State<EmployerSubscriptionScreen>
 
   Future<void> _loadSubscriptionStatus() async {
     try {
-      final status = await SubscriptionService.getCurrentUserSubscriptionStatus();
+      final status =
+          await SubscriptionService.getCurrentUserSubscriptionStatus();
       setState(() {
         _subscriptionStatus = status;
         _isLoading = false;
@@ -47,23 +50,23 @@ class _EmployerSubscriptionScreenState extends State<EmployerSubscriptionScreen>
     try {
       // Simulate payment processing
       await Future.delayed(const Duration(seconds: 2));
-      
+
       // Create subscription
       final userId = await SessionService.getCurrentUserId();
       if (userId != null) {
         await SubscriptionService.createSubscription(userId, 'Employer', plan);
-        
+
         // Reload status
         await _loadSubscriptionStatus();
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Successfully subscribed to ${plan.name}!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
+
+        // if (mounted) {
+        //   ScaffoldMessenger.of(context).showSnackBar(
+        //     SnackBar(
+        //       content: Text('Successfully subscribed to ${plan.name}!'),
+        //       backgroundColor: Colors.green,
+        //     ),
+        //   );
+        // }
       }
     } catch (e) {
       if (mounted) {
@@ -88,10 +91,7 @@ class _EmployerSubscriptionScreenState extends State<EmployerSubscriptionScreen>
       appBar: AppBar(
         title: const Text(
           'Subscription Plans',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
@@ -111,7 +111,7 @@ class _EmployerSubscriptionScreenState extends State<EmployerSubscriptionScreen>
                       usage: _subscriptionStatus!['usage'] as UsageTracking,
                       userType: 'Employer',
                     ),
-                  
+
                   // Current Subscription Status
                   if (_subscriptionStatus?['hasSubscription'] == true)
                     Container(
@@ -177,12 +177,13 @@ class _EmployerSubscriptionScreenState extends State<EmployerSubscriptionScreen>
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: SubscriptionConstants.availablePlans.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final plan = SubscriptionConstants.availablePlans[index];
                       final isSelected = _selectedPlanId == plan.id;
                       final isPopular = plan.id == 'standard';
-                      
+
                       return SubscriptionPlanCard(
                         plan: plan,
                         isPopular: isPopular,
@@ -242,19 +243,12 @@ class _EmployerSubscriptionScreenState extends State<EmployerSubscriptionScreen>
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: Colors.green[600],
-            size: 20,
-          ),
+          Icon(Icons.check_circle, color: Colors.green[600], size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               feature,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
           ),
         ],

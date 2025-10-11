@@ -13,26 +13,27 @@ import '../../utils/validators/form_validators.dart';
 class EditEmployerProfileScreen extends StatefulWidget {
   final Employer employer;
 
-  const EditEmployerProfileScreen({
-    super.key,
-    required this.employer,
-  });
+  const EditEmployerProfileScreen({super.key, required this.employer});
 
   @override
-  State<EditEmployerProfileScreen> createState() => _EditEmployerProfileScreenState();
+  State<EditEmployerProfileScreen> createState() =>
+      _EditEmployerProfileScreenState();
 }
 
 class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  
+
+  String? _selectedMunicipality;
   String? _selectedBarangay;
   String? _barangayClearanceFileName;
   String? _barangayClearanceBase64;
   String? _profilePictureBase64;
   bool _isLoading = false;
   bool _hasChanges = false;
+  List<String> _barangayList = [];
+  final muniList = LocationConstants.getSortedMunicipalities();
 
   @override
   void initState() {
@@ -41,12 +42,13 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
   }
 
   void _initializeFields() {
-    _firstNameController.text = widget.employer.firstName;
-    _lastNameController.text = widget.employer.lastName;
+    _firstNameController.text = widget.employer.firstName ?? '';
+    _lastNameController.text = widget.employer.lastName ?? '';
+    _selectedMunicipality = widget.employer.municipality ?? '';
     _selectedBarangay = widget.employer.barangay;
     _barangayClearanceBase64 = widget.employer.barangayClearanceBase64;
     _profilePictureBase64 = widget.employer.profilePictureBase64;
-    
+
     // Add listeners to detect changes
     _firstNameController.addListener(_onFieldChanged);
     _lastNameController.addListener(_onFieldChanged);
@@ -70,7 +72,7 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
   Future<void> _pickBarangayClearance() async {
     try {
       final result = await FilePickerService.pickImageWithBase64();
-      
+
       if (result != null && mounted) {
         setState(() {
           _barangayClearanceFileName = result.fileName;
@@ -103,24 +105,30 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
     }
 
     setState(() => _isLoading = true);
-
+    // print("haha");
+    // print(widget.employer.barangay);
     try {
       final result = await EmployerAuthService.updateEmployerProfile(
         id: widget.employer.id,
-        firstName: _firstNameController.text.trim() != widget.employer.firstName 
-            ? _firstNameController.text.trim() 
+        firstName: _firstNameController.text.trim() != widget.employer.firstName
+            ? _firstNameController.text.trim()
             : null,
-        lastName: _lastNameController.text.trim() != widget.employer.lastName 
-            ? _lastNameController.text.trim() 
+        lastName: _lastNameController.text.trim() != widget.employer.lastName
+            ? _lastNameController.text.trim()
             : null,
-        barangay: _selectedBarangay != widget.employer.barangay 
-            ? _selectedBarangay 
+        municipality: _selectedMunicipality != widget.employer.municipality
+            ? _selectedMunicipality
             : null,
-        barangayClearanceBase64: _barangayClearanceBase64 != widget.employer.barangayClearanceBase64 
-            ? _barangayClearanceBase64 
+        barangay: _selectedBarangay != widget.employer.barangay
+            ? _selectedBarangay
             : null,
-        profilePictureBase64: _profilePictureBase64 != widget.employer.profilePictureBase64 
-            ? _profilePictureBase64 
+        barangayClearanceBase64:
+            _barangayClearanceBase64 != widget.employer.barangayClearanceBase64
+            ? _barangayClearanceBase64
+            : null,
+        profilePictureBase64:
+            _profilePictureBase64 != widget.employer.profilePictureBase64
+            ? _profilePictureBase64
             : null,
       );
 
@@ -137,7 +145,10 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
           ),
         );
 
-        Navigator.pop(context, true); // Return true to indicate changes were saved
+        Navigator.pop(
+          context,
+          true,
+        ); // Return true to indicate changes were saved
       } else {
         _showErrorMessage(result['message']);
       }
@@ -153,10 +164,7 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
 
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -250,10 +258,7 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Employer Profile',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -286,14 +291,16 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
                 controller: _firstNameController,
                 label: 'First Name',
                 hint: 'Enter your first name',
-                validator: (value) => FormValidators.validateRequired(value, 'first name'),
+                validator: (value) =>
+                    FormValidators.validateRequired(value, 'first name'),
               ),
 
               CustomTextField(
                 controller: _lastNameController,
                 label: 'Last Name',
                 hint: 'Enter your last name',
-                validator: (value) => FormValidators.validateRequired(value, 'last name'),
+                validator: (value) =>
+                    FormValidators.validateRequired(value, 'last name'),
               ),
 
               const SizedBox(height: 24),
@@ -302,8 +309,8 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
               _buildSectionHeader('Contact Information'),
               const SizedBox(height: 16),
 
-              _buildReadOnlyField('Email', widget.employer.email),
-              _buildReadOnlyField('Phone', widget.employer.phone),
+              _buildReadOnlyField('Email', widget.employer.email ?? ''),
+              _buildReadOnlyField('Phone', widget.employer.phone ?? ''),
 
               const SizedBox(height: 24),
 
@@ -312,18 +319,56 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
               const SizedBox(height: 16),
 
               BarangayDropdown(
-                selectedBarangay: _selectedBarangay,
-                barangayList: LocationConstants.getSortedLocations(),
-                label: 'Location in Bohol',
-                hint: 'Select your location in Bohol',
+                selectedBarangay:
+                    (_selectedMunicipality != null &&
+                        muniList.contains(_selectedMunicipality))
+                    ? _selectedMunicipality
+                    : null,
+                barangayList: LocationConstants.getSortedMunicipalities(),
+                label: 'Select Municipality',
+                hint: 'Select your Municipality',
                 onChanged: (String? value) {
                   setState(() {
-                    _selectedBarangay = value;
-                    _hasChanges = true;
+                    _selectedMunicipality = value;
+                    // Update barangay list based on selected municipality
+                    _barangayList =
+                        LocationConstants.municipalityBarangays[value] ?? [];
+                    _selectedBarangay = null; // reset barangay selection
                   });
                 },
               ),
 
+              BarangayDropdown(
+                selectedBarangay:
+                    _selectedBarangay != null &&
+                        _barangayList.contains(_selectedBarangay)
+                    ? _selectedBarangay
+                    : null,
+                barangayList: _barangayList,
+                label: 'Select Barangay',
+                hint: 'Select your barangay',
+                onChanged: (String? value) {
+                  setState(() {
+                    // Only allow values that exist in _barangayList
+                    if (value == null || _barangayList.contains(value)) {
+                      _selectedBarangay = value;
+                    }
+                  });
+                },
+              ),
+
+              // BarangayDropdown(
+              //   selectedBarangay: _selectedBarangay,
+              //   barangayList: LocationConstants.getSortedMunicipalities(),
+              //   label: 'Location in Bohol',
+              //   hint: 'Select your location in Bohol',
+              //   onChanged: (String? value) {
+              //     setState(() {
+              //       _selectedBarangay = value;
+              //       _hasChanges = true;
+              //     });
+              //   },
+              // ),
               const SizedBox(height: 24),
 
               // Documents Section
@@ -332,8 +377,11 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
 
               FileUploadField(
                 label: 'Barangay Clearance Image',
-                fileName: _barangayClearanceFileName ?? 
-                    (widget.employer.barangayClearanceBase64 != null ? 'Current document' : null),
+                fileName:
+                    _barangayClearanceFileName ??
+                    (widget.employer.barangayClearanceBase64 != null
+                        ? 'Current document'
+                        : null),
                 onTap: _pickBarangayClearance,
                 placeholder: 'Upload Barangay Clearance Image (JPG, PNG)',
               ),
@@ -361,7 +409,9 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Text(
@@ -418,10 +468,7 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
             ),
             child: Text(
               value,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ),
         ],

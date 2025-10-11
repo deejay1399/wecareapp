@@ -18,14 +18,50 @@ class LocationConstants {
     'Ubujan',
   ];
 
+  static const List<String> balilihanBarangays = [
+    'Baucan Norte',
+    'Baucan Sur',
+    'Boctol',
+    'Boyog Norte',
+    'Boyog Proper',
+    'Boyog Sur',
+    'Cabad',
+    'Candasig',
+    'Cantalid',
+    'Cantomimbo',
+    'Cogon',
+    'Datag Norte',
+    'Datag Sur',
+    'Del Carmen Este (DCE) (Poblacion)',
+    'Del Carmen Norte (DCN) (Poblacion)',
+    'Del Carmen Sur (DCS) (Poblacion)',
+    'Del Carmen Weste (DCW) (Poblacion)',
+    'Del Rosario',
+    'Dorol',
+    'Haguilanan Grande',
+    'Hanopol Este',
+    'Hanopol Norte',
+    'Hanopol Weste',
+    'Magsija',
+    'Maslog',
+    'Sagasa',
+    'Sal‑ing',
+    'San Isidro',
+    'San Roque',
+    'Santo Niño',
+    'Tagustusan',
+  ];
+
   // All Bohol Municipalities and City
   static const List<String> boholMunicipalities = [
+    'Tagbilaran',
+    'Balilihan',
+    // Add the rest of the municipalities here
     'Alburquerque',
     'Alicia',
     'Anda',
     'Antequera',
     'Baclayon',
-    'Balilihan',
     'Batuan',
     'Bien Unido',
     'Bilar',
@@ -62,7 +98,6 @@ class LocationConstants {
     'Sevilla',
     'Sierra Bullones',
     'Sikatuna',
-    'Tagbilaran',
     'Talibon',
     'Trinidad',
     'Tubigon',
@@ -70,45 +105,27 @@ class LocationConstants {
     'Valencia',
   ];
 
-  // Major urban barangays across Bohol (for enhanced location selection)
-  static const List<String> majorBoholBarangays = [
-    // Tagbilaran City
-    'Bool', 'Booy', 'Cogon', 'Dao', 'Manga', 'Mansasa', 'Poblacion I', 'Poblacion II', 'Poblacion III',
-    
-    // Panglao (tourist area)
-    'Poblacion', 'Doljo', 'Tangnan', 'Tawala', 'Bolod', 'Danao', 'Libaong', 'Lourdes', 'Tangen', 'Looc',
-    
-    // Dauis
-    'Bingag', 'Biking', 'Catarman', 'Dao', 'Mariveles', 'Mayacabac', 'Poblacion', 'San Agustin', 'Tinago', 'Totolan',
-    
-    // Baclayon
-    'Banlasan', 'Boyog Norte', 'Boyog Sur', 'Daorong', 'Landican', 'Laya', 'Liboron', 'Poblacion', 'Tanday', 'Taguihon',
-    
-    // Tubigon
-    'Bagacay', 'Batasan', 'Bilangbilangan Este', 'Bilangbilangan Weste', 'Bosque', 'Cabulihan', 'Cahayag', 'Centro Poblacion',
-    
-    // Loon
-    'Biasong', 'Cabol', 'Cambane', 'Campatud', 'Canlubang', 'Canmano', 'Cantaguic', 'Cayacay', 'Guinobatan', 'Huanh',
-    
-    // Loay
-    'Alegria', 'Bogo', 'Canangca-an', 'Canayaon', 'Entice', 'La Union', 'Lobogon', 'Looc', 'Napo', 'Poblacion Weste',
-  ];
+  // Map municipality name to its barangay list
+  static const Map<String, List<String>> municipalityBarangays = {
+    'Tagbilaran': tagbilaranBarangays,
+    'Balilihan': balilihanBarangays,
+    // Add more mappings as needed:
+    // 'Alburquerque': alburquerqueBarangays,
+    // 'Alicia': aliciaBarangays,
+    // ...
+  };
 
-  // Get all available locations for dropdowns
-  static List<String> getAllLocations() {
-    return [...boholMunicipalities];
+  // Get all municipalities sorted alphabetically
+  static List<String> getSortedMunicipalities() {
+    final municipalities = boholMunicipalities.toSet().toList();
+    municipalities.sort();
+    return municipalities;
   }
 
-  // Get locations sorted alphabetically
-  static List<String> getSortedLocations() {
-    final allLocations = getAllLocations().toSet().toList();
-    allLocations.sort();
-    return allLocations;
+  // Get barangays for a given municipality, sorted alphabetically
+  static List<String> getBarangaysForMunicipality(String municipality) {
+    final barangays = municipalityBarangays[municipality] ?? [];
+    final sortedBarangays = barangays.toList()..sort();
+    return sortedBarangays;
   }
-}
-
-// For backward compatibility
-@Deprecated('Use LocationConstants instead')
-class BarangayConstants {
-  static const List<String> tagbilaranBarangays = LocationConstants.tagbilaranBarangays;
 }

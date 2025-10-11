@@ -11,14 +11,10 @@ import '../../widgets/rating/star_rating_display.dart';
 import '../messaging/chat_screen.dart';
 import '../rating/user_ratings_screen.dart';
 
-
 class ServiceDetailsScreen extends StatefulWidget {
   final HelperServicePosting servicePosting;
 
-  const ServiceDetailsScreen({
-    super.key,
-    required this.servicePosting,
-  });
+  const ServiceDetailsScreen({super.key, required this.servicePosting});
 
   @override
   State<ServiceDetailsScreen> createState() => _ServiceDetailsScreenState();
@@ -67,7 +63,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
         widget.servicePosting.helperId,
         'helper',
       );
-      
+
       if (mounted) {
         setState(() {
           _helperRatingStats = stats;
@@ -84,8 +80,12 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   }
 
   Future<void> _showJobOfferDialog() async {
-    final titleController = TextEditingController(text: widget.servicePosting.title);
-    final descriptionController = TextEditingController(text: _messageController.text.trim());
+    final titleController = TextEditingController(
+      text: widget.servicePosting.title,
+    );
+    final descriptionController = TextEditingController(
+      text: _messageController.text.trim(),
+    );
     final salaryController = TextEditingController();
     final locationController = TextEditingController();
     String paymentFrequency = 'hourly';
@@ -141,13 +141,29 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                             border: OutlineInputBorder(),
                           ),
                           items: const [
-                            DropdownMenuItem(value: 'hourly', child: Text('Per Hour')),
-                            DropdownMenuItem(value: 'daily', child: Text('Per Day')),
-                            DropdownMenuItem(value: 'weekly', child: Text('Per Week')),
-                            DropdownMenuItem(value: 'monthly', child: Text('Per Month')),
-                            DropdownMenuItem(value: 'one-time', child: Text('One-time')),
+                            DropdownMenuItem(
+                              value: 'hourly',
+                              child: Text('Per Hour'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'daily',
+                              child: Text('Per Day'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'weekly',
+                              child: Text('Per Week'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'monthly',
+                              child: Text('Per Month'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'one-time',
+                              child: Text('One-time'),
+                            ),
                           ],
-                          onChanged: (value) => setState(() => paymentFrequency = value!),
+                          onChanged: (value) =>
+                              setState(() => paymentFrequency = value!),
                         ),
                       ),
                     ],
@@ -202,6 +218,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
         description: descriptionController.text.trim(),
         salary: double.tryParse(salaryController.text.trim()) ?? 0,
         paymentFrequency: paymentFrequency,
+        municipality: "testhello",
         location: locationController.text.trim(),
         requiredSkills: requiredSkills,
       );
@@ -218,6 +235,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     required String description,
     required double salary,
     required String paymentFrequency,
+    required String municipality,
     required String location,
     required List<String> requiredSkills,
   }) async {
@@ -233,14 +251,16 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       }
 
       // Create or get conversation
-      final conversation = await DatabaseMessagingService.createOrGetConversation(
-        employerId: currentEmployer.id,
-        employerName: '${currentEmployer.firstName} ${currentEmployer.lastName}',
-        helperId: widget.servicePosting.helperId,
-        helperName: widget.servicePosting.helperName,
-        jobId: widget.servicePosting.id,
-        jobTitle: 'Service: ${widget.servicePosting.title}',
-      );
+      final conversation =
+          await DatabaseMessagingService.createOrGetConversation(
+            employerId: currentEmployer.id,
+            employerName:
+                '${currentEmployer.firstName} ${currentEmployer.lastName}',
+            helperId: widget.servicePosting.helperId,
+            helperName: widget.servicePosting.helperName,
+            jobId: widget.servicePosting.id,
+            jobTitle: 'Service: ${widget.servicePosting.title}',
+          );
 
       // Create the job offer
       await JobOfferService.createJobOffer(
@@ -252,6 +272,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
         description: description,
         salary: salary,
         paymentFrequency: paymentFrequency,
+        municipality: municipality,
         location: location,
         requiredSkills: requiredSkills,
       );
@@ -259,11 +280,14 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       // Send an initial message about the job offer
       await DatabaseMessagingService.sendMessage(
         conversationId: conversation.id,
-        content: 'I\'ve sent you a job offer! Please check the details above and let me know if you\'re interested.',
+        content:
+            'I\'ve sent you a job offer! Please check the details above and let me know if you\'re interested.',
       );
 
       // Increment contacts count
-      await HelperServicePostingService.incrementContactsCount(widget.servicePosting.id);
+      await HelperServicePostingService.incrementContactsCount(
+        widget.servicePosting.id,
+      );
 
       if (mounted) {
         // Navigate to chat screen
@@ -311,10 +335,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,10 +371,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Helper Profile',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -396,10 +414,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
             ] else ...[
               Text(
                 'No ratings yet',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
           ] else ...[
@@ -422,10 +437,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,12 +456,19 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: widget.servicePosting.statusColor.withValues(alpha: 0.1),
+                  color: widget.servicePosting.statusColor.withValues(
+                    alpha: 0.1,
+                  ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: widget.servicePosting.statusColor.withValues(alpha: 0.3),
+                    color: widget.servicePosting.statusColor.withValues(
+                      alpha: 0.3,
+                    ),
                     width: 1,
                   ),
                 ),
@@ -471,7 +490,10 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF10B981).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -487,7 +509,10 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
               ),
               const SizedBox(width: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -536,10 +561,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -572,29 +594,29 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-                  const Text(
-          'Helper\'s Expertise',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
+          const Text(
+            'Helper\'s Expertise',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F2937),
+            ),
           ),
-        ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: widget.servicePosting.skills.map((skill) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1565C0).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -625,10 +647,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -657,7 +676,10 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
             runSpacing: 8,
             children: widget.servicePosting.serviceAreas.map((area) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -688,10 +710,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -726,7 +745,10 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
               Expanded(
                 child: _buildStatItem(
                   Icons.schedule,
-                  widget.servicePosting.formatCreatedDate().replaceAll('Created ', ''),
+                  widget.servicePosting.formatCreatedDate().replaceAll(
+                    'Created ',
+                    '',
+                  ),
                   'Posted',
                   const Color(0xFF6B7280),
                 ),
@@ -738,14 +760,15 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     );
   }
 
-  Widget _buildStatItem(IconData icon, String value, String label, Color color) {
+  Widget _buildStatItem(
+    IconData icon,
+    String value,
+    String label,
+    Color color,
+  ) {
     return Column(
       children: [
-        Icon(
-          icon,
-          size: 24,
-          color: color,
-        ),
+        Icon(icon, size: 24, color: color),
         const SizedBox(height: 8),
         Text(
           value,
@@ -758,10 +781,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF6B7280),
-          ),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
         ),
       ],
     );
@@ -773,10 +793,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -792,17 +809,15 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           const SizedBox(height: 8),
           const Text(
             'Interested in hiring this helper? Send them a formal job offer with your requirements.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF6B7280),
-            ),
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _messageController,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: 'Describe your job requirements and what you need help with...',
+              hintText:
+                  'Describe your job requirements and what you need help with...',
               hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
               filled: true,
               fillColor: Colors.white,
@@ -812,9 +827,15 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF1565C0), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1565C0),
+                  width: 2,
+                ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -871,10 +892,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
         ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1565C0),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1565C0)),
         ),
       ),
       body: SafeArea(

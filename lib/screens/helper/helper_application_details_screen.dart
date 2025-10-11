@@ -12,16 +12,15 @@ import '../messaging/chat_screen.dart';
 class HelperApplicationDetailsScreen extends StatefulWidget {
   final Application application;
 
-  const HelperApplicationDetailsScreen({
-    super.key,
-    required this.application,
-  });
+  const HelperApplicationDetailsScreen({super.key, required this.application});
 
   @override
-  State<HelperApplicationDetailsScreen> createState() => _HelperApplicationDetailsScreenState();
+  State<HelperApplicationDetailsScreen> createState() =>
+      _HelperApplicationDetailsScreenState();
 }
 
-class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetailsScreen> {
+class _HelperApplicationDetailsScreenState
+    extends State<HelperApplicationDetailsScreen> {
   late Application _application;
   JobPosting? _jobPosting;
   Employer? _employer;
@@ -42,11 +41,15 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
 
     try {
       // Load job posting details
-      final jobPosting = await JobPostingService.getJobPostingById(_application.jobId);
-      
+      final jobPosting = await JobPostingService.getJobPostingById(
+        _application.jobId,
+      );
+
       // Load employer details
-      final employer = await EmployerAuthService.getEmployerById(jobPosting.employerId);
-      
+      final employer = await EmployerAuthService.getEmployerById(
+        jobPosting.employerId,
+      );
+
       if (mounted) {
         setState(() {
           _jobPosting = jobPosting;
@@ -64,24 +67,28 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
   }
 
   Future<void> _withdrawApplication() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Withdraw Application'),
-        content: const Text('Are you sure you want to withdraw this application? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Withdraw Application'),
+            content: const Text(
+              'Are you sure you want to withdraw this application? This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Withdraw'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Withdraw'),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (!confirmed) return;
 
@@ -90,8 +97,11 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
     });
 
     try {
-      await ApplicationService.updateApplicationStatus(_application.id, 'withdrawn');
-      
+      await ApplicationService.updateApplicationStatus(
+        _application.id,
+        'withdrawn',
+      );
+
       if (mounted) {
         setState(() {
           _application = Application(
@@ -150,14 +160,15 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
       if (currentHelper == null) return;
 
       // Create or get conversation
-      final conversation = await DatabaseMessagingService.createOrGetConversation(
-        employerId: _employer!.id,
-        employerName: _employer!.fullName,
-        helperId: currentUserId,
-        helperName: currentHelper.fullName,
-        jobId: _application.jobId,
-        jobTitle: _application.jobTitle,
-      );
+      final conversation =
+          await DatabaseMessagingService.createOrGetConversation(
+            employerId: _employer!.id,
+            employerName: _employer!.fullName,
+            helperId: currentUserId,
+            helperName: currentHelper.fullName,
+            jobId: _application.jobId,
+            jobTitle: _application.jobTitle,
+          );
 
       if (mounted) {
         await Navigator.push(
@@ -204,10 +215,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,7 +246,10 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _getStatusColor().withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -270,15 +281,10 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),
         child: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF8A50),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFFF8A50)),
         ),
       );
     }
@@ -289,17 +295,11 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),
         child: const Text(
           'Job information not available',
-          style: TextStyle(
-            fontSize: 16,
-            color: Color(0xFF6B7280),
-          ),
+          style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
         ),
       );
     }
@@ -309,10 +309,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,7 +323,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Employer Info
           Row(
             children: [
@@ -396,10 +393,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Text(
               _jobPosting!.description,
@@ -428,7 +422,10 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
             runSpacing: 8,
             children: _jobPosting!.requiredSkills.map((skill) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -471,10 +468,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF1F2937),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF1F2937)),
           ),
         ),
       ],
@@ -487,16 +481,13 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Your Cover Letter',
+            'Your Applicant\'s message',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -510,15 +501,12 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Text(
-              _application.coverLetter.isNotEmpty 
-                ? _application.coverLetter 
-                : 'No cover letter provided',
+              _application.coverLetter.isNotEmpty
+                  ? _application.coverLetter
+                  : 'No applicant\'s message provided',
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF374151),
@@ -537,10 +525,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         children: [
@@ -554,10 +539,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
                 icon: const Icon(Icons.chat_bubble_outline, size: 20),
                 label: const Text(
                   'Message Employer',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFF8A50),
@@ -594,7 +576,9 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF87171)),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFFF87171),
+                              ),
                             ),
                           ),
                           SizedBox(width: 12),
@@ -624,10 +608,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF2F2),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFFCA5A5),
-                  width: 1,
-                ),
+                border: Border.all(color: const Color(0xFFFCA5A5), width: 1),
               ),
               child: Row(
                 children: [
@@ -640,10 +621,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
                   const Expanded(
                     child: Text(
                       'This application was not accepted. Keep applying to other opportunities!',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF991B1B),
-                      ),
+                      style: TextStyle(fontSize: 14, color: Color(0xFF991B1B)),
                     ),
                   ),
                 ],
@@ -655,10 +633,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
               decoration: BoxDecoration(
                 color: const Color(0xFFF9FAFB),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFD1D5DB),
-                  width: 1,
-                ),
+                border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
               ),
               child: Row(
                 children: [
@@ -671,10 +646,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
                   const Expanded(
                     child: Text(
                       'You have withdrawn this application.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF374151),
-                      ),
+                      style: TextStyle(fontSize: 14, color: Color(0xFF374151)),
                     ),
                   ),
                 ],
@@ -695,10 +667,7 @@ class _HelperApplicationDetailsScreenState extends State<HelperApplicationDetail
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFFFF8A50),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8A50)),
         ),
         title: const Text(
           'Application Details',

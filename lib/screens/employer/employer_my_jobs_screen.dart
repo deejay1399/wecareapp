@@ -36,17 +36,22 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
       final employer = await SessionService.getCurrentEmployer();
       if (employer != null) {
         // Load job postings for this employer
-        final jobPostings = await JobPostingService.getJobPostingsByEmployer(employer.id);
-        
+        final jobPostings = await JobPostingService.getJobPostingsByEmployer(
+          employer.id,
+        );
+
         // Load application counts for each job posting
         for (int i = 0; i < jobPostings.length; i++) {
           try {
-            final count = await ApplicationService.getApplicationCount(jobPostings[i].id);
+            final count = await ApplicationService.getApplicationCount(
+              jobPostings[i].id,
+            );
             jobPostings[i] = JobPosting(
               id: jobPostings[i].id,
               employerId: jobPostings[i].employerId,
               title: jobPostings[i].title,
               description: jobPostings[i].description,
+              municipality: jobPostings[i].municipality,
               barangay: jobPostings[i].barangay,
               salary: jobPostings[i].salary,
               paymentFrequency: jobPostings[i].paymentFrequency,
@@ -60,7 +65,7 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
             // If application count fails, keep original job posting
           }
         }
-        
+
         if (mounted) {
           setState(() {
             _jobPostings = jobPostings;
@@ -86,11 +91,9 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
   void _onPostJob() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const PostJobScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const PostJobScreen()),
     );
-    
+
     // If job was posted successfully, refresh the job list
     if (result == true) {
       _loadJobPostings();
@@ -104,7 +107,7 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
         builder: (context) => JobDetailsScreen(jobPosting: job),
       ),
     );
-    
+
     // Handle different results from job details screen
     if (result == 'deleted' && mounted) {
       // Job was deleted, refresh the list
@@ -217,11 +220,17 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
             // Benefits list
             Column(
               children: [
-                _buildBenefitItem(Icons.search, 'Find qualified helpers quickly'),
+                _buildBenefitItem(
+                  Icons.search,
+                  'Find qualified helpers quickly',
+                ),
                 const SizedBox(height: 12),
                 _buildBenefitItem(Icons.schedule, 'Set your own schedule'),
                 const SizedBox(height: 12),
-                _buildBenefitItem(Icons.verified_user, 'All helpers are verified'),
+                _buildBenefitItem(
+                  Icons.verified_user,
+                  'All helpers are verified',
+                ),
               ],
             ),
           ],
@@ -234,11 +243,7 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: const Color(0xFF1565C0),
-        ),
+        Icon(icon, size: 20, color: const Color(0xFF1565C0)),
         const SizedBox(width: 12),
         Text(
           text,
@@ -255,9 +260,7 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
   Widget _buildContent() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF1565C0),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF1565C0)),
       );
     }
 
@@ -293,10 +296,7 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -382,11 +382,9 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
                 ],
               ),
             ),
-            
+
             // Content
-            Expanded(
-              child: _buildContent(),
-            ),
+            Expanded(child: _buildContent()),
           ],
         ),
       ),

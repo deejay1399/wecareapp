@@ -11,10 +11,7 @@ import '../../utils/constants/barangay_constants.dart';
 class EditJobScreen extends StatefulWidget {
   final JobPosting jobPosting;
 
-  const EditJobScreen({
-    super.key,
-    required this.jobPosting,
-  });
+  const EditJobScreen({super.key, required this.jobPosting});
 
   @override
   State<EditJobScreen> createState() => _EditJobScreenState();
@@ -25,8 +22,9 @@ class _EditJobScreenState extends State<EditJobScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _salaryController = TextEditingController();
-  
+
   String? _selectedPaymentFrequency;
+  String? _selectedMunicipality;
   String? _selectedBarangay;
   List<String> _requiredSkills = [];
   bool _isLoading = false;
@@ -38,7 +36,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
   String? _paymentFrequencyError;
   String? _barangayError;
   String? _skillsError;
-
+  List<String> _barangayList = [];
   @override
   void initState() {
     super.initState();
@@ -64,7 +62,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
 
   bool _validateForm() {
     bool isValid = true;
-    
+
     setState(() {
       // Reset errors
       _titleError = null;
@@ -134,6 +132,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
         employerId: widget.jobPosting.employerId,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
+        municipality: _selectedMunicipality!,
         barangay: _selectedBarangay!,
         salary: double.parse(_salaryController.text.trim()),
         paymentFrequency: _selectedPaymentFrequency!,
@@ -187,10 +186,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1565C0),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1565C0)),
         ),
         title: const Text(
           'Edit Job',
@@ -222,10 +218,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   'Update your job information below.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF6B7280),
-                  ),
+                  style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 32),
 
@@ -239,10 +232,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _titleError!,
-                    style: TextStyle(
-                      color: Colors.red.shade600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.red.shade600, fontSize: 14),
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -264,9 +254,9 @@ class _EditJobScreenState extends State<EditJobScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _descriptionError != null 
-                            ? Colors.red.shade400 
-                            : const Color(0xFFD1D5DB),
+                          color: _descriptionError != null
+                              ? Colors.red.shade400
+                              : const Color(0xFFD1D5DB),
                           width: 1,
                         ),
                         color: Colors.white,
@@ -277,7 +267,8 @@ class _EditJobScreenState extends State<EditJobScreen> {
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.all(16),
                           border: InputBorder.none,
-                          hintText: 'Describe the job responsibilities, requirements, and any specific details...',
+                          hintText:
+                              'Describe the job responsibilities, requirements, and any specific details...',
                           hintStyle: TextStyle(
                             color: Color(0xFF9CA3AF),
                             fontSize: 16,
@@ -320,21 +311,28 @@ class _EditJobScreenState extends State<EditJobScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _salaryError != null 
-                            ? Colors.red.shade400 
-                            : const Color(0xFFD1D5DB),
+                          color: _salaryError != null
+                              ? Colors.red.shade400
+                              : const Color(0xFFD1D5DB),
                           width: 1,
                         ),
                         color: Colors.white,
                       ),
                       child: TextField(
                         controller: _salaryController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d+\.?\d{0,2}'),
+                          ),
                         ],
                         decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
                           border: InputBorder.none,
                           hintText: 'Enter amount (e.g., 500.00)',
                           hintStyle: TextStyle(
@@ -383,25 +381,54 @@ class _EditJobScreenState extends State<EditJobScreen> {
 
                 // Barangay
                 BarangayDropdown(
-                  selectedBarangay: _selectedBarangay,
-                  barangayList: LocationConstants.tagbilaranBarangays,
-                  onChanged: (value) {
+                  selectedBarangay: _selectedMunicipality,
+                  barangayList: LocationConstants.getSortedMunicipalities(),
+                  label: 'Select Municipality',
+                  hint: 'Select your Municipality',
+                  onChanged: (String? value) {
                     setState(() {
-                      _selectedBarangay = value;
-                      _barangayError = null;
+                      _selectedMunicipality = value;
+                      // Update barangay list based on selected municipality
+                      _barangayList =
+                          LocationConstants.municipalityBarangays[value] ?? [];
+                      _selectedBarangay = null; // reset barangay selection
                     });
                   },
                 ),
-                if (_barangayError != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    _barangayError!,
-                    style: TextStyle(
-                      color: Colors.red.shade600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
+
+                BarangayDropdown(
+                  selectedBarangay: _selectedBarangay,
+                  barangayList: _barangayList,
+                  label: 'Select Barangay',
+                  hint: 'Select your barangay',
+                  onChanged: (String? value) {
+                    setState(() {
+                      _selectedBarangay = value;
+                    });
+                  },
+                ),
+
+                // Barangay
+                // BarangayDropdown(
+                //   selectedBarangay: _selectedBarangay,
+                //   barangayList: LocationConstants.tagbilaranBarangays,
+                //   onChanged: (value) {
+                //     setState(() {
+                //       _selectedBarangay = value;
+                //       _barangayError = null;
+                //     });
+                //   },
+                // ),
+                // if (_barangayError != null) ...[
+                //   const SizedBox(height: 8),
+                //   Text(
+                //     _barangayError!,
+                //     style: TextStyle(
+                //       color: Colors.red.shade600,
+                //       fontSize: 14,
+                //     ),
+                //   ),
+                // ],
                 const SizedBox(height: 24),
 
                 // Required Skills
@@ -427,7 +454,9 @@ class _EditJobScreenState extends State<EditJobScreen> {
                       backgroundColor: const Color(0xFF1565C0),
                       foregroundColor: Colors.white,
                       elevation: 2,
-                      shadowColor: const Color(0xFF1565C0).withValues(alpha: 0.3),
+                      shadowColor: const Color(
+                        0xFF1565C0,
+                      ).withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),

@@ -43,13 +43,13 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
             await SessionService.updateCurrentUser(freshHelper.toMap());
           }
           final finalHelper = freshHelper ?? helper;
-          
+
           // Load rating statistics
           final stats = await _ratingService.getUserRatingStatistics(
             finalHelper.id,
             'helper',
           );
-          
+
           if (mounted) {
             setState(() {
               _currentHelper = finalHelper;
@@ -63,7 +63,7 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
             helper.id,
             'helper',
           );
-          
+
           if (mounted) {
             setState(() {
               _currentHelper = helper;
@@ -90,14 +90,14 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
 
   Future<void> _navigateToEditProfile() async {
     if (_currentHelper == null) return;
-    
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => EditHelperProfileScreen(helper: _currentHelper!),
       ),
     );
-    
+
     // If changes were saved, refresh the profile
     if (result == true) {
       _loadCurrentHelper();
@@ -216,7 +216,8 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                   child: Column(
                     children: [
                       LargeProfilePictureWidget(
-                        profilePictureBase64: _currentHelper!.profilePictureBase64,
+                        profilePictureBase64:
+                            _currentHelper!.profilePictureBase64,
                         fullName: _currentHelper!.fullName,
                         onTap: _navigateToEditProfile,
                         showEditIcon: true,
@@ -246,10 +247,11 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
 
                 // Profile Information
                 _buildInfoSection(
-                  'Personal Information',
+                  'Personal Informationss',
                   [
                     _buildInfoRow('First Name', _currentHelper!.firstName),
                     _buildInfoRow('Last Name', _currentHelper!.lastName),
+                    _buildInfoRow('Birth date', _currentHelper!.barangay),
                     _buildInfoRow('Age', '${_currentHelper!.age} years old'),
                     _buildInfoRow('Email', _currentHelper!.email),
                     _buildInfoRow('Phone', _currentHelper!.phone),
@@ -264,7 +266,8 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                   'Skills & Experience',
                   [
                     _buildInfoRow('Primary Skill', _currentHelper!.skill),
-                    _buildInfoRow('Experience Level', _currentHelper!.experience),
+                    _buildInfoRow(
+                        'Experience Level', _currentHelper!.experience),
                   ],
                 ),
 
@@ -274,12 +277,16 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                 _buildInfoSection(
                   'Account Information',
                   [
-                    _buildInfoRow('Member Since', _formatDate(_currentHelper!.createdAt)),
-                    _buildInfoRow('Last Updated', _formatDate(_currentHelper!.updatedAt)),
                     _buildInfoRow(
-                      'Verification Status', 
+                        'Member Since', _formatDate(_currentHelper!.createdAt)),
+                    _buildInfoRow(
+                        'Last Updated', _formatDate(_currentHelper!.updatedAt)),
+                    _buildInfoRow(
+                      'Verification Status',
                       _currentHelper!.isVerified ? 'Verified' : 'Pending',
-                      valueColor: _currentHelper!.isVerified ? Colors.green : Colors.orange,
+                      valueColor: _currentHelper!.isVerified
+                          ? Colors.green
+                          : Colors.orange,
                     ),
                   ],
                 ),
@@ -363,7 +370,8 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFFFF8A50),
-                          side: const BorderSide(color: Color(0xFFFF8A50), width: 2),
+                          side: const BorderSide(
+                              color: Color(0xFFFF8A50), width: 2),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -379,7 +387,8 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const HelperSubscriptionScreen(),
+                              builder: (context) =>
+                                  const HelperSubscriptionScreen(),
                             ),
                           );
                         },

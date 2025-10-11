@@ -16,6 +16,7 @@ class JobOfferService {
     required String description,
     required double salary,
     required String paymentFrequency,
+    required String municipality,
     required String location,
     required List<String> requiredSkills,
   }) async {
@@ -30,6 +31,7 @@ class JobOfferService {
         description: description,
         salary: salary,
         paymentFrequency: paymentFrequency,
+        municipality: municipality,
         location: location,
         requiredSkills: requiredSkills,
         status: JobOfferStatus.pending,
@@ -70,7 +72,9 @@ class JobOfferService {
           .eq('id', jobOfferId);
 
       // Convert payment frequency to match database constraints
-      String dbPaymentFrequency = _convertPaymentFrequencyForDb(jobOffer.paymentFrequency);
+      String dbPaymentFrequency = _convertPaymentFrequencyForDb(
+        jobOffer.paymentFrequency,
+      );
 
       // Create a job posting from the accepted offer
       final jobPosting = await JobPostingService.createJobPosting(
@@ -79,6 +83,7 @@ class JobOfferService {
         description: jobOffer.description,
         salary: jobOffer.salary,
         paymentFrequency: dbPaymentFrequency,
+        municipality: jobOffer.municipality,
         barangay: jobOffer.location,
         requiredSkills: jobOffer.requiredSkills,
       );
@@ -89,8 +94,9 @@ class JobOfferService {
           .select('first_name, last_name')
           .eq('id', jobOffer.helperId)
           .single();
-      
-      final helperName = '${helperResponse['first_name']} ${helperResponse['last_name']}';
+
+      final helperName =
+          '${helperResponse['first_name']} ${helperResponse['last_name']}';
 
       // Immediately assign the helper to the job (since they accepted)
       await JobPostingService.assignHelperToJob(
@@ -134,7 +140,10 @@ class JobOfferService {
   }
 
   /// Reject a job offer
-  static Future<JobOffer> rejectJobOffer(String jobOfferId, String rejectionReason) async {
+  static Future<JobOffer> rejectJobOffer(
+    String jobOfferId,
+    String rejectionReason,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -154,7 +163,9 @@ class JobOfferService {
   }
 
   /// Get job offers for a conversation
-  static Future<List<JobOffer>> getJobOffersForConversation(String conversationId) async {
+  static Future<List<JobOffer>> getJobOffersForConversation(
+    String conversationId,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -162,16 +173,16 @@ class JobOfferService {
           .eq('conversation_id', conversationId)
           .order('created_at', ascending: false);
 
-      return (response as List)
-          .map((data) => JobOffer.fromMap(data))
-          .toList();
+      return (response as List).map((data) => JobOffer.fromMap(data)).toList();
     } catch (e) {
       throw Exception('Failed to fetch job offers: $e');
     }
   }
 
   /// Get pending job offers for a helper
-  static Future<List<JobOffer>> getPendingJobOffersForHelper(String helperId) async {
+  static Future<List<JobOffer>> getPendingJobOffersForHelper(
+    String helperId,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -180,16 +191,16 @@ class JobOfferService {
           .eq('status', JobOfferStatus.pending.name)
           .order('created_at', ascending: false);
 
-      return (response as List)
-          .map((data) => JobOffer.fromMap(data))
-          .toList();
+      return (response as List).map((data) => JobOffer.fromMap(data)).toList();
     } catch (e) {
       throw Exception('Failed to fetch pending job offers: $e');
     }
   }
 
   /// Get job offers sent by an employer
-  static Future<List<JobOffer>> getJobOffersByEmployer(String employerId) async {
+  static Future<List<JobOffer>> getJobOffersByEmployer(
+    String employerId,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -197,9 +208,7 @@ class JobOfferService {
           .eq('employer_id', employerId)
           .order('created_at', ascending: false);
 
-      return (response as List)
-          .map((data) => JobOffer.fromMap(data))
-          .toList();
+      return (response as List).map((data) => JobOffer.fromMap(data)).toList();
     } catch (e) {
       throw Exception('Failed to fetch employer job offers: $e');
     }
@@ -222,7 +231,9 @@ class JobOfferService {
   }
 
   /// Check if there's a pending job offer in conversation
-  static Future<JobOffer?> getPendingJobOfferInConversation(String conversationId) async {
+  static Future<JobOffer?> getPendingJobOfferInConversation(
+    String conversationId,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)

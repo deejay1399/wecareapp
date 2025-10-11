@@ -31,7 +31,9 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
         // Fetch fresh data from database
         final userId = await SessionService.getCurrentUserId();
         if (userId != null) {
-          final freshEmployer = await EmployerAuthService.getEmployerById(userId);
+          final freshEmployer = await EmployerAuthService.getEmployerById(
+            userId,
+          );
           if (freshEmployer != null) {
             // Update session with fresh data
             await SessionService.updateCurrentUser(freshEmployer.toMap());
@@ -68,14 +70,15 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
 
   Future<void> _navigateToEditProfile() async {
     if (_currentEmployer == null) return;
-    
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditEmployerProfileScreen(employer: _currentEmployer!),
+        builder: (context) =>
+            EditEmployerProfileScreen(employer: _currentEmployer!),
       ),
     );
-    
+
     // If changes were saved, refresh the profile
     if (result == true) {
       _loadCurrentEmployer();
@@ -100,16 +103,11 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
               if (!mounted) return;
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const RoleSelectionScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
                 (route) => false,
               );
             },
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -122,9 +120,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
       return const Scaffold(
         backgroundColor: Colors.white,
         body: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF1565C0),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFF1565C0)),
         ),
       );
     }
@@ -136,18 +132,11 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.grey,
-              ),
+              const Icon(Icons.error_outline, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
               const Text(
                 'Unable to load profile',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -194,7 +183,8 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                   child: Column(
                     children: [
                       LargeProfilePictureWidget(
-                        profilePictureBase64: _currentEmployer!.profilePictureBase64,
+                        profilePictureBase64:
+                            _currentEmployer!.profilePictureBase64,
                         fullName: _currentEmployer!.fullName,
                         onTap: _navigateToEditProfile,
                         showEditIcon: true,
@@ -223,33 +213,43 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                 const SizedBox(height: 32),
 
                 // Profile Information
-                _buildInfoSection(
-                  'Personal Information',
-                  [
-                    _buildInfoRow('First Name', _currentEmployer!.firstName),
-                    _buildInfoRow('Last Name', _currentEmployer!.lastName),
-                    _buildInfoRow('Age', '${_currentEmployer!.age} years old'),
-                    _buildInfoRow('Email', _currentEmployer!.email),
-                    _buildInfoRow('Phone', _currentEmployer!.phone),
-                    _buildInfoRow('Barangay', _currentEmployer!.barangay),
-                  ],
-                ),
+                _buildInfoSection('Personal Information', [
+                  _buildInfoRow(
+                    'First Name',
+                    _currentEmployer!.firstName ?? '',
+                  ),
+                  _buildInfoRow('Last Name', _currentEmployer!.lastName ?? ''),
+                  _buildInfoRow(
+                    'Age',
+                    '${_currentEmployer!.age ?? 0} years old',
+                  ),
+                  _buildInfoRow('Email', _currentEmployer!.email ?? ''),
+                  _buildInfoRow('Phone', _currentEmployer!.phone ?? ''),
+                  _buildInfoRow('Barangay', _currentEmployer!.barangay ?? ''),
+                ]),
 
                 const SizedBox(height: 24),
 
                 // Account Information
-                _buildInfoSection(
-                  'Account Information',
-                  [
-                    _buildInfoRow('Member Since', _formatDate(_currentEmployer!.createdAt)),
-                    _buildInfoRow('Last Updated', _formatDate(_currentEmployer!.updatedAt)),
-                    _buildInfoRow(
-                      'Verification Status', 
-                      _currentEmployer!.isVerified ? 'Verified' : 'Pending',
-                      valueColor: _currentEmployer!.isVerified ? Colors.green : Colors.orange,
-                    ),
-                  ],
-                ),
+                _buildInfoSection('Account Information', [
+                  _buildInfoRow(
+                    'Member Since',
+                    _formatDate(_currentEmployer!.createdAt),
+                  ),
+                  _buildInfoRow(
+                    'Last Updated',
+                    _formatDate(_currentEmployer!.updatedAt),
+                  ),
+                  _buildInfoRow(
+                    'Verification Status',
+                    _currentEmployer!.isVerified == true
+                        ? 'Verified'
+                        : 'Pending',
+                    valueColor: _currentEmployer!.isVerified == true
+                        ? Colors.green
+                        : Colors.orange,
+                  ),
+                ]),
 
                 const SizedBox(height: 32),
 
@@ -271,7 +271,10 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1565C0),
-                          side: const BorderSide(color: Color(0xFF1565C0), width: 2),
+                          side: const BorderSide(
+                            color: Color(0xFF1565C0),
+                            width: 2,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -287,7 +290,8 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const EmployerSubscriptionScreen(),
+                              builder: (context) =>
+                                  const EmployerSubscriptionScreen(),
                             ),
                           );
                         },

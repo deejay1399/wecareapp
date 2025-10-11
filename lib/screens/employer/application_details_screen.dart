@@ -9,13 +9,11 @@ import '../messaging/chat_screen.dart';
 class ApplicationDetailsScreen extends StatefulWidget {
   final Application application;
 
-  const ApplicationDetailsScreen({
-    super.key,
-    required this.application,
-  });
+  const ApplicationDetailsScreen({super.key, required this.application});
 
   @override
-  State<ApplicationDetailsScreen> createState() => _ApplicationDetailsScreenState();
+  State<ApplicationDetailsScreen> createState() =>
+      _ApplicationDetailsScreenState();
 }
 
 class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
@@ -39,7 +37,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
   }
 
   void _setDefaultMessage() {
-    _messageController.text = "Congratulations! Your application has been accepted. I'd like to discuss the job details with you. When would be a good time to start?";
+    _messageController.text =
+        "Congratulations! Your application has been accepted. I'd like to discuss the job details with you. When would be a good time to start?";
   }
 
   Future<void> _loadHelperDetails() async {
@@ -49,7 +48,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
 
     try {
       await HelperAuthService.getHelperById(_application.helperId);
-      
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -70,7 +69,9 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       if (message.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Please enter a message before accepting the application'),
+            content: Text(
+              'Please enter a message before accepting the application',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -84,7 +85,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
 
     try {
       await ApplicationService.updateApplicationStatus(_application.id, status);
-      
+
       // If accepted with message, create conversation and send message
       if (status == 'accepted') {
         await _sendAcceptanceMessage(_messageController.text.trim());
@@ -146,14 +147,15 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       if (currentEmployer == null) return;
 
       // Create or get conversation
-      final conversation = await DatabaseMessagingService.createOrGetConversation(
-        employerId: currentUserId,
-        employerName: currentEmployer.fullName,
-        helperId: _application.helperId,
-        helperName: _application.helperName,
-        jobId: _application.jobId,
-        jobTitle: _application.jobTitle,
-      );
+      final conversation =
+          await DatabaseMessagingService.createOrGetConversation(
+            employerId: currentUserId,
+            employerName: currentEmployer.fullName,
+            helperId: _application.helperId,
+            helperName: _application.helperName,
+            jobId: _application.jobId,
+            jobTitle: _application.jobTitle,
+          );
 
       // Send the acceptance message
       await DatabaseMessagingService.sendMessage(
@@ -174,14 +176,15 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       if (currentEmployer == null) return;
 
       // Create or get conversation
-      final conversation = await DatabaseMessagingService.createOrGetConversation(
-        employerId: currentUserId,
-        employerName: currentEmployer.fullName,
-        helperId: _application.helperId,
-        helperName: _application.helperName,
-        jobId: _application.jobId,
-        jobTitle: _application.jobTitle,
-      );
+      final conversation =
+          await DatabaseMessagingService.createOrGetConversation(
+            employerId: currentUserId,
+            employerName: currentEmployer.fullName,
+            helperId: _application.helperId,
+            helperName: _application.helperName,
+            jobId: _application.jobId,
+            jobTitle: _application.jobTitle,
+          );
 
       if (mounted) {
         await Navigator.push(
@@ -226,10 +229,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +260,10 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _getStatusColor().withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -292,15 +295,10 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),
         child: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF1565C0),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFF1565C0)),
         ),
       );
     }
@@ -310,10 +308,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,7 +322,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Helper Name and Rating
           Row(
             children: [
@@ -409,7 +404,10 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
             runSpacing: 8,
             children: _application.helperSkills.map((skill) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1565C0).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -452,10 +450,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF1F2937),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF1F2937)),
           ),
         ),
       ],
@@ -468,16 +463,13 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Cover Letter',
+            'Applicant\'s message',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -491,15 +483,12 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Text(
-              _application.coverLetter.isNotEmpty 
-                ? _application.coverLetter 
-                : 'No cover letter provided',
+              _application.coverLetter.isNotEmpty
+                  ? _application.coverLetter
+                  : 'No Applicant\'s message provided',
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF374151),
@@ -520,10 +509,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,10 +535,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
           const SizedBox(height: 8),
           const Text(
             'Write a message that will be sent to the helper when you accept their application:',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF6B7280),
-            ),
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -566,7 +549,10 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFF10B981),
+                  width: 2,
+                ),
               ),
               filled: true,
               fillColor: const Color(0xFFF9FAFB),
@@ -584,10 +570,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                 ),
                 label: const Text(
                   'Use Default Message',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
               ),
             ],
@@ -604,10 +587,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),
         child: SizedBox(
           width: double.infinity,
@@ -617,10 +597,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
             icon: const Icon(Icons.chat_bubble_outline, size: 20),
             label: const Text(
               'Message Helper',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1565C0),
@@ -639,10 +616,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         children: [
@@ -651,7 +625,9 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: _isUpdatingStatus ? null : () => _updateApplicationStatus('accepted'),
+              onPressed: _isUpdatingStatus
+                  ? null
+                  : () => _updateApplicationStatus('accepted'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
@@ -668,7 +644,9 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         ),
                         SizedBox(width: 12),
@@ -698,7 +676,9 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
             width: double.infinity,
             height: 52,
             child: OutlinedButton(
-              onPressed: _isUpdatingStatus ? null : () => _updateApplicationStatus('rejected'),
+              onPressed: _isUpdatingStatus
+                  ? null
+                  : () => _updateApplicationStatus('rejected'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFF87171),
                 side: const BorderSide(color: Color(0xFFF87171)),
@@ -708,10 +688,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
               ),
               child: const Text(
                 'Reject Application',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -729,10 +706,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1565C0),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1565C0)),
         ),
         title: const Text(
           'Application Details',

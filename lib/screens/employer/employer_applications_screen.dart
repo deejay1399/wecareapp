@@ -12,10 +12,12 @@ class EmployerApplicationsScreen extends StatefulWidget {
   const EmployerApplicationsScreen({super.key});
 
   @override
-  State<EmployerApplicationsScreen> createState() => _EmployerApplicationsScreenState();
+  State<EmployerApplicationsScreen> createState() =>
+      _EmployerApplicationsScreenState();
 }
 
-class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen> {
+class _EmployerApplicationsScreenState
+    extends State<EmployerApplicationsScreen> {
   List<Application> _applications = [];
   String _selectedFilter = 'all'; // 'all', 'pending', 'accepted', 'rejected'
   bool _isLoading = true;
@@ -60,20 +62,26 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
 
     try {
       // Get all job postings for this employer
-      final jobPostings = await JobPostingService.getJobPostingsByEmployer(_currentEmployer!.id);
-      
+      final jobPostings = await JobPostingService.getJobPostingsByEmployer(
+        _currentEmployer!.id,
+      );
+
       // Get applications for all job postings
       List<Application> allApplications = [];
       for (final job in jobPostings) {
-        final applications = await ApplicationService.getApplicationsForJob(job.id);
+        final applications = await ApplicationService.getApplicationsForJob(
+          job.id,
+        );
         // Filter out withdrawn applications
-        final nonWithdrawnApplications = applications.where((app) => !app.isWithdrawn).toList();
+        final nonWithdrawnApplications = applications
+            .where((app) => !app.isWithdrawn)
+            .toList();
         allApplications.addAll(nonWithdrawnApplications);
       }
-      
+
       // Sort by applied date (newest first)
       allApplications.sort((a, b) => b.appliedDate.compareTo(a.appliedDate));
-      
+
       if (mounted) {
         setState(() {
           _applications = allApplications;
@@ -94,17 +102,21 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ApplicationDetailsScreen(application: application),
+        builder: (context) =>
+            ApplicationDetailsScreen(application: application),
       ),
     );
-    
+
     // If application was updated (accepted/rejected), refresh the list
     if (result != null) {
       _loadApplications();
     }
   }
 
-  Future<void> _onStatusChange(Application application, String newStatus) async {
+  Future<void> _onStatusChange(
+    Application application,
+    String newStatus,
+  ) async {
     if (newStatus == 'accepted') {
       // Show message dialog for acceptance
       await _showAcceptanceDialog(application);
@@ -129,7 +141,9 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Accept ${application.helperName}\'s application for "${application.jobTitle}"?'),
+                  Text(
+                    'Accept ${application.helperName}\'s application for "${application.jobTitle}"?',
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'Send a message to the helper:',
@@ -140,7 +154,8 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
                     controller: messageController,
                     maxLines: 3,
                     decoration: InputDecoration(
-                      hintText: 'Congratulations! Your application has been accepted. Please contact me at...',
+                      hintText:
+                          'Congratulations! Your application has been accepted. Please contact me at...',
                       border: const OutlineInputBorder(),
                       errorText: messageError,
                     ),
@@ -183,56 +198,68 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
     );
 
     if (result == true && messageController.text.trim().isNotEmpty) {
-      await _updateApplicationStatus(application, 'accepted', messageController.text.trim());
+      await _updateApplicationStatus(
+        application,
+        'accepted',
+        messageController.text.trim(),
+      );
     }
-    
+
     messageController.dispose();
   }
 
-  Future<void> _updateApplicationStatus(Application application, String status, [String? message]) async {
+  Future<void> _updateApplicationStatus(
+    Application application,
+    String status, [
+    String? message,
+  ]) async {
     try {
       await ApplicationService.updateApplicationStatus(application.id, status);
-      
+
       // If application is accepted and message provided, create conversation and send message
-      if (status == 'accepted' && message != null && message.trim().isNotEmpty) {
+      if (status == 'accepted' &&
+          message != null &&
+          message.trim().isNotEmpty) {
         final currentEmployer = await SessionService.getCurrentEmployer();
         if (currentEmployer != null) {
-                     try {
-             // Create or get conversation for this job application
-             final conversation = await DatabaseMessagingService.createOrGetConversation(
-               employerId: currentEmployer.id,
-               employerName: '${currentEmployer.firstName} ${currentEmployer.lastName}',
-               helperId: application.helperId,
-               helperName: application.helperName,
-               jobId: application.jobId,
-               jobTitle: application.jobTitle,
-             );
+          try {
+            // Create or get conversation for this job application
+            final conversation =
+                await DatabaseMessagingService.createOrGetConversation(
+                  employerId: currentEmployer.id,
+                  employerName:
+                      '${currentEmployer.firstName} ${currentEmployer.lastName}',
+                  helperId: application.helperId,
+                  helperName: application.helperName,
+                  jobId: application.jobId,
+                  jobTitle: application.jobTitle,
+                );
 
-             // Send the acceptance message
-             await DatabaseMessagingService.sendMessage(
-               conversationId: conversation.id,
-               content: message,
-             );
-                     } catch (e) {
-             // Log messaging error but don't fail the acceptance
-             debugPrint('Failed to send acceptance message: $e');
-           }
+            // Send the acceptance message
+            await DatabaseMessagingService.sendMessage(
+              conversationId: conversation.id,
+              content: message,
+            );
+          } catch (e) {
+            // Log messaging error but don't fail the acceptance
+            debugPrint('Failed to send acceptance message: $e');
+          }
         }
       }
-      
+
       // Refresh applications list
       await _loadApplications();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              status == 'accepted' 
-                ? 'Application accepted and message sent to helper!'
-                : 'Application ${status}ed successfully'
+              status == 'accepted'
+                  ? 'Application accepted and message sent to helper!'
+                  : 'Application ${status}ed successfully',
             ),
-            backgroundColor: status == 'accepted' 
-                ? const Color(0xFF4CAF50) 
+            backgroundColor: status == 'accepted'
+                ? const Color(0xFF4CAF50)
                 : const Color(0xFFF44336),
           ),
         );
@@ -269,12 +296,14 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? const Color(0xFF1565C0) 
+          color: isSelected
+              ? const Color(0xFF1565C0)
               : const Color(0xFF1565C0).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: const Color(0xFF1565C0).withValues(alpha: isSelected ? 1.0 : 0.3),
+            color: const Color(
+              0xFF1565C0,
+            ).withValues(alpha: isSelected ? 1.0 : 0.3),
             width: 1,
           ),
         ),
@@ -294,7 +323,7 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected 
+                  color: isSelected
                       ? Colors.white.withValues(alpha: 0.2)
                       : const Color(0xFF1565C0).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
@@ -342,7 +371,7 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
             ),
             const SizedBox(height: 32),
             const Text(
-              'No Applications Yet',
+              'No Applications Yets',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -366,11 +395,20 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
             // Benefits list
             Column(
               children: [
-                _buildBenefitItem(Icons.person_search, 'Review helper profiles and ratings'),
+                _buildBenefitItem(
+                  Icons.person_search,
+                  'Review helper profiles and ratings',
+                ),
                 const SizedBox(height: 12),
-                _buildBenefitItem(Icons.chat_bubble_outline, 'Read cover letters and experience'),
+                _buildBenefitItem(
+                  Icons.chat_bubble_outline,
+                  'Read Applicant\'s message and experience',
+                ),
                 const SizedBox(height: 12),
-                _buildBenefitItem(Icons.thumb_up_outlined, 'Accept or reject applications easily'),
+                _buildBenefitItem(
+                  Icons.thumb_up_outlined,
+                  'Accept or reject applications easily',
+                ),
               ],
             ),
           ],
@@ -383,11 +421,7 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: const Color(0xFF1565C0),
-        ),
+        Icon(icon, size: 20, color: const Color(0xFF1565C0)),
         const SizedBox(width: 12),
         Text(
           text,
@@ -404,9 +438,7 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
   Widget _buildContent(List<Application> filteredApplications) {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF1565C0),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF1565C0)),
       );
     }
 
@@ -442,10 +474,7 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -475,11 +504,7 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.filter_list_off,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.filter_list_off, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No $_selectedFilter applications',
@@ -504,7 +529,8 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
           return ApplicationCard(
             application: filteredApplications[index],
             onTap: () => _onApplicationTap(filteredApplications[index]),
-            onStatusChange: (status) => _onStatusChange(filteredApplications[index], status),
+            onStatusChange: (status) =>
+                _onStatusChange(filteredApplications[index], status),
           );
         },
       ),
@@ -537,7 +563,10 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
                   ),
                   if (_applications.isNotEmpty)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1565C0).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -577,11 +606,9 @@ class _EmployerApplicationsScreenState extends State<EmployerApplicationsScreen>
                   ],
                 ),
               ),
-            
+
             // Content
-            Expanded(
-              child: _buildContent(filteredApplications),
-            ),
+            Expanded(child: _buildContent(filteredApplications)),
           ],
         ),
       ),

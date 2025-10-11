@@ -40,11 +40,7 @@ class ApplicationCard extends StatelessWidget {
                 },
               ),
             )
-          : const Icon(
-              Icons.person,
-              size: 30,
-              color: Color(0xFF1565C0),
-            ),
+          : const Icon(Icons.person, size: 30, color: Color(0xFF1565C0)),
     );
   }
 
@@ -99,10 +95,7 @@ class ApplicationCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               color: Colors.white,
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,7 +141,10 @@ class ApplicationCard extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: application.statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
@@ -173,7 +169,10 @@ class ApplicationCard extends StatelessWidget {
 
                 // Job title
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(8),
@@ -206,7 +205,7 @@ class ApplicationCard extends StatelessWidget {
 
                 // Cover letter preview
                 Text(
-                  'Cover Letter:',
+                  'Applicant\'s message: ',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -261,9 +260,14 @@ class ApplicationCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF10B981,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -288,17 +292,16 @@ class ApplicationCard extends StatelessWidget {
                   children: [
                     Text(
                       'Applied ${application.formatAppliedDate()}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                     if (application.isPending && onStatusChange != null)
                       Row(
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF44336).withValues(alpha: 0.1),
+                              color: const Color(
+                                0xFFF44336,
+                              ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: IconButton(
@@ -318,7 +321,9 @@ class ApplicationCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                              color: const Color(
+                                0xFF4CAF50,
+                              ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: IconButton(

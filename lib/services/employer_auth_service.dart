@@ -32,11 +32,11 @@ class EmployerAuthService {
   static bool _verifyPassword(String password, String storedHash) {
     final parts = storedHash.split(':');
     if (parts.length != 2) return false;
-    
+
     final salt = parts[0];
     final hash = parts[1];
     final computedHash = _hashPassword(password, salt);
-    
+
     return hash == computedHash;
   }
 
@@ -46,8 +46,10 @@ class EmployerAuthService {
     required String lastName,
     required String email,
     required String phone,
+    required String birthdate,
     required int age,
     required String password,
+    required String municipality,
     required String barangay,
     String? barangayClearanceBase64,
     String? profilePictureBase64,
@@ -92,8 +94,10 @@ class EmployerAuthService {
             'last_name': lastName,
             'email': email,
             'phone': phone,
+            'birthdate': birthdate,
             'age': age,
             'password_hash': passwordHash,
+            'municipality': municipality,
             'barangay': barangay,
             'barangay_clearance_base64': barangayClearanceBase64,
             'profile_picture_base64': profilePictureBase64,
@@ -109,10 +113,7 @@ class EmployerAuthService {
         'employer': employer,
       };
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Registration failed: $e',
-      };
+      return {'success': false, 'message': 'Registration failed: $e'};
     }
   }
 
@@ -136,17 +137,15 @@ class EmployerAuthService {
       if (response == null) {
         return {
           'success': false,
-          'message': 'No account found with this ${isEmail ? 'email' : 'phone number'}',
+          'message':
+              'No account found with this ${isEmail ? 'email' : 'phone number'}',
         };
       }
 
       // Verify password
       final storedPasswordHash = response['password_hash'] as String;
       if (!_verifyPassword(password, storedPasswordHash)) {
-        return {
-          'success': false,
-          'message': 'Invalid password',
-        };
+        return {'success': false, 'message': 'Invalid password'};
       }
 
       final employer = Employer.fromMap(response);
@@ -157,10 +156,7 @@ class EmployerAuthService {
         'employer': employer,
       };
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Login failed: $e',
-      };
+      return {'success': false, 'message': 'Login failed: $e'};
     }
   }
 
@@ -186,24 +182,25 @@ class EmployerAuthService {
     required String id,
     String? firstName,
     String? lastName,
+    String? municipality,
     String? barangay,
     String? barangayClearanceBase64,
     String? profilePictureBase64,
   }) async {
     try {
       final updateData = <String, dynamic>{};
-      
+
       if (firstName != null) updateData['first_name'] = firstName;
       if (lastName != null) updateData['last_name'] = lastName;
+      if (municipality != null) updateData['municipality'] = municipality;
       if (barangay != null) updateData['barangay'] = barangay;
-      if (barangayClearanceBase64 != null) updateData['barangay_clearance_base64'] = barangayClearanceBase64;
-      if (profilePictureBase64 != null) updateData['profile_picture_base64'] = profilePictureBase64;
+      if (barangayClearanceBase64 != null)
+        updateData['barangay_clearance_base64'] = barangayClearanceBase64;
+      if (profilePictureBase64 != null)
+        updateData['profile_picture_base64'] = profilePictureBase64;
 
       if (updateData.isEmpty) {
-        return {
-          'success': false,
-          'message': 'No data to update',
-        };
+        return {'success': false, 'message': 'No data to update'};
       }
 
       final response = await SupabaseService.client
@@ -221,10 +218,7 @@ class EmployerAuthService {
         'employer': employer,
       };
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Update failed: $e',
-      };
+      return {'success': false, 'message': 'Update failed: $e'};
     }
   }
 
@@ -245,16 +239,13 @@ class EmployerAuthService {
 
       return {
         'success': true,
-        'message': profilePictureBase64 != null 
+        'message': profilePictureBase64 != null
             ? 'Profile picture updated successfully'
             : 'Profile picture removed successfully',
         'employer': employer,
       };
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Profile picture update failed: $e',
-      };
+      return {'success': false, 'message': 'Profile picture update failed: $e'};
     }
   }
 }

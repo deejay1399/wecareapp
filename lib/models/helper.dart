@@ -7,6 +7,7 @@ class Helper {
   final int age;
   final String skill;
   final String experience;
+  final String municipality;
   final String barangay;
   final String? barangayClearanceBase64;
   final String? profilePictureBase64;
@@ -23,6 +24,7 @@ class Helper {
     required this.age,
     required this.skill,
     required this.experience,
+    required this.municipality,
     required this.barangay,
     this.barangayClearanceBase64,
     this.profilePictureBase64,
@@ -33,20 +35,25 @@ class Helper {
 
   factory Helper.fromMap(Map<String, dynamic> map) {
     return Helper(
-      id: map['id'] as String,
-      firstName: map['first_name'] as String,
-      lastName: map['last_name'] as String,
-      email: map['email'] as String,
-      phone: map['phone'] as String,
-      age: map['age'] as int,
-      skill: map['skill'] as String,
-      experience: map['experience'] as String,
-      barangay: map['barangay'] as String,
+      id: map['id'] as String? ?? '',
+      firstName: map['first_name'] as String? ?? '',
+      lastName: map['last_name'] as String? ?? '',
+      email: map['email'] as String? ?? '',
+      phone: map['phone'] as String? ?? '',
+      age: map['age'] as int? ?? 0,
+      skill: map['skill'] as String? ?? '',
+      experience: map['experience'] as String? ?? '',
+      municipality: map['municipality'] as String? ?? '',
+      barangay: map['barangay'] as String? ?? '',
       barangayClearanceBase64: map['barangay_clearance_base64'] as String?,
       profilePictureBase64: map['profile_picture_base64'] as String?,
-      isVerified: map['is_verified'] as bool,
-      createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: DateTime.parse(map['updated_at'] as String),
+      isVerified: map['is_verified'] as bool? ?? false,
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'] as String)
+          : DateTime.now(),
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -60,6 +67,7 @@ class Helper {
       'age': age,
       'skill': skill,
       'experience': experience,
+      'municipality': municipality,
       'barangay': barangay,
       'barangay_clearance_base64': barangayClearanceBase64,
       'profile_picture_base64': profilePictureBase64,

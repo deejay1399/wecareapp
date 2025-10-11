@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:wecareapp/services/rating_service.dart';
+import 'package:wecareapp/widgets/rating/star_rating_display.dart';
 import '../../models/job_posting.dart';
 import '../../models/helper_service_posting.dart';
 import '../../models/helper.dart';
+import '../../models/employer.dart';
 import '../../services/subscription_service.dart';
 import '../../services/database_messaging_service.dart';
 import '../../services/job_posting_service.dart';
@@ -15,17 +18,12 @@ import '../helper/helper_subscription_screen.dart';
 import '../helper/apply_job_screen.dart';
 import '../helper/post_service_screen.dart';
 import '../helper/edit_service_screen.dart';
-import '../helper/helper_active_jobs_screen.dart';
 import '../messaging/conversations_screen.dart';
 import '../shared/completed_jobs_screen.dart';
+import '../../models/rating_statistics.dart';
 
 class HelperHomeScreen extends StatefulWidget {
-  final VoidCallback? onNavigateToFindJobs;
-
-  const HelperHomeScreen({
-    super.key,
-    this.onNavigateToFindJobs,
-  });
+  const HelperHomeScreen({super.key});
 
   @override
   State<HelperHomeScreen> createState() => _HelperHomeScreenState();
@@ -39,14 +37,34 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
   List<HelperServicePosting> _myServices = [];
   bool _isLoadingJobs = true;
   bool _isLoadingServices = true;
-
+  bool showEmployerRating = false;
+  final _ratingService = RatingService();
+  RatingStatistics? _employerRatingStats;
   @override
   void initState() {
     super.initState();
     _loadCurrentHelper();
     _loadSubscriptionStatus();
     _loadUnreadMessageCount();
+    _loadEmployerRatingStats();
     _loadMatchedJobs(); // Load all job opportunities
+  }
+
+  Future<void> _loadEmployerRatingStats() async {
+    try {
+      final stats = await _ratingService.getUserRatingStatistics(
+        _matchedJobs[0].employerId,
+        'employer',
+      );
+
+      if (mounted) {
+        setState(() {
+          _employerRatingStats = stats;
+        });
+      }
+    } catch (e) {
+      // Handle error silently
+    }
   }
 
   Future<void> _loadCurrentHelper() async {
@@ -69,11 +87,12 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     });
 
     try {
-      final allJobs = await JobPostingService.getActiveJobPostings();
-      
+      // Use getRecentJobPostings with limit 100
+      List<JobPosting> recentJobs =
+          await JobPostingService.getRecentJobPostings(limit: 100);
       // Take only the first 2 jobs for the home screen
-      final jobs = allJobs.take(2).toList();
-      
+      final jobs = recentJobs.take(2).toList();
+
       if (mounted) {
         setState(() {
           _matchedJobs = jobs;
@@ -91,14 +110,17 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
 
   Future<void> _loadMyServices() async {
     if (_currentHelper == null) return;
-    
+
     setState(() {
       _isLoadingServices = true;
     });
 
     try {
-      final services = await HelperServicePostingService.getServicePostingsByHelper(_currentHelper!.id);
-      
+      final services =
+          await HelperServicePostingService.getServicePostingsByHelper(
+            _currentHelper!.id,
+          );
+
       if (mounted) {
         setState(() {
           _myServices = services;
@@ -116,7 +138,8 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
 
   Future<void> _loadSubscriptionStatus() async {
     try {
-      final status = await SubscriptionService.getCurrentUserSubscriptionStatus();
+      final status =
+          await SubscriptionService.getCurrentUserSubscriptionStatus();
       if (mounted) {
         setState(() {
           _subscriptionStatus = status;
@@ -143,9 +166,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
   void _onSubscriptionTap() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const HelperSubscriptionScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const HelperSubscriptionScreen()),
     );
   }
 
@@ -160,7 +181,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
       // Refresh unread count when returning
       _loadUnreadMessageCount();
     });
-    
+
     // Also schedule a short delayed refresh to catch async updates
     Future.delayed(const Duration(milliseconds: 400), _loadUnreadMessageCount);
   }
@@ -168,27 +189,14 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
   void _onCompletedJobsTap() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CompletedJobsScreen(),
-      ),
-    );
-  }
-
-  void _onActiveJobsTap() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HelperActiveJobsScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const CompletedJobsScreen()),
     );
   }
 
   void _onPostService(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const PostServiceScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const PostServiceScreen()),
     ).then((_) {
       // Refresh services when returning
       _loadMyServices();
@@ -201,9 +209,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     // Navigate to apply screen
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => ApplyJobScreen(jobPosting: job),
-      ),
+      MaterialPageRoute(builder: (context) => ApplyJobScreen(jobPosting: job)),
     );
 
     if (result == true) {
@@ -215,7 +221,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
             backgroundColor: Color(0xFF10B981),
           ),
         );
-        
+
         // Refresh matched jobs
         _loadMatchedJobs();
       }
@@ -231,7 +237,10 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     );
   }
 
-  void _onEditService(BuildContext context, HelperServicePosting service) async {
+  void _onEditService(
+    BuildContext context,
+    HelperServicePosting service,
+  ) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -254,8 +263,6 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
       }
     }
   }
-
-
 
   Widget _buildEmptyJobsState() {
     return Container(
@@ -343,7 +350,6 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -387,10 +393,14 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFFFF8A50,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: const Color(0xFFFF8A50).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFFFF8A50,
+                              ).withValues(alpha: 0.2),
                               width: 1,
                             ),
                           ),
@@ -427,7 +437,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
 
               const SizedBox(height: 16),
 
-              // Quick Action Cards - Row 1
+              // Quick Action Cards
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
@@ -447,36 +457,13 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                     Expanded(
                       child: _buildQuickActionCard(
                         context,
-                        'Active Jobs',
-                        'Mark complete',
-                        Icons.work_outline,
-                        const Color(0xFF3B82F6),
-                        _onActiveJobsTap,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Quick Action Cards - Row 2
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickActionCard(
-                        context,
-                        'Completed',
-                        'Rate past jobs',
+                        'Completed Jobs',
+                        'Rate your past experiences',
                         Icons.history_outlined,
                         const Color(0xFF10B981),
                         _onCompletedJobsTap,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    const Expanded(child: SizedBox()), // Empty space for symmetry
                   ],
                 ),
               ),
@@ -484,9 +471,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
               const SizedBox(height: 32),
 
               // Post Service Button
-              PostServiceButton(
-                onPressed: () => _onPostService(context),
-              ),
+              PostServiceButton(onPressed: () => _onPostService(context)),
 
               const SizedBox(height: 32),
 
@@ -496,8 +481,15 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                 child: SectionHeader(
                   title: 'Latest Job Opportunities',
                   subtitle: 'Explore all available job postings',
-                  onSeeAll: _matchedJobs.isNotEmpty 
-                      ? widget.onNavigateToFindJobs 
+                  onSeeAll: _matchedJobs.isNotEmpty
+                      ? () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('View All Jobs - Coming Soon'),
+                              backgroundColor: Color(0xFFFF8A50),
+                            ),
+                          );
+                        }
                       : null,
                 ),
               ),
@@ -517,12 +509,16 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                         ),
                       )
                     : _matchedJobs.isEmpty
-                        ? _buildEmptyJobsState()
-                        : Column(
-                            children: _matchedJobs.map((job) {
-                              return _buildJobCard(job);
-                            }).toList(),
-                          ),
+                    ? _buildEmptyJobsState()
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: _matchedJobs.length,
+                        itemBuilder: (context, index) {
+                          print('Job #$index: ${_matchedJobs[index].toMap()}');
+                          return _buildJobCard(_matchedJobs[index]);
+                        },
+                      ),
               ),
 
               const SizedBox(height: 32),
@@ -533,14 +529,16 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                 child: SectionHeader(
                   title: 'My Posted Services',
                   subtitle: 'Manage your service offerings',
-                  onSeeAll: _myServices.length > 2 ? () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('View All Services - Coming Soon'),
-                        backgroundColor: Color(0xFFFF8A50),
-                      ),
-                    );
-                  } : null,
+                  onSeeAll: _myServices.length > 2
+                      ? () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('View All Services - Coming Soon'),
+                              backgroundColor: Color(0xFFFF8A50),
+                            ),
+                          );
+                        }
+                      : null,
                 ),
               ),
 
@@ -559,16 +557,16 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                         ),
                       )
                     : _myServices.isEmpty
-                        ? _buildEmptyServicesState()
-                        : Column(
-                            children: _myServices.take(2).map((service) {
-                              return HelperServicePostingCard(
-                                servicePosting: service,
-                                onTap: () => _onServiceTap(context, service),
-                                onEdit: () => _onEditService(context, service),
-                              );
-                            }).toList(),
-                          ),
+                    ? _buildEmptyServicesState()
+                    : Column(
+                        children: _myServices.take(2).map((service) {
+                          return HelperServicePostingCard(
+                            servicePosting: service,
+                            onTap: () => _onServiceTap(context, service),
+                            onEdit: () => _onEditService(context, service),
+                          );
+                        }).toList(),
+                      ),
               ),
 
               const SizedBox(height: 32),
@@ -594,10 +592,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               color: Colors.white,
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -607,7 +602,10 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        job.title,
+                        (job.employer?.fullName != null &&
+                                job.employer!.fullName.trim().isNotEmpty)
+                            ? job.employer!.fullName
+                            : 'Unknown',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -624,6 +622,18 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                       ),
                     ),
                   ],
+                ),
+
+                const SizedBox(height: 12),
+                Text(
+                  "Age: ${job.employer?.age ?? 'N/A'}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
 
                 const SizedBox(height: 8),
@@ -647,19 +657,13 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                     const SizedBox(width: 4),
                     Text(
                       job.barangay,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 12),
-
-                // Description
                 Text(
-                  job.description,
+                  "Job title: ${job.title}",
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -671,6 +675,78 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
 
                 const SizedBox(height: 12),
 
+                // Description
+                Text(
+                  "Job description: ${job.description}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 12),
+                if (showEmployerRating) ...[
+                  if (_employerRatingStats != null &&
+                      _employerRatingStats!.hasRatings) ...[
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.business,
+                          size: 16,
+                          color: Color(0xFF1565C0),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Employer Rating:',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF374151),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        StarRatingDisplay(
+                          rating: _employerRatingStats!.averageRating,
+                          totalRatings: _employerRatingStats!.totalRatings,
+                          size: 14,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ] else if (_employerRatingStats != null) ...[
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.business,
+                          size: 16,
+                          color: Color(0xFF1565C0),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Employer Rating:',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF374151),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'No ratings yet',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+                const SizedBox(height: 12),
                 // Required skills
                 if (job.requiredSkills.isNotEmpty) ...[
                   Wrap(
@@ -678,7 +754,10 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                     runSpacing: 6,
                     children: job.requiredSkills.take(3).map((skill) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -705,7 +784,10 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF8A50),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -748,10 +830,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             color: Colors.white,
-            border: Border.all(
-              color: color.withValues(alpha: 0.2),
-              width: 1,
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -766,11 +845,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                       color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      icon,
-                      size: 24,
-                      color: color,
-                    ),
+                    child: Icon(icon, size: 24, color: color),
                   ),
                   if (badgeCount != null && badgeCount > 0)
                     Positioned(
@@ -788,10 +863,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2,
-                          ),
+                          border: Border.all(color: Colors.white, width: 2),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.2),
