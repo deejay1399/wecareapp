@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../localization_manager.dart';
 
 class PostJobButton extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const PostJobButton({
-    super.key,
-    required this.onPressed,
-  });
+  const PostJobButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +25,7 @@ class PostJobButton extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF1565C0),
-                  Color(0xFF1E88E5),
-                ],
+                colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
               ),
             ),
             child: Row(
@@ -50,8 +45,8 @@ class PostJobButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                const Text(
-                  'Post a Job',
+                Text(
+                  LocalizationManager.translate('post_a_job'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

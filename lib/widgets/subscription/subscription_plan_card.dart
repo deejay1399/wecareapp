@@ -23,7 +23,7 @@ class SubscriptionPlanCard extends StatelessWidget {
       SubscriptionConstants.planColors[plan.id] ?? 0xFF2196F3,
     );
 
-    void _handleSubscribe(BuildContext context) {
+    void handleSubscribe(BuildContext context) {
       onSubscribe();
       Navigator.push(
         context,
@@ -160,7 +160,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: isLoading
                         ? null
-                        : () => _handleSubscribe(context),
+                        : () => handleSubscribe(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: planColor,
                       foregroundColor: Colors.white,

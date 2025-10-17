@@ -872,7 +872,7 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _selectedMunicipality,
+                  initialValue: _selectedMunicipality,
                   decoration: InputDecoration(
                     labelText: 'Municipality',
                     hintText: 'Select municipality',
@@ -914,7 +914,7 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedBarangay,
+            initialValue: _selectedBarangay,
             decoration: InputDecoration(
               labelText: 'Barangay',
               hintText: 'Select barangay',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/usage_tracking.dart';
 import '../../models/subscription.dart';
+import '../../localization_manager.dart';
 
 class SubscriptionStatusBanner extends StatelessWidget {
   final Map<String, dynamic> subscriptionStatus;
@@ -25,7 +26,7 @@ class SubscriptionStatusBanner extends StatelessWidget {
 
   Widget _buildSubscriptionBanner(BuildContext context) {
     final subscription = subscriptionStatus['subscription'] as Subscription;
-    
+
     return Container(
       margin: const EdgeInsets.all(16),
       child: Material(
@@ -42,18 +43,14 @@ class SubscriptionStatusBanner extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green[600],
-                  size: 24,
-                ),
+                Icon(Icons.check_circle, color: Colors.green[600], size: 24),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Premium Member',
+                        LocalizationManager.translate('premium_user'),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -63,8 +60,10 @@ class SubscriptionStatusBanner extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subscription.expiryDate != null
-                            ? 'Expires ${_formatDate(subscription.expiryDate!)}'
-                            : 'Active subscription',
+                            ? '${LocalizationManager.translate('expires')} ${_formatDate(subscription.expiryDate!)}'
+                            : LocalizationManager.translate(
+                                'active_subscription',
+                              ),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.green[700],
@@ -73,11 +72,7 @@ class SubscriptionStatusBanner extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  color: Colors.green[600],
-                  size: 20,
-                ),
+                Icon(Icons.chevron_right, color: Colors.green[600], size: 20),
               ],
             ),
           ),
@@ -90,7 +85,7 @@ class SubscriptionStatusBanner extends StatelessWidget {
     final usage = subscriptionStatus['usage'] as UsageTracking;
     final isNearLimit = usage.remainingTrialUses <= 2;
     final isAtLimit = usage.hasExceededTrial;
-    
+
     Color statusColor;
     Color backgroundColor;
     IconData statusIcon;
@@ -101,20 +96,22 @@ class SubscriptionStatusBanner extends StatelessWidget {
       statusColor = Colors.red[600]!;
       backgroundColor = Colors.red[50]!;
       statusIcon = Icons.warning;
-      statusText = 'Trial Expired';
-      subText = 'Subscribe to continue using the app';
+      statusText = LocalizationManager.translate('trial_ended');
+      subText = LocalizationManager.translate('subscribe_to_continue');
     } else if (isNearLimit) {
       statusColor = Colors.orange[600]!;
       backgroundColor = Colors.orange[50]!;
       statusIcon = Icons.access_time;
-      statusText = '${usage.remainingTrialUses} uses left';
-      subText = 'Subscribe for unlimited access';
+      statusText =
+          '${usage.remainingTrialUses} ${LocalizationManager.translate('uses_left')}';
+      subText = LocalizationManager.translate('subscribe_for_unlimited_access');
     } else {
       statusColor = Colors.blue[600]!;
       backgroundColor = Colors.blue[50]!;
       statusIcon = Icons.rocket_launch;
-      statusText = '${usage.remainingTrialUses} free uses left';
-      subText = 'Tap to view subscription plans';
+      statusText =
+          '${usage.remainingTrialUses} ${LocalizationManager.translate('free_uses_left')}';
+      subText = LocalizationManager.translate('subscription_recommendation');
     }
 
     return Container(
@@ -133,11 +130,7 @@ class SubscriptionStatusBanner extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  statusIcon,
-                  color: statusColor,
-                  size: 24,
-                ),
+                Icon(statusIcon, color: statusColor, size: 24),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -154,10 +147,7 @@ class SubscriptionStatusBanner extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subText,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[700],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                       ),
                     ],
                   ),
@@ -174,7 +164,9 @@ class SubscriptionStatusBanner extends StatelessWidget {
                         child: CircularProgressIndicator(
                           value: usage.trialUsagePercentage,
                           backgroundColor: Colors.grey[200],
-                          valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            statusColor,
+                          ),
                           strokeWidth: 3,
                         ),
                       ),
@@ -190,11 +182,7 @@ class SubscriptionStatusBanner extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right,
-                  color: statusColor,
-                  size: 20,
-                ),
+                Icon(Icons.chevron_right, color: statusColor, size: 20),
               ],
             ),
           ),
@@ -206,14 +194,14 @@ class SubscriptionStatusBanner extends StatelessWidget {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = date.difference(now);
-    
+
     if (difference.inDays > 30) {
       final months = (difference.inDays / 30).round();
-      return 'in $months month${months > 1 ? 's' : ''}';
+      return '${LocalizationManager.translate('in')} $months ${LocalizationManager.translate('months')}${months > 1 ? 's' : ''}';
     } else if (difference.inDays > 0) {
-      return 'in ${difference.inDays} day${difference.inDays > 1 ? 's' : ''}';
+      return '${LocalizationManager.translate('in')} ${difference.inDays} ${LocalizationManager.translate('days')}${difference.inDays > 1 ? 's' : ''}';
     } else {
-      return 'today';
+      return LocalizationManager.translate('today');
     }
   }
 }

@@ -197,10 +197,12 @@ class HelperAuthService {
       if (experience != null) updateData['experience'] = experience;
       if (municipality != null) updateData['municipality'] = municipality;
       if (barangay != null) updateData['barangay'] = barangay;
-      if (barangayClearanceBase64 != null)
+      if (barangayClearanceBase64 != null) {
         updateData['barangay_clearance_base64'] = barangayClearanceBase64;
-      if (profilePictureBase64 != null)
+      }
+      if (profilePictureBase64 != null) {
         updateData['profile_picture_base64'] = profilePictureBase64;
+      }
 
       if (updateData.isEmpty) {
         return {'success': false, 'message': 'No data to update'};

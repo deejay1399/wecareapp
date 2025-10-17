@@ -4,7 +4,6 @@ import 'package:wecareapp/widgets/rating/star_rating_display.dart';
 import '../../models/job_posting.dart';
 import '../../models/helper_service_posting.dart';
 import '../../models/helper.dart';
-import '../../models/employer.dart';
 import '../../services/subscription_service.dart';
 import '../../services/database_messaging_service.dart';
 import '../../services/job_posting_service.dart';

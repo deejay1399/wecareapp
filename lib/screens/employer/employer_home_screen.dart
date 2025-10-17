@@ -18,6 +18,8 @@ import '../employer/all_services_screen.dart';
 import '../employer/service_details_screen.dart';
 import '../messaging/conversations_screen.dart';
 import '../shared/completed_jobs_screen.dart';
+import '../../language_manager.dart';
+import '../../localization_manager.dart';
 
 class EmployerHomeScreen extends StatefulWidget {
   const EmployerHomeScreen({super.key});
@@ -51,7 +53,8 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
 
   Future<void> _loadSubscriptionStatus() async {
     try {
-      final status = await SubscriptionService.getCurrentUserSubscriptionStatus();
+      final status =
+          await SubscriptionService.getCurrentUserSubscriptionStatus();
       if (mounted) {
         setState(() {
           _subscriptionStatus = status;
@@ -85,8 +88,10 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
       final employer = await SessionService.getCurrentEmployer();
       if (employer != null) {
         // Load recent job postings (limit to 3)
-        final allJobPostings = await JobPostingService.getJobPostingsByEmployer(employer.id);
-        
+        final allJobPostings = await JobPostingService.getJobPostingsByEmployer(
+          employer.id,
+        );
+
         if (mounted) {
           setState(() {
             _recentJobPostings = allJobPostings.take(3).toList();
@@ -114,8 +119,9 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
 
     try {
       // Load active helper service postings (limit to 3)
-      final allServices = await HelperServicePostingService.getActiveServicePostings();
-      
+      final allServices =
+          await HelperServicePostingService.getActiveServicePostings();
+
       if (mounted) {
         setState(() {
           _availableServices = allServices.take(3).toList();
@@ -143,14 +149,12 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
   void _onMessagesTap() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const ConversationsScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const ConversationsScreen()),
     ).then((_) {
       // Refresh unread count when returning
       _loadUnreadMessageCount();
     });
-    
+
     // Also schedule a short delayed refresh to catch async updates
     Future.delayed(const Duration(milliseconds: 400), _loadUnreadMessageCount);
   }
@@ -158,30 +162,28 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
   void _onCompletedJobsTap() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CompletedJobsScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const CompletedJobsScreen()),
     );
   }
 
   void _onPostJob(BuildContext context) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const PostJobScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const PostJobScreen()),
     );
 
     if (!context.mounted) return;
-    
+
     // If job was posted successfully, refresh data and show success message
     if (result == true) {
       _loadRecentJobPostings(); // Refresh job postings
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Job posted successfully! Check "My Jobs" to view it.'),
-          backgroundColor: Color(0xFF10B981),
-          duration: Duration(seconds: 3),
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('job_post_success_message'),
+          ),
+          backgroundColor: const Color(0xFF10B981),
+          duration: const Duration(seconds: 3),
         ),
       );
     }
@@ -213,13 +215,9 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
   void _onSeeAllServices() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AllServicesScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const AllServicesScreen()),
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -241,13 +239,14 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Good ${_getGreeting()}!',
+                                  '${LocalizationManager.translate('good')} ${LocalizationManager.translate(_getGreeting())}!',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     color: Color(0xFF6B7280),
@@ -255,8 +254,8 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                const Text(
-                                  'Find the perfect help',
+                                Text(
+                                  LocalizationManager.translate('find_help'),
                                   style: TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.bold,
@@ -266,25 +265,101 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                               ],
                             ),
                           ),
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1565C0).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFF1565C0).withValues(alpha: 0.2),
-                                width: 1,
+                          Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF1565C0,
+                                  ).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFF1565C0,
+                                    ).withValues(alpha: 0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: IconButton(
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    Icons.notifications_outlined,
+                                    color: Color(0xFF1565C0),
+                                    size: 24,
+                                  ),
+                                ),
                               ),
-                            ),
-                            child: IconButton(
-                              onPressed: () {},
-                              icon: const Icon(
-                                Icons.notifications_outlined,
-                                color: Color(0xFF1565C0),
-                                size: 24,
+                              Container(
+                                width: 48,
+                                height: 48,
+                                margin: const EdgeInsets.only(left: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF1565C0,
+                                  ).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFF1565C0,
+                                    ).withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: PopupMenuButton<String>(
+                                  icon: const Icon(
+                                    Icons.language,
+                                    color: Color(0xFF1565C0),
+                                    size: 24,
+                                  ),
+                                  offset: const Offset(
+                                    0,
+                                    50,
+                                  ), // 👈 dropdown appears BELOW icon
+                                  color: Colors.white.withOpacity(
+                                    0.9,
+                                  ), // 👈 slight transparency
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  onSelected: (String code) async {
+                                    await LanguageManager.setLanguage(code);
+                                    await LocalizationManager.loadLanguage();
+                                    if (context.mounted) setState(() {});
+                                  },
+                                  itemBuilder: (BuildContext context) => const [
+                                    PopupMenuItem(
+                                      value: 'English',
+                                      child: Text(
+                                        'English',
+                                        style: TextStyle(
+                                          color: Color(0xFF1565C0),
+                                        ),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'Tagalog',
+                                      child: Text(
+                                        'Tagalog',
+                                        style: TextStyle(
+                                          color: Color(0xFF1565C0),
+                                        ),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'Cebuano',
+                                      child: Text(
+                                        'Cebuano',
+                                        style: TextStyle(
+                                          color: Color(0xFF1565C0),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
@@ -300,9 +375,7 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                   ),
 
                 // Post Job Button
-                PostJobButton(
-                  onPressed: () => _onPostJob(context),
-                ),
+                PostJobButton(onPressed: () => _onPostJob(context)),
 
                 const SizedBox(height: 24),
 
@@ -310,8 +383,8 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: SectionHeader(
-                    title: 'Quick Actions',
-                    subtitle: 'Manage your employer account',
+                    title: LocalizationManager.translate('quick_actions'),
+                    subtitle: LocalizationManager.translate('manage_account'),
                   ),
                 ),
 
@@ -325,8 +398,8 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                       Expanded(
                         child: _buildQuickActionCard(
                           context,
-                          'Messages',
-                          'Chat with helpers',
+                          LocalizationManager.translate('messages'),
+                          LocalizationManager.translate('chat_with_helpers'),
                           Icons.chat_bubble_outline,
                           const Color(0xFF1565C0),
                           _onMessagesTap,
@@ -337,8 +410,8 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                       Expanded(
                         child: _buildQuickActionCard(
                           context,
-                          'Completed Jobs',
-                          'Rate your hires',
+                          LocalizationManager.translate('completed_jobs'),
+                          LocalizationManager.translate('rate_your_hires'),
                           Icons.history_outlined,
                           const Color(0xFF10B981),
                           _onCompletedJobsTap,
@@ -348,8 +421,8 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                       Expanded(
                         child: _buildQuickActionCard(
                           context,
-                          'Services',
-                          'Browse helpers',
+                          LocalizationManager.translate('services'),
+                          LocalizationManager.translate('browse_helpers'),
                           Icons.storefront_outlined,
                           const Color(0xFFFF8A50),
                           _onSeeAllServices,
@@ -365,14 +438,16 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: SectionHeader(
-                    title: 'Recent Job Postings',
-                    subtitle: 'Manage your active job listings',
-                    onSeeAll: _recentJobPostings.length >= 3 ? () {
-                      // Navigate to the My Jobs tab (index 1 in the bottom navigation)
-                      if (context.mounted) {
-                        DefaultTabController.of(context).animateTo(1);
-                      }
-                    } : null,
+                    title: LocalizationManager.translate('recent_jobs'),
+                    subtitle: LocalizationManager.translate('manage_employer'),
+                    onSeeAll: _recentJobPostings.length >= 3
+                        ? () {
+                            // Navigate to the My Jobs tab (index 1 in the bottom navigation)
+                            if (context.mounted) {
+                              DefaultTabController.of(context).animateTo(1);
+                            }
+                          }
+                        : null,
                   ),
                 ),
 
@@ -391,15 +466,15 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                           ),
                         )
                       : _recentJobPostings.isEmpty
-                          ? _buildEmptyJobsState()
-                          : Column(
-                              children: _recentJobPostings.map((job) {
-                                return JobPostingCard(
-                                  jobPosting: job,
-                                  onTap: () => _onJobTap(context, job),
-                                );
-                              }).toList(),
-                            ),
+                      ? _buildEmptyJobsState()
+                      : Column(
+                          children: _recentJobPostings.map((job) {
+                            return JobPostingCard(
+                              jobPosting: job,
+                              onTap: () => _onJobTap(context, job),
+                            );
+                          }).toList(),
+                        ),
                 ),
 
                 const SizedBox(height: 32),
@@ -408,9 +483,13 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: SectionHeader(
-                    title: 'Available Services',
-                    subtitle: 'Browse helpers by service type',
-                    onSeeAll: _availableServices.isNotEmpty ? _onSeeAllServices : null,
+                    title: LocalizationManager.translate('available_services'),
+                    subtitle: LocalizationManager.translate(
+                      'browse_by_service_type',
+                    ),
+                    onSeeAll: _availableServices.isNotEmpty
+                        ? _onSeeAllServices
+                        : null,
                   ),
                 ),
 
@@ -429,15 +508,15 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                           ),
                         )
                       : _availableServices.isEmpty
-                          ? _buildEmptyServicesState()
-                          : Column(
-                              children: _availableServices.map((service) {
-                                return HelperServicePostingCard(
-                                  servicePosting: service,
-                                  onTap: () => _onServiceTap(context, service),
-                                );
-                              }).toList(),
-                            ),
+                      ? _buildEmptyServicesState()
+                      : Column(
+                          children: _availableServices.map((service) {
+                            return HelperServicePostingCard(
+                              servicePosting: service,
+                              onTap: () => _onServiceTap(context, service),
+                            );
+                          }).toList(),
+                        ),
                 ),
 
                 const SizedBox(height: 32),
@@ -454,6 +533,33 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
     if (hour < 12) return 'morning';
     if (hour < 17) return 'afternoon';
     return 'evening';
+  }
+
+  Widget _buildLanguageOption(BuildContext context, String name, String code) {
+    final isSelected = LanguageManager.selectedLanguage == code;
+    return ListTile(
+      leading: Icon(
+        Icons.language,
+        color: isSelected ? const Color(0xFF1565C0) : Colors.grey,
+      ),
+      title: Text(
+        name,
+        style: TextStyle(
+          color: isSelected ? const Color(0xFF1565C0) : Colors.black,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check, color: Color(0xFF1565C0))
+          : null,
+      onTap: () async {
+        await LanguageManager.setLanguage(code);
+        if (context.mounted) {
+          Navigator.pop(context);
+          setState(() {}); // rebuild this page (translations already loaded)
+        }
+      },
+    );
   }
 
   Widget _buildEmptyJobsState() {
@@ -475,8 +581,8 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No Job Postings Yet',
+          Text(
+            LocalizationManager.translate('job_post_success_message'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -484,8 +590,8 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Start by posting your first job to find the perfect helper',
+          Text(
+            LocalizationManager.translate('post_first_job'),
             style: TextStyle(
               fontSize: 14,
               color: Color(0xFF6B7280),
@@ -517,17 +623,17 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No Services Available',
+          Text(
+            LocalizationManager.translate('no_services'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1F2937),
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Helper services will be displayed here once they become available',
+          SizedBox(height: 8),
+          Text(
+            LocalizationManager.translate('services_coming_soon'),
             style: TextStyle(
               fontSize: 14,
               color: Color(0xFF6B7280),
@@ -561,10 +667,7 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             color: Colors.white,
-            border: Border.all(
-              color: color.withValues(alpha: 0.2),
-              width: 1,
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,11 +682,7 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                       color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      icon,
-                      size: 24,
-                      color: color,
-                    ),
+                    child: Icon(icon, size: 24, color: color),
                   ),
                   if (badgeCount != null && badgeCount > 0)
                     Positioned(
@@ -601,10 +700,7 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2,
-                          ),
+                          border: Border.all(color: Colors.white, width: 2),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.2),

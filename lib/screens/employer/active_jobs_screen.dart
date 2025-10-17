@@ -3,6 +3,7 @@ import '../../models/job_posting.dart';
 import '../../services/job_posting_service.dart';
 import '../../services/session_service.dart';
 import '../rating/rating_dialog_screen.dart';
+import '../../localization_manager.dart';
 
 class ActiveJobsScreen extends StatefulWidget {
   const ActiveJobsScreen({super.key});
@@ -31,11 +32,15 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
     try {
       final currentUserId = await SessionService.getCurrentUserId();
       if (currentUserId == null) {
-        throw Exception('User session not found');
+        throw Exception(
+          LocalizationManager.translate('user_session_not_found'),
+        );
       }
 
-      final jobs = await JobPostingService.getInProgressJobsForEmployer(currentUserId);
-      
+      final jobs = await JobPostingService.getInProgressJobsForEmployer(
+        currentUserId,
+      );
+
       if (mounted) {
         setState(() {
           _activeJobs = jobs;
@@ -45,7 +50,8 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to load active jobs: $e';
+          _errorMessage =
+              '${LocalizationManager.translate('failed_to_load_active_jobs')}: $e';
           _isLoading = false;
         });
       }
@@ -53,46 +59,50 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
   }
 
   Future<void> _markJobAsCompleted(JobPosting job) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Mark Job as Completed'),
-        content: Text(
-          'Are you sure the work for "${job.title}" has been completed by ${job.assignedHelperName}?'
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              foregroundColor: Colors.white,
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(LocalizationManager.translate('Confirm Completion')),
+            content: Text(
+              '${LocalizationManager.translate('are_you_sure')} "${job.title}" ${LocalizationManager.translate('has_been_completed_by')} ${job.assignedHelperName}?',
             ),
-            child: const Text('Mark Completed'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(LocalizationManager.translate('cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                ),
+                child: Text(LocalizationManager.translate('mark_completed')),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (!confirmed) return;
 
     try {
       await JobPostingService.markJobAsCompleted(job.id);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Job marked as completed! You can now rate the helper.'),
-            backgroundColor: Color(0xFF10B981),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('job_mark_as_completed'),
+            ),
+            backgroundColor: const Color(0xFF10B981),
           ),
         );
 
         // Show rating dialog
         _showRatingDialog(job);
-        
+
         // Refresh the list
         _loadActiveJobs();
       }
@@ -100,7 +110,9 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to mark job as completed: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_mark_job_as_completed')}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -118,12 +130,15 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
         MaterialPageRoute(
           builder: (context) => RatingDialogScreen(
             raterId: currentUserId,
-            raterType: 'employer',
+            raterType: LocalizationManager.translate('employer'),
             ratedId: job.assignedHelperId!,
-            ratedType: 'helper',
-            ratedName: job.assignedHelperName ?? 'Helper',
+            ratedType: LocalizationManager.translate('helper'),
+            ratedName:
+                job.assignedHelperName ??
+                LocalizationManager.translate('helper'),
             jobPostingId: job.id,
-            title: 'Rate ${job.assignedHelperName}',
+            title:
+                '${LocalizationManager.translate('rate')} ${job.assignedHelperName}',
           ),
         ),
       );
@@ -142,10 +157,7 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             color: Colors.white,
-            border: Border.all(
-              color: const Color(0xFFE5E7EB),
-              width: 1,
-            ),
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,7 +176,10 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -193,10 +208,7 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                 ),
                 child: Row(
                   children: [
@@ -218,15 +230,16 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Working with:',
+                          Text(
+                            '${LocalizationManager.translate('working_with')}:',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF6B7280),
                             ),
                           ),
                           Text(
-                            job.assignedHelperName ?? 'Helper',
+                            job.assignedHelperName ??
+                                LocalizationManager.translate('helper'),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -249,8 +262,8 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Salary:',
+                        Text(
+                          '${LocalizationManager.translate('salary')}:',
                           style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF6B7280),
@@ -271,8 +284,8 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Location:',
+                        Text(
+                          '${LocalizationManager.translate('location')}:',
                           style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF6B7280),
@@ -308,12 +321,9 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                     ),
                   ),
                   icon: const Icon(Icons.check_circle_outline),
-                  label: const Text(
-                    'Mark as Completed',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  label: Text(
+                    LocalizationManager.translate('mark_as_completed'),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -345,8 +355,8 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'No Active Jobs',
+            Text(
+              LocalizationManager.translate('no_active_jobs'),
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -354,12 +364,9 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'When you accept job applications, active work will appear here.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF6B7280),
-              ),
+            Text(
+              LocalizationManager.translate('no_active_jobs_description'),
+              style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -375,8 +382,8 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Active Jobs',
+        title: Text(
+          LocalizationManager.translate('active_jobs'),
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -385,10 +392,7 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
         ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1565C0),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1565C0)),
         ),
       ),
       body: RefreshIndicator(
@@ -402,9 +406,7 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF1565C0),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF1565C0)),
       );
     }
 
@@ -415,18 +417,11 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -436,7 +431,7 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                   backgroundColor: const Color(0xFF1565C0),
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Retry'),
+                child: Text(LocalizationManager.translate('retry')),
               ),
             ],
           ),
