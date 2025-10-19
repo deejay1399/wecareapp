@@ -6,6 +6,7 @@ import '../../widgets/ui/profile_picture_widget.dart';
 import '../role_selection_screen.dart';
 import 'edit_employer_profile_screen.dart';
 import 'employer_subscription_screen.dart';
+import '../../localization_manager.dart';
 
 class EmployerProfileScreen extends StatefulWidget {
   const EmployerProfileScreen({super.key});
@@ -89,12 +90,14 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(LocalizationManager.translate('logout')),
+        content: Text(
+          LocalizationManager.translate('are_you_sure_you_want_to_logout'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(LocalizationManager.translate('cancel')),
           ),
           TextButton(
             onPressed: () async {
@@ -107,7 +110,10 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                 (route) => false,
               );
             },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+            child: Text(
+              LocalizationManager.translate('logout'),
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -134,9 +140,9 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text(
-                'Unable to load profile',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+              Text(
+                LocalizationManager.translate('unable_to_load_profile'),
+                style: const TextStyle(fontSize: 18, color: Colors.grey),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -145,7 +151,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Logout'),
+                child: Text(LocalizationManager.translate('logout')),
               ),
             ],
           ),
@@ -200,7 +206,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Employer',
+                        LocalizationManager.translate('employer'),
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.white.withValues(alpha: 0.9),
@@ -213,43 +219,61 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                 const SizedBox(height: 32),
 
                 // Profile Information
-                _buildInfoSection('Personal Information', [
-                  _buildInfoRow(
-                    'First Name',
-                    _currentEmployer!.firstName ?? '',
-                  ),
-                  _buildInfoRow('Last Name', _currentEmployer!.lastName ?? ''),
-                  _buildInfoRow(
-                    'Age',
-                    '${_currentEmployer!.age ?? 0} years old',
-                  ),
-                  _buildInfoRow('Email', _currentEmployer!.email ?? ''),
-                  _buildInfoRow('Phone', _currentEmployer!.phone ?? ''),
-                  _buildInfoRow('Barangay', _currentEmployer!.barangay ?? ''),
-                ]),
+                _buildInfoSection(
+                  LocalizationManager.translate('personal_information'),
+                  [
+                    _buildInfoRow(
+                      LocalizationManager.translate('first_name'),
+                      _currentEmployer!.firstName ?? '',
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('last_name'),
+                      _currentEmployer!.lastName ?? '',
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('age'),
+                      '${_currentEmployer!.age ?? 0} ${LocalizationManager.translate('years_old')}',
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('email'),
+                      _currentEmployer!.email ?? '',
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('phone'),
+                      _currentEmployer!.phone ?? '',
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('barangay'),
+                      _currentEmployer!.barangay ?? '',
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 24),
 
                 // Account Information
-                _buildInfoSection('Account Information', [
-                  _buildInfoRow(
-                    'Member Since',
-                    _formatDate(_currentEmployer!.createdAt),
-                  ),
-                  _buildInfoRow(
-                    'Last Updated',
-                    _formatDate(_currentEmployer!.updatedAt),
-                  ),
-                  _buildInfoRow(
-                    'Verification Status',
-                    _currentEmployer!.isVerified == true
-                        ? 'Verified'
-                        : 'Pending',
-                    valueColor: _currentEmployer!.isVerified == true
-                        ? Colors.green
-                        : Colors.orange,
-                  ),
-                ]),
+                _buildInfoSection(
+                  LocalizationManager.translate('account_information'),
+                  [
+                    _buildInfoRow(
+                      LocalizationManager.translate('member_since'),
+                      _formatDate(_currentEmployer!.createdAt),
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('last_updated'),
+                      _formatDate(_currentEmployer!.updatedAt),
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('verification_status'),
+                      _currentEmployer!.isVerified == true
+                          ? LocalizationManager.translate('verified')
+                          : LocalizationManager.translate('pending'),
+                      valueColor: _currentEmployer!.isVerified == true
+                          ? Colors.green
+                          : Colors.orange,
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 32),
 
@@ -262,9 +286,9 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _navigateToEditProfile,
                         icon: const Icon(Icons.edit),
-                        label: const Text(
-                          'Edit Profile',
-                          style: TextStyle(
+                        label: Text(
+                          LocalizationManager.translate('edit_profile'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -296,9 +320,9 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                           );
                         },
                         icon: const Icon(Icons.credit_card),
-                        label: const Text(
-                          'Manage Subscription',
-                          style: TextStyle(
+                        label: Text(
+                          LocalizationManager.translate('manage_subscription'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -319,9 +343,9 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _logout,
                         icon: const Icon(Icons.logout),
-                        label: const Text(
-                          'Logout',
-                          style: TextStyle(
+                        label: Text(
+                          LocalizationManager.translate('logout'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

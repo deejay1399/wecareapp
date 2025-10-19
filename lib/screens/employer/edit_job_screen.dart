@@ -7,6 +7,7 @@ import '../../widgets/forms/barangay_dropdown.dart';
 import '../../widgets/forms/payment_frequency_dropdown.dart';
 import '../../widgets/forms/skills_input_field.dart';
 import '../../utils/constants/barangay_constants.dart';
+import '../../localization_manager.dart';
 
 class EditJobScreen extends StatefulWidget {
   final JobPosting jobPosting;
@@ -74,43 +75,47 @@ class _EditJobScreenState extends State<EditJobScreen> {
 
       // Validate title
       if (_titleController.text.trim().isEmpty) {
-        _titleError = 'Job title is required';
+        _titleError = LocalizationManager.translate('job_title_required');
         isValid = false;
       }
 
       // Validate description
       if (_descriptionController.text.trim().isEmpty) {
-        _descriptionError = 'Job description is required';
+        _descriptionError = LocalizationManager.translate(
+          'job_description_required',
+        );
         isValid = false;
       }
 
       // Validate salary
       if (_salaryController.text.trim().isEmpty) {
-        _salaryError = 'Salary is required';
+        _salaryError = LocalizationManager.translate('salary_required');
         isValid = false;
       } else {
         final salary = double.tryParse(_salaryController.text.trim());
         if (salary == null || salary <= 0) {
-          _salaryError = 'Please enter a valid salary amount';
+          _salaryError = LocalizationManager.translate('invalid_salary');
           isValid = false;
         }
       }
 
       // Validate payment frequency
       if (_selectedPaymentFrequency == null) {
-        _paymentFrequencyError = 'Payment frequency is required';
+        _paymentFrequencyError = LocalizationManager.translate(
+          'payment_frequency_required',
+        );
         isValid = false;
       }
 
       // Validate barangay
       if (_selectedBarangay == null) {
-        _barangayError = 'Barangay selection is required';
+        _barangayError = LocalizationManager.translate('barangay_required');
         isValid = false;
       }
 
       // Validate skills
       if (_requiredSkills.isEmpty) {
-        _skillsError = 'At least one skill is required';
+        _skillsError = LocalizationManager.translate('skills_required');
         isValid = false;
       }
     });
@@ -148,8 +153,10 @@ class _EditJobScreenState extends State<EditJobScreen> {
       if (mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Job updated successfully!'),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('job_updated_successfully'),
+            ),
             backgroundColor: Color(0xFF10B981),
             duration: Duration(seconds: 3),
           ),
@@ -162,7 +169,9 @@ class _EditJobScreenState extends State<EditJobScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update job: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_update_job')}: $e',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -188,8 +197,8 @@ class _EditJobScreenState extends State<EditJobScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1565C0)),
         ),
-        title: const Text(
-          'Edit Job',
+        title: Text(
+          LocalizationManager.translate('edit_job'),
           style: TextStyle(
             color: Color(0xFF1565C0),
             fontSize: 20,
@@ -207,8 +216,8 @@ class _EditJobScreenState extends State<EditJobScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header
-                const Text(
-                  'Edit Job Details',
+                Text(
+                  LocalizationManager.translate('edit_job_details'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -216,8 +225,8 @@ class _EditJobScreenState extends State<EditJobScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Update your job information below.',
+                Text(
+                  LocalizationManager.translate('update_job_information'),
                   style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 32),
@@ -225,8 +234,8 @@ class _EditJobScreenState extends State<EditJobScreen> {
                 // Job Title
                 CustomTextField(
                   controller: _titleController,
-                  label: 'Job Title',
-                  hint: 'e.g., House Cleaner, Babysitter, Cook',
+                  label: LocalizationManager.translate('job_title'),
+                  hint: LocalizationManager.translate('job_title_hint'),
                 ),
                 if (_titleError != null) ...[
                   const SizedBox(height: 8),
@@ -241,8 +250,8 @@ class _EditJobScreenState extends State<EditJobScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Job Description',
+                    Text(
+                      LocalizationManager.translate('job_description'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -264,11 +273,12 @@ class _EditJobScreenState extends State<EditJobScreen> {
                       child: TextField(
                         controller: _descriptionController,
                         maxLines: 4,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           contentPadding: EdgeInsets.all(16),
                           border: InputBorder.none,
-                          hintText:
-                              'Describe the job responsibilities, requirements, and any specific details...',
+                          hintText: LocalizationManager.translate(
+                            'job_description_hint',
+                          ),
                           hintStyle: TextStyle(
                             color: Color(0xFF9CA3AF),
                             fontSize: 16,
@@ -298,8 +308,8 @@ class _EditJobScreenState extends State<EditJobScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Salary',
+                    Text(
+                      LocalizationManager.translate('salary'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -328,13 +338,13 @@ class _EditJobScreenState extends State<EditJobScreen> {
                             RegExp(r'^\d+\.?\d{0,2}'),
                           ),
                         ],
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 16,
                           ),
                           border: InputBorder.none,
-                          hintText: 'Enter amount (e.g., 500.00)',
+                          hintText: LocalizationManager.translate('amount'),
                           hintStyle: TextStyle(
                             color: Color(0xFF9CA3AF),
                             fontSize: 16,
@@ -383,8 +393,10 @@ class _EditJobScreenState extends State<EditJobScreen> {
                 BarangayDropdown(
                   selectedBarangay: _selectedMunicipality,
                   barangayList: LocationConstants.getSortedMunicipalities(),
-                  label: 'Select Municipality',
-                  hint: 'Select your Municipality',
+                  label: LocalizationManager.translate('select_municipality'),
+                  hint: LocalizationManager.translate(
+                    'select_your_municipality',
+                  ),
                   onChanged: (String? value) {
                     setState(() {
                       _selectedMunicipality = value;
@@ -399,8 +411,8 @@ class _EditJobScreenState extends State<EditJobScreen> {
                 BarangayDropdown(
                   selectedBarangay: _selectedBarangay,
                   barangayList: _barangayList,
-                  label: 'Select Barangay',
-                  hint: 'Select your barangay',
+                  label: LocalizationManager.translate('select_barangay'),
+                  hint: LocalizationManager.translate('select_your_barangay'),
                   onChanged: (String? value) {
                     setState(() {
                       _selectedBarangay = value;
@@ -471,8 +483,8 @@ class _EditJobScreenState extends State<EditJobScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
-                            'Update Job',
+                        : Text(
+                            LocalizationManager.translate('update_job'),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,

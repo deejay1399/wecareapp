@@ -3,6 +3,7 @@ import '../../models/helper_service_posting.dart';
 import '../../services/helper_service_posting_service.dart';
 import '../../widgets/cards/helper_service_posting_card.dart';
 import 'service_details_screen.dart';
+import '../../localization_manager.dart';
 
 class AllServicesScreen extends StatefulWidget {
   const AllServicesScreen({super.key});
@@ -38,8 +39,9 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
     });
 
     try {
-      final services = await HelperServicePostingService.getActiveServicePostings();
-      
+      final services =
+          await HelperServicePostingService.getActiveServicePostings();
+
       if (mounted) {
         setState(() {
           _allServices = services;
@@ -50,7 +52,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to load services: $e';
+          _errorMessage =
+              '${LocalizationManager.translate('failed_to_load_services')}: ${e.toString()}';
           _isLoading = false;
         });
       }
@@ -62,8 +65,10 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       _filteredServices = _allServices.where((service) {
         final searchText = _searchController.text.toLowerCase();
         return service.title.toLowerCase().contains(searchText) ||
-               service.description.toLowerCase().contains(searchText) ||
-               service.skills.any((skill) => skill.toLowerCase().contains(searchText));
+            service.description.toLowerCase().contains(searchText) ||
+            service.skills.any(
+              (skill) => skill.toLowerCase().contains(searchText),
+            );
       }).toList();
     });
   }
@@ -95,11 +100,14 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search services, skills, or keywords...',
+          hintText: LocalizationManager.translate('search_services'),
           hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
           prefixIcon: const Icon(Icons.search, color: Color(0xFF1565C0)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
                   onPressed: () {
@@ -118,9 +126,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       builder: (context, constraints) {
         return SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: constraints.maxHeight,
-            ),
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -145,8 +151,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    const Text(
-                      'No Services Available',
+                    Text(
+                      LocalizationManager.translate('no_services_available'),
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -154,10 +160,12 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
-                        'Helper services will appear here once they become available. Check back regularly for new services!',
+                        LocalizationManager.translate(
+                          'no_services_available_description',
+                        ),
                         style: TextStyle(
                           fontSize: 16,
                           color: Color(0xFF6B7280),
@@ -179,9 +187,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
   Widget _buildContent() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF1565C0),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF1565C0)),
       );
     }
 
@@ -206,8 +212,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Error Loading Services',
+              Text(
+                LocalizationManager.translate('error_loading_services'),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -217,10 +223,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -233,7 +236,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Retry'),
+                child: Text(LocalizationManager.translate('retry')),
               ),
             ],
           ),
@@ -250,32 +253,28 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
         builder: (context, constraints) {
           return SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
-              ),
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.search_off,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
+                      Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
-                      const Text(
-                        'No services match your search',
+                      Text(
+                        LocalizationManager.translate('no_services_found'),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF6B7280),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Try adjusting your search criteria',
+                      SizedBox(height: 8),
+                      Text(
+                        LocalizationManager.translate(
+                          'no_services_found_description',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           color: Color(0xFF9CA3AF),
@@ -314,8 +313,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Available Services',
+        title: Text(
+          LocalizationManager.translate('available_services'),
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -324,10 +323,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
         ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1565C0),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1565C0)),
         ),
         actions: [
           if (_allServices.isNotEmpty)
@@ -343,7 +339,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                 ),
               ),
               child: Text(
-                '${_filteredServices.length} Services',
+                '${_filteredServices.length} ${LocalizationManager.translate("services")}',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -361,9 +357,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
             _buildSearchBar(),
             const SizedBox(height: 16),
             // Content
-            Expanded(
-              child: _buildContent(),
-            ),
+            Expanded(child: _buildContent()),
           ],
         ),
       ),

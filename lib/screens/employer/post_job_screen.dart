@@ -8,6 +8,7 @@ import '../../widgets/forms/barangay_dropdown.dart';
 import '../../widgets/forms/payment_frequency_dropdown.dart';
 import '../../widgets/forms/skills_input_field.dart';
 import '../../utils/constants/barangay_constants.dart';
+import '../../localization_manager.dart';
 
 class PostJobScreen extends StatefulWidget {
   const PostJobScreen({super.key});
@@ -79,43 +80,53 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
       // Validate title
       if (_titleController.text.trim().isEmpty) {
-        _titleError = 'Job title is required';
+        _titleError = LocalizationManager.translate('job_title_is_required');
         isValid = false;
       }
 
       // Validate description
       if (_descriptionController.text.trim().isEmpty) {
-        _descriptionError = 'Job description is required';
+        _descriptionError = LocalizationManager.translate(
+          'job_description_is_required',
+        );
         isValid = false;
       }
 
       // Validate salary
       if (_salaryController.text.trim().isEmpty) {
-        _salaryError = 'Salary is required';
+        _salaryError = LocalizationManager.translate('salary_is_required');
         isValid = false;
       } else {
         final salary = double.tryParse(_salaryController.text.trim());
         if (salary == null || salary <= 0) {
-          _salaryError = 'Please enter a valid salary amount';
+          _salaryError = LocalizationManager.translate(
+            'please_enter_a_valid_salary_amount',
+          );
           isValid = false;
         }
       }
 
       // Validate payment frequency
       if (_selectedPaymentFrequency == null) {
-        _paymentFrequencyError = 'Payment frequency is required';
+        _paymentFrequencyError = LocalizationManager.translate(
+          'payment_frequency_is_required',
+        );
         isValid = false;
       }
 
       // Validate barangay
       if (_selectedBarangay == null) {
-        _barangayError = 'Barangay selection is required';
+        _barangayError = LocalizationManager.translate(
+          'barangay_selection_is_required',
+        );
         isValid = false;
       }
 
       // Validate skills
       if (_requiredSkills.isEmpty) {
-        _skillsError = 'At least one skill is required';
+        _skillsError = LocalizationManager.translate(
+          'at_least_one_skill_is_required',
+        );
         isValid = false;
       }
     });
@@ -146,10 +157,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
       if (mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Job posted successfully!'),
-            backgroundColor: Color(0xFF10B981),
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('job_posted_successfully'),
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            duration: const Duration(seconds: 3),
           ),
         );
 
@@ -160,7 +173,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to post job: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_post_job')}: $e',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -186,8 +201,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1565C0)),
         ),
-        title: const Text(
-          'Post a Job',
+        title: Text(
+          LocalizationManager.translate('post_a_job'),
           style: TextStyle(
             color: Color(0xFF1565C0),
             fontSize: 20,
@@ -205,8 +220,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header
-                const Text(
-                  'Job Details',
+                Text(
+                  LocalizationManager.translate('job_details'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -214,8 +229,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Fill in the information below to post your job.',
+                Text(
+                  LocalizationManager.translate(
+                    'fill_in_the_information_below_to_post_your_job',
+                  ),
                   style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 32),
@@ -223,8 +240,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 // Job Title
                 CustomTextField(
                   controller: _titleController,
-                  label: 'Job Title',
-                  hint: 'e.g., House Cleaner, Babysitter, Cook',
+                  label: LocalizationManager.translate('job_title'),
+                  hint: LocalizationManager.translate(
+                    'e.g., House Cleaner, Babysitter, Cook',
+                  ),
                 ),
                 if (_titleError != null) ...[
                   const SizedBox(height: 8),
@@ -239,8 +258,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Job Description',
+                    Text(
+                      LocalizationManager.translate('job_description'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -262,11 +281,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
                       child: TextField(
                         controller: _descriptionController,
                         maxLines: 4,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           contentPadding: EdgeInsets.all(16),
                           border: InputBorder.none,
-                          hintText:
-                              'Describe the job responsibilities, requirements, and any specific details...',
+                          hintText: LocalizationManager.translate(
+                            'describe_the_job_responsibilities_requirements_and_any_specific_details',
+                          ),
                           hintStyle: TextStyle(
                             color: Color(0xFF9CA3AF),
                             fontSize: 16,
@@ -296,8 +316,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Salary',
+                    Text(
+                      LocalizationManager.translate('salary'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -326,13 +346,15 @@ class _PostJobScreenState extends State<PostJobScreen> {
                             RegExp(r'^\d+\.?\d{0,2}'),
                           ),
                         ],
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 16,
                           ),
                           border: InputBorder.none,
-                          hintText: 'Enter amount (e.g., 500.00)',
+                          hintText: LocalizationManager.translate(
+                            'enter_amount_(e.g., 500.00)',
+                          ),
                           hintStyle: TextStyle(
                             color: Color(0xFF9CA3AF),
                             fontSize: 16,
@@ -377,54 +399,44 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Barangay
+                // Municipality
                 BarangayDropdown(
                   selectedBarangay: _selectedMunicipality,
                   barangayList: LocationConstants.getSortedMunicipalities(),
-                  label: 'Select Municipality',
-                  hint: 'Select your Municipality',
+                  label: LocalizationManager.translate('select_municipality'),
+                  hint: LocalizationManager.translate(
+                    'select_your_municipality',
+                  ),
                   onChanged: (String? value) {
                     setState(() {
                       _selectedMunicipality = value;
-                      // Update barangay list based on selected municipality
                       _barangayList =
                           LocationConstants.municipalityBarangays[value] ?? [];
-                      _selectedBarangay = null; // reset barangay selection
+                      _selectedBarangay = null;
                     });
                   },
                 ),
 
+                // Barangay
                 BarangayDropdown(
                   selectedBarangay: _selectedBarangay,
                   barangayList: _barangayList,
-                  label: 'Select Barangay',
-                  hint: 'Select your barangay',
+                  label: LocalizationManager.translate('select_barangay'),
+                  hint: LocalizationManager.translate('select_your_barangay'),
                   onChanged: (String? value) {
                     setState(() {
                       _selectedBarangay = value;
+                      _barangayError = null;
                     });
                   },
                 ),
-                // BarangayDropdown(
-                //   selectedBarangay: _selectedBarangay,
-                //   barangayList: LocationConstants.tagbilaranBarangays,
-                //   onChanged: (value) {
-                //     setState(() {
-                //       _selectedBarangay = value;
-                //       _barangayError = null;
-                //     });
-                //   },
-                // ),
-                // if (_barangayError != null) ...[
-                //   const SizedBox(height: 8),
-                //   Text(
-                //     _barangayError!,
-                //     style: TextStyle(
-                //       color: Colors.red.shade600,
-                //       fontSize: 14,
-                //     ),
-                //   ),
-                // ],
+                if (_barangayError != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    LocalizationManager.translate(_barangayError!),
+                    style: TextStyle(color: Colors.red.shade600, fontSize: 14),
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 // Required Skills
@@ -436,7 +448,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                       _skillsError = null;
                     });
                   },
-                  errorText: _skillsError,
+                  errorText: _skillsError != null
+                      ? LocalizationManager.translate(_skillsError!)
+                      : null,
                 ),
                 const SizedBox(height: 40),
 
@@ -467,9 +481,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
-                            'Post Job',
-                            style: TextStyle(
+                        : Text(
+                            LocalizationManager.translate('post_job_button'),
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,

@@ -6,6 +6,7 @@ import '../../services/session_service.dart';
 import '../../utils/constants/subscription_constants.dart';
 import '../../widgets/subscription/subscription_plan_card.dart';
 import '../../widgets/subscription/trial_status_card.dart';
+import '../../localization_manager.dart';
 
 class EmployerSubscriptionScreen extends StatefulWidget {
   const EmployerSubscriptionScreen({super.key});
@@ -54,7 +55,11 @@ class _EmployerSubscriptionScreenState
       // Create subscription
       final userId = await SessionService.getCurrentUserId();
       if (userId != null) {
-        await SubscriptionService.createSubscription(userId, 'Employer', plan);
+        await SubscriptionService.createSubscription(
+          userId,
+          LocalizationManager.translate('employer'),
+          plan,
+        );
 
         // Reload status
         await _loadSubscriptionStatus();
@@ -72,7 +77,9 @@ class _EmployerSubscriptionScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Subscription failed: $e'),
+            content: Text(
+              '${LocalizationManager.translate("subscription_failed")}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -89,9 +96,9 @@ class _EmployerSubscriptionScreenState
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Subscription Plans',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
+        title: Text(
+          LocalizationManager.translate('subscription_plans'),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
@@ -132,7 +139,9 @@ class _EmployerSubscriptionScreenState
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Active Subscription',
+                            LocalizationManager.translate(
+                              'active_subscription',
+                            ),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -141,7 +150,9 @@ class _EmployerSubscriptionScreenState
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'You have unlimited access to all features',
+                            LocalizationManager.translate(
+                              'you_have_unlimited_access_to_all_features',
+                            ),
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.green[700],
@@ -153,9 +164,9 @@ class _EmployerSubscriptionScreenState
                     ),
 
                   // Header
-                  const Text(
-                    'Choose Your Plan',
-                    style: TextStyle(
+                  Text(
+                    LocalizationManager.translate('choose_your_plan'),
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
@@ -163,7 +174,9 @@ class _EmployerSubscriptionScreenState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Unlock unlimited access to connect with helpers and post job opportunities',
+                    LocalizationManager.translate(
+                      'unlock_unlimited_access_to_connect_with_helpers_and_post_job_opportunities',
+                    ),
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[600],
@@ -213,20 +226,40 @@ class _EmployerSubscriptionScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'What\'s Included',
-                          style: TextStyle(
+                        Text(
+                          LocalizationManager.translate('whats_included'),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             color: Colors.black87,
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _buildFeatureItem('Unlimited job postings'),
-                        _buildFeatureItem('Connect with verified helpers'),
-                        _buildFeatureItem('View all helper applications'),
-                        _buildFeatureItem('Priority customer support'),
-                        _buildFeatureItem('Advanced search filters'),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'unlimited_job_postings',
+                          ),
+                        ),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'connect_with_verified_helpers',
+                          ),
+                        ),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'view_all_helper_applications',
+                          ),
+                        ),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'priority_customer_support',
+                          ),
+                        ),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'advanced_search_filters',
+                          ),
+                        ),
                       ],
                     ),
                   ),

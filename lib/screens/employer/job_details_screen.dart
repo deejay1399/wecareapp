@@ -8,14 +8,12 @@ import '../../utils/constants/payment_frequency_constants.dart';
 import '../../widgets/cards/application_card.dart';
 import 'edit_job_screen.dart';
 import 'application_details_screen.dart';
+import '../../localization_manager.dart';
 
 class JobDetailsScreen extends StatefulWidget {
   final JobPosting jobPosting;
 
-  const JobDetailsScreen({
-    super.key,
-    required this.jobPosting,
-  });
+  const JobDetailsScreen({super.key, required this.jobPosting});
 
   @override
   State<JobDetailsScreen> createState() => _JobDetailsScreenState();
@@ -32,7 +30,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     super.initState();
     _jobPosting = widget.jobPosting;
     _loadApplications();
-    
+
     // Refresh applications every 30 seconds when screen is visible
     _startPeriodicRefresh();
   }
@@ -53,8 +51,10 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     });
 
     try {
-      final applications = await ApplicationService.getApplicationsForJob(_jobPosting.id);
-      
+      final applications = await ApplicationService.getApplicationsForJob(
+        _jobPosting.id,
+      );
+
       if (mounted) {
         setState(() {
           _applications = applications;
@@ -82,11 +82,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       setState(() {
         _jobPosting = result;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Job updated successfully!'),
-          backgroundColor: Color(0xFF10B981),
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('job_updated_successfully'),
+          ),
+          backgroundColor: const Color(0xFF10B981),
         ),
       );
     }
@@ -98,8 +100,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     });
 
     try {
-      final updatedJob = await JobPostingService.updateJobPostingStatus(_jobPosting.id, status);
-      
+      final updatedJob = await JobPostingService.updateJobPostingStatus(
+        _jobPosting.id,
+        status,
+      );
+
       if (mounted) {
         setState(() {
           _jobPosting = updatedJob;
@@ -108,7 +113,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Job ${status == 'active' ? 'activated' : status}!'),
+            content: Text(
+              LocalizationManager.translate(
+                status == 'active'
+                    ? 'job_activated'
+                    : 'job_${status.toLowerCase()}',
+              ),
+            ),
             backgroundColor: const Color(0xFF10B981),
           ),
         );
@@ -121,7 +132,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update job status: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_update_job_status')}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -131,64 +144,45 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
   Future<void> _deleteJob() async {
     // Show confirmation dialog
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Job Posting'),
-        content: const Text('Are you sure you want to delete this job posting? This action cannot be undone and all applications will be lost.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+    final shouldDelete =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(LocalizationManager.translate('delete_job_posting')),
+            content: Text(
+              LocalizationManager.translate(
+                'are_you_sure_you_want_to_delete_this_job_posting',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(LocalizationManager.translate('cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: Text(LocalizationManager.translate('delete')),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (!shouldDelete) return;
 
     try {
       await JobPostingService.deleteJobPosting(_jobPosting.id);
-      
+
       if (mounted) {
         // Navigate back with deletion flag first
         Navigator.pop(context, 'deleted');
         // Show success message using the parent context
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Job posting deleted successfully'),
-            backgroundColor: Color(0xFF10B981),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to delete job posting: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _onApplicationStatusChange(String applicationId, String newStatus) async {
-    try {
-      await ApplicationService.updateApplicationStatus(applicationId, newStatus);
-      
-      // Refresh applications list
-      _loadApplications();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Application $newStatus successfully'),
+            content: Text(
+              LocalizationManager.translate('job_posting_deleted_successfully'),
+            ),
             backgroundColor: const Color(0xFF10B981),
           ),
         );
@@ -197,7 +191,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update application: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_delete_job_posting')}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -205,7 +201,42 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     }
   }
 
+  Future<void> _onApplicationStatusChange(
+    String applicationId,
+    String newStatus,
+  ) async {
+    try {
+      await ApplicationService.updateApplicationStatus(
+        applicationId,
+        newStatus,
+      );
 
+      // Refresh applications list
+      _loadApplications();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${LocalizationManager.translate('application')} $newStatus ${LocalizationManager.translate('successfully')}',
+            ),
+            backgroundColor: const Color(0xFF10B981),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${LocalizationManager.translate('failed_to_update_application')}: $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   Color _getStatusColor() {
     switch (_jobPosting.status) {
@@ -223,13 +254,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   String _getStatusDisplayText() {
     switch (_jobPosting.status) {
       case 'active':
-        return 'Active';
+        return LocalizationManager.translate('active');
       case 'paused':
-        return 'Paused';
+        return LocalizationManager.translate('paused');
       case 'closed':
-        return 'Closed';
+        return LocalizationManager.translate('closed');
       default:
-        return 'Unknown';
+        return LocalizationManager.translate('unknown');
     }
   }
 
@@ -239,10 +270,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +289,10 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: _getStatusColor().withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -295,10 +326,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               const SizedBox(width: 6),
               Text(
                 _jobPosting.barangay,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
               const Spacer(),
               Text(
@@ -311,11 +339,10 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               ),
               const SizedBox(width: 4),
               Text(
-                PaymentFrequencyConstants.frequencyLabels[_jobPosting.paymentFrequency] ?? _jobPosting.paymentFrequency,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                PaymentFrequencyConstants.frequencyLabels[_jobPosting
+                        .paymentFrequency] ??
+                    _jobPosting.paymentFrequency,
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -323,14 +350,15 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           const SizedBox(height: 16),
 
           // Description
-          const Text(
-            'Job Description',
-            style: TextStyle(
+          Text(
+            LocalizationManager.translate('job_description'),
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Color(0xFF374151),
             ),
           ),
+
           const SizedBox(height: 8),
           Text(
             _jobPosting.description,
@@ -344,21 +372,25 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           const SizedBox(height: 16),
 
           // Required skills
-          const Text(
-            'Required Skills',
-            style: TextStyle(
+          Text(
+            LocalizationManager.translate('required_skills'),
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Color(0xFF374151),
             ),
           ),
+
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: _jobPosting.requiredSkills.map((skill) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1565C0).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -383,11 +415,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
           // Posted date
           Text(
-            'Posted ${_formatDate(_jobPosting.createdAt)}',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[500],
-            ),
+            '${LocalizationManager.translate('posted')} ${_formatDate(_jobPosting.createdAt)}',
+            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -403,7 +432,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           child: ElevatedButton.icon(
             onPressed: _editJob,
             icon: const Icon(Icons.edit, size: 18),
-            label: const Text('Edit Job'),
+            label: Text(LocalizationManager.translate('edit_job')),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1565C0),
               foregroundColor: Colors.white,
@@ -414,9 +443,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
             ),
           ),
         ),
-        
+
         const SizedBox(width: 12),
-        
+
         // Status button
         Expanded(
           child: PopupMenuButton<String>(
@@ -443,50 +472,54 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                         color: Color(0xFF1565C0),
                       ),
                     )
-                  : Icon(
-                      Icons.more_vert,
-                      color: const Color(0xFF1565C0),
-                    ),
+                  : const Icon(Icons.more_vert, color: Color(0xFF1565C0)),
             ),
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'active',
                 child: Row(
                   children: [
-                    Icon(Icons.play_arrow, color: Color(0xFF10B981), size: 18),
-                    SizedBox(width: 8),
-                    Text('Activate'),
+                    const Icon(
+                      Icons.play_arrow,
+                      color: Color(0xFF10B981),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(LocalizationManager.translate('activate')),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'paused',
                 child: Row(
                   children: [
-                    Icon(Icons.pause, color: Color(0xFFFF9800), size: 18),
-                    SizedBox(width: 8),
-                    Text('Pause'),
+                    const Icon(Icons.pause, color: Color(0xFFFF9800), size: 18),
+                    const SizedBox(width: 8),
+                    Text(LocalizationManager.translate('pause')),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'closed',
                 child: Row(
                   children: [
-                    Icon(Icons.stop, color: Color(0xFFF44336), size: 18),
-                    SizedBox(width: 8),
-                    Text('Close'),
+                    const Icon(Icons.stop, color: Color(0xFFF44336), size: 18),
+                    const SizedBox(width: 8),
+                    Text(LocalizationManager.translate('close')),
                   ],
                 ),
               ),
               const PopupMenuDivider(),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: [
-                    Icon(Icons.delete, color: Colors.red, size: 18),
-                    SizedBox(width: 8),
-                    Text('Delete', style: TextStyle(color: Colors.red)),
+                    const Icon(Icons.delete, color: Colors.red, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      LocalizationManager.translate('delete'),
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -503,9 +536,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       children: [
         Row(
           children: [
-            const Text(
-              'Applications',
-              style: TextStyle(
+            Text(
+              LocalizationManager.translate('applications'),
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF1F2937),
@@ -519,7 +552,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                '${_applications.length} Applications',
+                '${_applications.length} ${LocalizationManager.translate('applications')}',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -530,12 +563,10 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        
+
         if (_isLoadingApplications)
           const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF1565C0),
-            ),
+            child: CircularProgressIndicator(color: Color(0xFF1565C0)),
           )
         else if (_applications.isEmpty)
           Container(
@@ -543,10 +574,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Column(
               children: [
@@ -564,18 +592,18 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'No Applications Yet',
-                  style: TextStyle(
+                Text(
+                  LocalizationManager.translate('no_applications_yet'),
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1F2937),
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'When helpers apply to your job, their applications will appear here.',
-                  style: TextStyle(
+                Text(
+                  LocalizationManager.translate('no_applications_description'),
+                  style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
                   ),
@@ -590,20 +618,19 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               return ApplicationCard(
                 application: application,
                 onTap: () async {
-                  // Navigate to application details screen
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ApplicationDetailsScreen(application: application),
+                      builder: (context) =>
+                          ApplicationDetailsScreen(application: application),
                     ),
                   );
-                  
-                  // If application was updated, refresh the list
                   if (result != null) {
                     _loadApplications();
                   }
                 },
-                onStatusChange: (status) => _onApplicationStatusChange(application.id, status),
+                onStatusChange: (status) =>
+                    _onApplicationStatusChange(application.id, status),
               );
             }).toList(),
           ),
@@ -614,12 +641,22 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date).inDays;
-    
-    if (difference == 0) return 'today';
-    if (difference == 1) return 'yesterday';
-    if (difference < 7) return '$difference days ago';
-    if (difference < 30) return '${(difference / 7).floor()} weeks ago';
-    return '${(difference / 30).floor()} months ago';
+
+    if (difference == 0) return LocalizationManager.translate('today');
+    if (difference == 1) return LocalizationManager.translate('yesterday');
+    if (difference < 7) {
+      return LocalizationManager.translate(
+        'days_ago',
+      ).replaceAll('{days}', difference.toString());
+    }
+    if (difference < 30) {
+      return LocalizationManager.translate(
+        'weeks_ago',
+      ).replaceAll('{weeks}', (difference ~/ 7).toString());
+    }
+    return LocalizationManager.translate(
+      'months_ago',
+    ).replaceAll('{months}', (difference ~/ 30).toString());
   }
 
   @override
@@ -631,14 +668,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1565C0),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1565C0)),
         ),
-        title: const Text(
-          'Job Details',
-          style: TextStyle(
+        title: Text(
+          LocalizationManager.translate('job_details'),
+          style: const TextStyle(
             color: Color(0xFF1565C0),
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -652,17 +686,10 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Job information
               _buildJobInfo(),
-              
               const SizedBox(height: 24),
-              
-              // Action buttons
               _buildActionButtons(),
-              
               const SizedBox(height: 32),
-              
-              // Applications section
               _buildApplicationsSection(),
             ],
           ),

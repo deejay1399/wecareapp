@@ -25,4 +25,14 @@ class LocalizationManager {
         return 'en';
     }
   }
+
+  static String translateWithArgs(String key, Map<String, String> args) {
+    String text = translate(key);
+
+    args.forEach((placeholder, value) {
+      text = text.replaceAll('{{$placeholder}}', value);
+    });
+
+    return text;
+  }
 }

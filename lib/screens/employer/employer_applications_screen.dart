@@ -7,6 +7,7 @@ import '../../services/session_service.dart';
 import '../../services/database_messaging_service.dart';
 import '../../widgets/cards/application_card.dart';
 import 'application_details_screen.dart';
+import '../../localization_manager.dart';
 
 class EmployerApplicationsScreen extends StatefulWidget {
   const EmployerApplicationsScreen({super.key});
@@ -40,13 +41,16 @@ class _EmployerApplicationsScreenState
         await _loadApplications();
       } else {
         setState(() {
-          _errorMessage = 'Failed to load employer information';
+          _errorMessage = LocalizationManager.translate(
+            'Failed_to_load_employer_information',
+          );
           _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to load employer information: $e';
+        _errorMessage =
+            '${LocalizationManager.translate('Failed_to_load_employer_information')}: $e';
         _isLoading = false;
       });
     }
@@ -91,7 +95,8 @@ class _EmployerApplicationsScreenState
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to load applications: $e';
+          _errorMessage =
+              '${LocalizationManager.translate('Failed_to_load_applications')}: $e';
           _isLoading = false;
         });
       }
@@ -136,17 +141,26 @@ class _EmployerApplicationsScreenState
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Accept Application'),
+              title: Text(LocalizationManager.translate('Accept_Application')),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Accept ${application.helperName}\'s application for "${application.jobTitle}"?',
+                    LocalizationManager.translateWithArgs(
+                      'accept_application_for_job',
+                      {
+                        'helperName': application.helperName,
+                        'jobTitle': application.jobTitle,
+                      },
+                    ),
                   ),
+
                   const SizedBox(height: 16),
-                  const Text(
-                    'Send a message to the helper:',
+                  Text(
+                    LocalizationManager.translate(
+                      'Send_a_message_to_the_helper:',
+                    ),
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
@@ -154,8 +168,9 @@ class _EmployerApplicationsScreenState
                     controller: messageController,
                     maxLines: 3,
                     decoration: InputDecoration(
-                      hintText:
-                          'Congratulations! Your application has been accepted. Please contact me at...',
+                      hintText: LocalizationManager.translate(
+                        'Congratulations!_Your_application_has_been_accepted. Please_contact_me_at...',
+                      ),
                       border: const OutlineInputBorder(),
                       errorText: messageError,
                     ),
@@ -172,13 +187,15 @@ class _EmployerApplicationsScreenState
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
+                  child: Text(LocalizationManager.translate('Cancel')),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     if (messageController.text.trim().isEmpty) {
                       setState(() {
-                        messageError = 'Please enter a message for the helper';
+                        messageError = LocalizationManager.translate(
+                          'Please_enter_a_message_for_the_helper',
+                        );
                       });
                       return;
                     }
@@ -188,7 +205,7 @@ class _EmployerApplicationsScreenState
                     backgroundColor: const Color(0xFF4CAF50),
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Accept & Send'),
+                  child: Text(LocalizationManager.translate('accept_&_send')),
                 ),
               ],
             );
@@ -200,7 +217,7 @@ class _EmployerApplicationsScreenState
     if (result == true && messageController.text.trim().isNotEmpty) {
       await _updateApplicationStatus(
         application,
-        'accepted',
+        LocalizationManager.translate('accepted'),
         messageController.text.trim(),
       );
     }
@@ -242,7 +259,9 @@ class _EmployerApplicationsScreenState
             );
           } catch (e) {
             // Log messaging error but don't fail the acceptance
-            debugPrint('Failed to send acceptance message: $e');
+            debugPrint(
+              '${LocalizationManager.translate('failed_to_send_acceptance_message')}: $e',
+            );
           }
         }
       }
@@ -255,8 +274,10 @@ class _EmployerApplicationsScreenState
           SnackBar(
             content: Text(
               status == 'accepted'
-                  ? 'Application accepted and message sent to helper!'
-                  : 'Application ${status}ed successfully',
+                  ? LocalizationManager.translate(
+                      'application_accepted_and_message_sent_to_helper',
+                    )
+                  : '${LocalizationManager.translate('application')} ${status}${LocalizationManager.translate('ed_successfully')}',
             ),
             backgroundColor: status == 'accepted'
                 ? const Color(0xFF4CAF50)
@@ -268,7 +289,9 @@ class _EmployerApplicationsScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update application: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_update_application')}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -370,8 +393,8 @@ class _EmployerApplicationsScreenState
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
-              'No Applications Yets',
+            Text(
+              LocalizationManager.translate('no_applications_yet'),
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -379,11 +402,13 @@ class _EmployerApplicationsScreenState
               ),
             ),
             const SizedBox(height: 16),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Once you post jobs, helper applications will appear here for you to review and manage.',
-                style: TextStyle(
+                LocalizationManager.translate(
+                  'once_you_post_jobs_helper_applications_will_appear_here_for_you_to_review_and_manage',
+                ),
+                style: const TextStyle(
                   fontSize: 16,
                   color: Color(0xFF6B7280),
                   height: 1.5,
@@ -391,23 +416,30 @@ class _EmployerApplicationsScreenState
                 textAlign: TextAlign.center,
               ),
             ),
+
             const SizedBox(height: 32),
             // Benefits list
             Column(
               children: [
                 _buildBenefitItem(
                   Icons.person_search,
-                  'Review helper profiles and ratings',
+                  LocalizationManager.translate(
+                    'review_helper_profiles_and_ratings',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 _buildBenefitItem(
                   Icons.chat_bubble_outline,
-                  'Read Applicant\'s message and experience',
+                  LocalizationManager.translate(
+                    'read_applicants_message_and_experience',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 _buildBenefitItem(
                   Icons.thumb_up_outlined,
-                  'Accept or reject applications easily',
+                  LocalizationManager.translate(
+                    'accept_or_reject_applications_easily',
+                  ),
                 ),
               ],
             ),
@@ -463,8 +495,8 @@ class _EmployerApplicationsScreenState
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Error Loading Applications',
+              Text(
+                LocalizationManager.translate('error_loading_applications'),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -487,7 +519,7 @@ class _EmployerApplicationsScreenState
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Retry'),
+                child: Text(LocalizationManager.translate('retry')),
               ),
             ],
           ),
@@ -507,7 +539,7 @@ class _EmployerApplicationsScreenState
             Icon(Icons.filter_list_off, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              'No $_selectedFilter applications',
+              '${LocalizationManager.translate('no')} $_selectedFilter ${LocalizationManager.translate('applications')}',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -551,9 +583,9 @@ class _EmployerApplicationsScreenState
               padding: const EdgeInsets.all(24),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Applications',
+                      LocalizationManager.translate('applications'),
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -576,7 +608,7 @@ class _EmployerApplicationsScreenState
                         ),
                       ),
                       child: Text(
-                        '${_applications.length} Total',
+                        '${_applications.length} ${LocalizationManager.translate('total')}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -596,13 +628,29 @@ class _EmployerApplicationsScreenState
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _buildFilterChip('all', 'All', _applications.length),
+                    _buildFilterChip(
+                      'all',
+                      LocalizationManager.translate('all'),
+                      _applications.length,
+                    ),
                     const SizedBox(width: 12),
-                    _buildFilterChip('pending', 'Pending', _pendingCount),
+                    _buildFilterChip(
+                      'pending',
+                      LocalizationManager.translate('pending'),
+                      _pendingCount,
+                    ),
                     const SizedBox(width: 12),
-                    _buildFilterChip('accepted', 'Accepted', _acceptedCount),
+                    _buildFilterChip(
+                      'accepted',
+                      LocalizationManager.translate('accepted'),
+                      _acceptedCount,
+                    ),
                     const SizedBox(width: 12),
-                    _buildFilterChip('rejected', 'Rejected', _rejectedCount),
+                    _buildFilterChip(
+                      'rejected',
+                      LocalizationManager.translate('rejected'),
+                      _rejectedCount,
+                    ),
                   ],
                 ),
               ),

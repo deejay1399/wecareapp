@@ -6,6 +6,7 @@ import '../../services/session_service.dart';
 import '../../widgets/cards/job_posting_card.dart';
 import 'post_job_screen.dart';
 import 'job_details_screen.dart';
+import "../../localization_manager.dart";
 
 class EmployerMyJobsScreen extends StatefulWidget {
   const EmployerMyJobsScreen({super.key});
@@ -74,14 +75,17 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
         }
       } else {
         setState(() {
-          _errorMessage = 'Unable to load employer information';
+          _errorMessage = LocalizationManager.translate(
+            'failed_to_load_employer_information',
+          );
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to load job postings: $e';
+          _errorMessage =
+              '${LocalizationManager.translate('failed_to_load_job_postings')}: $e';
           _isLoading = false;
         });
       }
@@ -113,9 +117,11 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
       // Job was deleted, refresh the list
       _loadJobPostings();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Job posting deleted successfully'),
-          backgroundColor: Color(0xFF10B981),
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('job_posting_deleted_successfully'),
+          ),
+          backgroundColor: const Color(0xFF10B981),
         ),
       );
     } else if (result != null) {
@@ -150,20 +156,22 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
-              'No Job Postings Yet',
-              style: TextStyle(
+            Text(
+              LocalizationManager.translate('no_job_postings_yet'),
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF1F2937),
               ),
             ),
             const SizedBox(height: 16),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Start finding the perfect helpers by posting your first job. It only takes a few minutes!',
-                style: TextStyle(
+                LocalizationManager.translate(
+                  'start_finding_the_perfect_helpers_by_posting_your_first_job',
+                ),
+                style: const TextStyle(
                   fontSize: 16,
                   color: Color(0xFF6B7280),
                   height: 1.5,
@@ -204,9 +212,9 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Text(
-                      'Post Your First Job',
-                      style: TextStyle(
+                    Text(
+                      LocalizationManager.translate('post_your_first_job'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
@@ -222,14 +230,19 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
               children: [
                 _buildBenefitItem(
                   Icons.search,
-                  'Find qualified helpers quickly',
+                  LocalizationManager.translate(
+                    'find_qualified_helpers_quickly',
+                  ),
                 ),
                 const SizedBox(height: 12),
-                _buildBenefitItem(Icons.schedule, 'Set your own schedule'),
+                _buildBenefitItem(
+                  Icons.schedule,
+                  LocalizationManager.translate('set_your_own_schedule'),
+                ),
                 const SizedBox(height: 12),
                 _buildBenefitItem(
                   Icons.verified_user,
-                  'All helpers are verified',
+                  LocalizationManager.translate('all_helpers_are_verified'),
                 ),
               ],
             ),
@@ -285,9 +298,9 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Error Loading Jobs',
-                style: TextStyle(
+              Text(
+                LocalizationManager.translate('error_loading_jobs'),
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1F2937),
@@ -309,7 +322,7 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Retry'),
+                child: Text(LocalizationManager.translate('retry')),
               ),
             ],
           ),
@@ -349,10 +362,10 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
               padding: const EdgeInsets.all(24),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'My Jobs',
-                      style: TextStyle(
+                      LocalizationManager.translate('my_jobs'),
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1565C0),
@@ -376,7 +389,7 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
                           color: Color(0xFF1565C0),
                           size: 24,
                         ),
-                        tooltip: 'Post New Job',
+                        tooltip: LocalizationManager.translate('post_new_job'),
                       ),
                     ),
                 ],

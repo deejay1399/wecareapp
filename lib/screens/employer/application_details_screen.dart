@@ -5,6 +5,7 @@ import '../../services/application_service.dart';
 import '../../services/database_messaging_service.dart';
 import '../../services/session_service.dart';
 import '../messaging/chat_screen.dart';
+import '../../localization_manager.dart';
 
 class ApplicationDetailsScreen extends StatefulWidget {
   final Application application;
@@ -37,8 +38,9 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
   }
 
   void _setDefaultMessage() {
-    _messageController.text =
-        "Congratulations! Your application has been accepted. I'd like to discuss the job details with you. When would be a good time to start?";
+    _messageController.text = LocalizationManager.translate(
+      'default_accept_message',
+    );
   }
 
   Future<void> _loadHelperDetails() async {
@@ -68,9 +70,9 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       final message = _messageController.text.trim();
       if (message.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Please enter a message before accepting the application',
+              LocalizationManager.translate('please_enter_message'),
             ),
             backgroundColor: Colors.red,
           ),
@@ -114,7 +116,9 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Application $status successfully'),
+            content: Text(
+              '${LocalizationManager.translate("application")} $status ${LocalizationManager.translate("successfully")}',
+            ),
             backgroundColor: const Color(0xFF10B981),
           ),
         );
@@ -130,7 +134,9 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update application: $e'),
+            content: Text(
+              '${LocalizationManager.translate("failed_to_update_application")}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -202,7 +208,9 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to start chat: $e'),
+            content: Text(
+              '${LocalizationManager.translate("failed_to_start_chat")}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -250,7 +258,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Applied ${_application.formatAppliedDate()}',
+                      '${LocalizationManager.translate("applied")} ${_application.formatAppliedDate()}',
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6B7280),
@@ -313,8 +321,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Helper Information',
+          Text(
+            LocalizationManager.translate('helper_information'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -361,7 +369,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Available for hire',
+                      LocalizationManager.translate('available_for_hire'),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.green[600],
@@ -378,20 +386,29 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
 
           // Contact Information
           if (_application.helperEmail != null) ...[
-            _buildInfoRow('Email', _application.helperEmail!),
+            _buildInfoRow(
+              LocalizationManager.translate('email'),
+              _application.helperEmail!,
+            ),
             const SizedBox(height: 12),
           ],
           if (_application.helperPhone != null) ...[
-            _buildInfoRow('Phone', _application.helperPhone!),
+            _buildInfoRow(
+              LocalizationManager.translate('phone'),
+              _application.helperPhone!,
+            ),
             const SizedBox(height: 12),
           ],
-          _buildInfoRow('Experience', _application.helperExperience),
+          _buildInfoRow(
+            LocalizationManager.translate('experience'),
+            _application.helperExperience,
+          ),
 
           const SizedBox(height: 20),
 
           // Skills
-          const Text(
-            'Skills',
+          Text(
+            LocalizationManager.translate('skills'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -468,8 +485,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Applicant\'s message',
+          Text(
+            LocalizationManager.translate('applicant_message'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -488,7 +505,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
             child: Text(
               _application.coverLetter.isNotEmpty
                   ? _application.coverLetter
-                  : 'No Applicant\'s message provided',
+                  : LocalizationManager.translate('no_applicant_message'),
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF374151),
@@ -522,8 +539,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Acceptance Message',
+              Text(
+                LocalizationManager.translate('acceptance_message'),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -533,8 +550,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Write a message that will be sent to the helper when you accept their application:',
+          Text(
+            LocalizationManager.translate('write_acceptance_message'),
             style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 16),
@@ -542,7 +559,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
             controller: _messageController,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: 'Enter your message here...',
+              hintText: LocalizationManager.translate('enter_message_here'),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -568,8 +585,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                   size: 16,
                   color: Color(0xFF6B7280),
                 ),
-                label: const Text(
-                  'Use Default Message',
+                label: Text(
+                  LocalizationManager.translate('use_default_message'),
                   style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
               ),
@@ -595,8 +612,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
           child: ElevatedButton.icon(
             onPressed: _startChat,
             icon: const Icon(Icons.chat_bubble_outline, size: 20),
-            label: const Text(
-              'Message Helper',
+            label: Text(
+              LocalizationManager.translate('message_helper'),
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
@@ -636,7 +653,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                 ),
               ),
               child: _isUpdatingStatus
-                  ? const Row(
+                  ? Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(
@@ -651,7 +668,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                         ),
                         SizedBox(width: 12),
                         Text(
-                          'Processing...',
+                          LocalizationManager.translate('processing'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -659,8 +676,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                         ),
                       ],
                     )
-                  : const Text(
-                      'Accept Application',
+                  : Text(
+                      LocalizationManager.translate('accept_application'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -686,8 +703,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Reject Application',
+              child: Text(
+                LocalizationManager.translate('reject_application'),
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -708,8 +725,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1565C0)),
         ),
-        title: const Text(
-          'Application Details',
+        title: Text(
+          LocalizationManager.translate('application_details'),
           style: TextStyle(
             color: Color(0xFF1565C0),
             fontSize: 20,

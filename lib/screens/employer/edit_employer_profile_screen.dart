@@ -9,6 +9,7 @@ import '../../widgets/forms/profile_picture_upload_field.dart';
 import '../../services/file_picker_service.dart';
 import '../../utils/constants/barangay_constants.dart';
 import '../../utils/validators/form_validators.dart';
+import '../../localization_manager.dart';
 
 class EditEmployerProfileScreen extends StatefulWidget {
   final Employer employer;
@@ -84,7 +85,9 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error picking image: $e'),
+          content: Text(
+            '${LocalizationManager.translate("error_picking_image")}: ${e.toString()}',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -96,8 +99,8 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
 
     if (!_hasChanges) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No changes to save'),
+        SnackBar(
+          content: Text(LocalizationManager.translate("no_changes_to_save")),
           backgroundColor: Colors.orange,
         ),
       );
@@ -140,7 +143,7 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message']),
+            content: Text(result[LocalizationManager.translate('message')]),
             backgroundColor: Colors.green,
           ),
         );
@@ -150,11 +153,13 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
           true,
         ); // Return true to indicate changes were saved
       } else {
-        _showErrorMessage(result['message']);
+        _showErrorMessage(result[LocalizationManager.translate('message')]);
       }
     } catch (e) {
       if (!mounted) return;
-      _showErrorMessage('Update failed: $e');
+      _showErrorMessage(
+        '${LocalizationManager.translate('update_failed')}: $e',
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -189,8 +194,8 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
             ),
           ),
         ),
-        title: const Text(
-          'Edit Profile',
+        title: Text(
+          LocalizationManager.translate('edit_profile'),
           style: TextStyle(
             color: Color(0xFF1565C0),
             fontSize: 20,
@@ -204,8 +209,8 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
               margin: const EdgeInsets.only(right: 16),
               child: TextButton(
                 onPressed: _isLoading ? null : _saveProfile,
-                child: const Text(
-                  'Save',
+                child: Text(
+                  LocalizationManager.translate('save'),
                   style: TextStyle(
                     color: Color(0xFF1565C0),
                     fontSize: 16,
@@ -257,7 +262,7 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Employer Profile',
+                      LocalizationManager.translate('employer_profile'),
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
@@ -267,7 +272,9 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
               const SizedBox(height: 32),
 
               // Profile Picture Section
-              _buildSectionHeader('Profile Picture'),
+              _buildSectionHeader(
+                LocalizationManager.translate('profile_picture'),
+              ),
               const SizedBox(height: 16),
 
               ProfilePictureUploadField(
@@ -284,21 +291,23 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
               const SizedBox(height: 24),
 
               // Personal Information Section
-              _buildSectionHeader('Personal Information'),
+              _buildSectionHeader(
+                LocalizationManager.translate('personal_information'),
+              ),
               const SizedBox(height: 16),
 
               CustomTextField(
                 controller: _firstNameController,
-                label: 'First Name',
-                hint: 'Enter your first name',
+                label: LocalizationManager.translate('first_name'),
+                hint: LocalizationManager.translate('enter_your_first_name'),
                 validator: (value) =>
                     FormValidators.validateRequired(value, 'first name'),
               ),
 
               CustomTextField(
                 controller: _lastNameController,
-                label: 'Last Name',
-                hint: 'Enter your last name',
+                label: LocalizationManager.translate('last_name'),
+                hint: LocalizationManager.translate('enter_your_last_name'),
                 validator: (value) =>
                     FormValidators.validateRequired(value, 'last name'),
               ),
@@ -306,16 +315,24 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
               const SizedBox(height: 24),
 
               // Contact Information Section
-              _buildSectionHeader('Contact Information'),
+              _buildSectionHeader(
+                LocalizationManager.translate('contact_information'),
+              ),
               const SizedBox(height: 16),
 
-              _buildReadOnlyField('Email', widget.employer.email ?? ''),
-              _buildReadOnlyField('Phone', widget.employer.phone ?? ''),
+              _buildReadOnlyField(
+                LocalizationManager.translate('email'),
+                widget.employer.email ?? '',
+              ),
+              _buildReadOnlyField(
+                LocalizationManager.translate('phone'),
+                widget.employer.phone ?? '',
+              ),
 
               const SizedBox(height: 24),
 
               // Location Section
-              _buildSectionHeader('Location'),
+              _buildSectionHeader(LocalizationManager.translate('location')),
               const SizedBox(height: 16),
 
               BarangayDropdown(
@@ -325,8 +342,8 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
                     ? _selectedMunicipality
                     : null,
                 barangayList: LocationConstants.getSortedMunicipalities(),
-                label: 'Select Municipality',
-                hint: 'Select your Municipality',
+                label: LocalizationManager.translate('select_municipality'),
+                hint: LocalizationManager.translate('select_your_municipality'),
                 onChanged: (String? value) {
                   setState(() {
                     _selectedMunicipality = value;
@@ -345,8 +362,8 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
                     ? _selectedBarangay
                     : null,
                 barangayList: _barangayList,
-                label: 'Select Barangay',
-                hint: 'Select your barangay',
+                label: LocalizationManager.translate('select_barangay'),
+                hint: LocalizationManager.translate('select_your_barangay'),
                 onChanged: (String? value) {
                   setState(() {
                     // Only allow values that exist in _barangayList
@@ -372,18 +389,22 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
               const SizedBox(height: 24),
 
               // Documents Section
-              _buildSectionHeader('Documents'),
+              _buildSectionHeader(LocalizationManager.translate('documents')),
               const SizedBox(height: 16),
 
               FileUploadField(
-                label: 'Barangay Clearance Image',
+                label: LocalizationManager.translate(
+                  'barangay_clearance_image',
+                ),
                 fileName:
                     _barangayClearanceFileName ??
                     (widget.employer.barangayClearanceBase64 != null
                         ? 'Current document'
                         : null),
                 onTap: _pickBarangayClearance,
-                placeholder: 'Upload Barangay Clearance Image (JPG, PNG)',
+                placeholder: LocalizationManager.translate(
+                  'upload_barangay_clearance_image',
+                ),
               ),
 
               const SizedBox(height: 32),
@@ -415,7 +436,9 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
                           ),
                         )
                       : Text(
-                          _hasChanges ? 'Save Changes' : 'No Changes',
+                          _hasChanges
+                              ? LocalizationManager.translate('save_changes')
+                              : LocalizationManager.translate('no_changes'),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
