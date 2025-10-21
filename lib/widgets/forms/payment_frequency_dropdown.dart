@@ -9,19 +9,21 @@ class PaymentFrequencyDropdown extends StatelessWidget {
 
   const PaymentFrequencyDropdown({
     super.key,
-    this.value,
+    required this.value,
     required this.onChanged,
     this.errorText,
   });
 
   @override
   Widget build(BuildContext context) {
+    final frequencies = PaymentFrequencyConstants.frequencyLabels;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           LocalizationManager.translate('payment_frequency'),
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             color: Color(0xFF374151),
@@ -40,10 +42,12 @@ class PaymentFrequencyDropdown extends StatelessWidget {
             color: Colors.white,
           ),
           child: DropdownButtonFormField<String>(
-            initialValue: value,
+            value: frequencies.containsKey(value)
+                ? value
+                : null, // ✅ Safe value
             onChanged: onChanged,
             decoration: InputDecoration(
-              contentPadding: EdgeInsets.symmetric(
+              contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 16,
               ),
@@ -51,7 +55,10 @@ class PaymentFrequencyDropdown extends StatelessWidget {
               hintText: LocalizationManager.translate(
                 'select_payment_frequency',
               ),
-              hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 16),
+              hintStyle: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 16,
+              ),
             ),
             style: const TextStyle(color: Color(0xFF374151), fontSize: 16),
             dropdownColor: Colors.white,
@@ -59,12 +66,11 @@ class PaymentFrequencyDropdown extends StatelessWidget {
               Icons.keyboard_arrow_down,
               color: Color(0xFF6B7280),
             ),
-            items: PaymentFrequencyConstants.frequencies.map((frequency) {
+            items: frequencies.entries.map((entry) {
               return DropdownMenuItem<String>(
-                value: frequency,
+                value: entry.key, // ✅ raw value (per_day, per_week, etc.)
                 child: Text(
-                  PaymentFrequencyConstants.frequencyLabels[frequency] ??
-                      frequency,
+                  entry.value, // ✅ translated label
                   style: const TextStyle(
                     color: Color(0xFF374151),
                     fontSize: 16,

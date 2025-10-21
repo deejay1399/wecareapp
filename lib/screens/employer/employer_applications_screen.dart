@@ -277,7 +277,7 @@ class _EmployerApplicationsScreenState
                   ? LocalizationManager.translate(
                       'application_accepted_and_message_sent_to_helper',
                     )
-                  : '${LocalizationManager.translate('application')} ${status}${LocalizationManager.translate('ed_successfully')}',
+                  : '${LocalizationManager.translate('application')} ${status} ${LocalizationManager.translate('ed_successfully')}',
             ),
             backgroundColor: status == 'accepted'
                 ? const Color(0xFF4CAF50)

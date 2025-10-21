@@ -589,11 +589,12 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
   }
 
   Widget _buildExperienceDropdown() {
+    // Base English values (used internally)
     final experienceLevels = [
-      LocalizationManager.translate('entry_level'),
-      LocalizationManager.translate('intermediate'),
-      LocalizationManager.translate('experienced'),
-      LocalizationManager.translate('expert'),
+      'Entry Level',
+      'Intermediate',
+      'Experienced',
+      'Expert',
     ];
 
     return Column(
@@ -617,7 +618,10 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              value: _selectedExperience.isEmpty ? null : _selectedExperience,
+              // Safely handle value to avoid mismatch
+              value: experienceLevels.contains(_selectedExperience)
+                  ? _selectedExperience
+                  : null,
               hint: Text(
                 LocalizationManager.translate('select_experience_level'),
                 style: const TextStyle(color: Color(0xFF9E9E9E)),
@@ -628,9 +632,12 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
               ),
               isExpanded: true,
               items: experienceLevels.map((String experience) {
+                // Convert to translation key
+                final key = experience.toLowerCase().replaceAll(' ', '_');
                 return DropdownMenuItem<String>(
                   value: experience,
-                  child: Text(experience),
+                  // Show translated label
+                  child: Text(LocalizationManager.translate(key)),
                 );
               }).toList(),
               onChanged: (value) {
