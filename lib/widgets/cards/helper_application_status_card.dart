@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/application.dart';
+import '../../localization_manager.dart';
 
 class HelperApplicationStatusCard extends StatelessWidget {
   final Application application;
@@ -130,8 +131,8 @@ class HelperApplicationStatusCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Your applicant\'s message:',
+                      Text(
+                        LocalizationManager.translate('your_applicant_message'),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -196,8 +197,8 @@ class HelperApplicationStatusCard extends StatelessWidget {
                             size: 16,
                             color: Color(0xFFF44336),
                           ),
-                          label: const Text(
-                            'Withdraw',
+                          label: Text(
+                            LocalizationManager.translate('withdraw'),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,

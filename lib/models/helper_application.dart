@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization_manager.dart';
 
 class HelperApplication {
   final String id;
@@ -84,29 +85,61 @@ class HelperApplication {
   String formatAppliedDate() {
     final now = DateTime.now();
     final difference = now.difference(appliedDate).inDays;
-    
-    if (difference == 0) return 'Applied today';
-    if (difference == 1) return 'Applied yesterday';
-    if (difference < 7) return 'Applied $difference days ago';
-    if (difference < 30) return 'Applied ${(difference / 7).floor()} weeks ago';
-    return 'Applied ${(difference / 30).floor()} months ago';
+
+    if (difference == 0) {
+      return LocalizationManager.translate('today');
+    } else if (difference == 1) {
+      return LocalizationManager.translate('yesterday');
+    } else if (difference < 7) {
+      return LocalizationManager.translate(
+        'days_ago',
+        params: {'count': difference.toString()},
+      );
+    } else if (difference < 30) {
+      return LocalizationManager.translate(
+        'weeks_ago',
+        params: {'count': (difference / 7).floor().toString()},
+      );
+    } else {
+      return LocalizationManager.translate(
+        'months_ago',
+        params: {'count': (difference / 30).floor().toString()},
+      );
+    }
   }
 
   String formatResponseDate() {
     if (responseDate == null) return '';
-    
+
     final now = DateTime.now();
     final difference = now.difference(responseDate!).inDays;
-    
-    if (difference == 0) return 'Response today';
-    if (difference == 1) return 'Response yesterday';
-    if (difference < 7) return 'Response $difference days ago';
-    return 'Response ${(difference / 7).floor()} weeks ago';
+
+    if (difference == 0) {
+      return LocalizationManager.translate('today');
+    } else if (difference == 1) {
+      return LocalizationManager.translate('yesterday');
+    } else if (difference < 7) {
+      return LocalizationManager.translate(
+        'days_ago',
+        params: {'count': difference.toString()},
+      );
+    } else if (difference < 30) {
+      return LocalizationManager.translate(
+        'weeks_ago',
+        params: {'count': (difference / 7).floor().toString()},
+      );
+    } else {
+      return LocalizationManager.translate(
+        'months_ago',
+        params: {'count': (difference / 30).floor().toString()},
+      );
+    }
   }
 
   String formatSalary() {
     return '₱${jobSalary.toStringAsFixed(0)}/$jobSalaryPeriod';
   }
 
-  bool get hasEmployerMessage => employerMessage != null && employerMessage!.isNotEmpty;
+  bool get hasEmployerMessage =>
+      employerMessage != null && employerMessage!.isNotEmpty;
 }

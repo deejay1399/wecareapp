@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization_manager.dart';
 
 class JobOpportunity {
   final String id;
@@ -38,11 +39,27 @@ class JobOpportunity {
   String formatPostedDate() {
     final now = DateTime.now();
     final difference = now.difference(postedDate).inDays;
-    
-    if (difference == 0) return 'Today';
-    if (difference == 1) return 'Yesterday';
-    if (difference < 7) return '$difference days ago';
-    return '${(difference / 7).floor()} weeks ago';
+
+    if (difference == 0) {
+      return LocalizationManager.translate('today');
+    } else if (difference == 1) {
+      return LocalizationManager.translate('yesterday');
+    } else if (difference < 7) {
+      return LocalizationManager.translate(
+        'days_ago',
+        params: {'count': difference.toString()},
+      );
+    } else if (difference < 30) {
+      return LocalizationManager.translate(
+        'weeks_ago',
+        params: {'count': (difference / 7).floor().toString()},
+      );
+    } else {
+      return LocalizationManager.translate(
+        'months_ago',
+        params: {'count': (difference / 30).floor().toString()},
+      );
+    }
   }
 
   Color get jobTypeColor {
@@ -75,5 +92,6 @@ class JobOpportunity {
     }
   }
 
-  bool get isRecentlyPosted => DateTime.now().difference(postedDate).inDays <= 3;
+  bool get isRecentlyPosted =>
+      DateTime.now().difference(postedDate).inDays <= 3;
 }

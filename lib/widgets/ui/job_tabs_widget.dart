@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization_manager.dart';
 
 class JobTabsWidget extends StatelessWidget {
   final int selectedTab;
@@ -37,33 +38,25 @@ class JobTabsWidget extends StatelessWidget {
           Expanded(
             child: _buildTab(
               index: 0,
-              title: 'Recent',
+              title: LocalizationManager.translate('recent'),
               count: recentCount,
               icon: Icons.schedule,
             ),
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: const Color(0xFFE5E7EB),
-          ),
+          Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
           Expanded(
             child: _buildTab(
               index: 1,
-              title: 'Best Matches',
+              title: LocalizationManager.translate('best_matches'),
               count: bestMatchesCount,
               icon: Icons.star,
             ),
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: const Color(0xFFE5E7EB),
-          ),
+          Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
           Expanded(
             child: _buildTab(
               index: 2,
-              title: 'Saved',
+              title: LocalizationManager.translate('saved'),
               count: savedCount,
               icon: Icons.bookmark,
             ),
@@ -81,14 +74,14 @@ class JobTabsWidget extends StatelessWidget {
   }) {
     final isSelected = selectedTab == index;
     final primaryColor = const Color(0xFFFF8A50);
-    
+
     return GestureDetector(
       onTap: () => onTabChanged(index),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? primaryColor.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
@@ -103,9 +96,7 @@ class JobTabsWidget extends StatelessWidget {
                 Icon(
                   icon,
                   size: 16,
-                  color: isSelected 
-                      ? primaryColor
-                      : const Color(0xFF6B7280),
+                  color: isSelected ? primaryColor : const Color(0xFF6B7280),
                 ),
                 if (count > 0) ...[
                   const SizedBox(width: 4),
@@ -115,7 +106,7 @@ class JobTabsWidget extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected 
+                      color: isSelected
                           ? primaryColor
                           : const Color(0xFF6B7280),
                       borderRadius: BorderRadius.circular(8),
@@ -132,18 +123,16 @@ class JobTabsWidget extends StatelessWidget {
                 ],
               ],
             ),
-            
+
             const SizedBox(height: 6),
-            
+
             // Title
             Text(
               title,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isSelected 
-                    ? primaryColor
-                    : const Color(0xFF6B7280),
+                color: isSelected ? primaryColor : const Color(0xFF6B7280),
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -186,7 +175,7 @@ class JobTabIndicator extends StatelessWidget {
           final title = entry.value;
           final isSelected = selectedIndex == index;
           final count = tabCounts[index] ?? 0;
-          
+
           return Expanded(
             child: GestureDetector(
               onTap: () => onTabChanged(index),
@@ -194,17 +183,17 @@ class JobTabIndicator extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isSelected 
-                      ? Colors.white
-                      : Colors.transparent,
+                  color: isSelected ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: isSelected ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ] : null,
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Center(
                   child: Row(
@@ -215,7 +204,7 @@ class JobTabIndicator extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isSelected 
+                          color: isSelected
                               ? const Color(0xFFFF8A50)
                               : const Color(0xFF6B7280),
                         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/subscription_plan.dart';
 import '../../utils/constants/subscription_constants.dart';
 import '../../screens/subscription/subscription_success_screen.dart';
+import '../../localization_manager.dart';
 
 class SubscriptionPlanCard extends StatelessWidget {
   final SubscriptionPlan plan;
@@ -182,7 +183,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                             ),
                           )
                         : Text(
-                            'Subscribe Now',
+                            LocalizationManager.translate('subscribe_now'),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

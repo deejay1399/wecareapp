@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization_manager.dart';
 
 class Application {
   final String id;
@@ -10,7 +11,8 @@ class Application {
   final String helperLocation;
   final String coverLetter;
   final DateTime appliedDate;
-  final String status; // 'pending', 'accepted', 'rejected', 'withdrawn', 'completed'
+  final String
+  status; // 'pending', 'accepted', 'rejected', 'withdrawn', 'completed'
   final String? helperPhone;
   final String? helperEmail;
   final List<String> helperSkills;
@@ -42,15 +44,15 @@ class Application {
   String get statusDisplayText {
     switch (status) {
       case 'pending':
-        return 'Pending Review';
+        return LocalizationManager.translate('pending_review');
       case 'accepted':
-        return 'Accepted';
+        return LocalizationManager.translate('accepted');
       case 'rejected':
-        return 'Rejected';
+        return LocalizationManager.translate('rejected');
       case 'withdrawn':
-        return 'Withdrawn';
+        return LocalizationManager.translate('withdrawn');
       case 'completed':
-        return 'Completed';
+        return LocalizationManager.translate('completed');
       default:
         return 'Unknown';
     }
@@ -76,11 +78,26 @@ class Application {
   String formatAppliedDate() {
     final now = DateTime.now();
     final difference = now.difference(appliedDate).inDays;
-    
-    if (difference == 0) return 'Today';
-    if (difference == 1) return 'Yesterday';
-    if (difference < 7) return '$difference days ago';
-    if (difference < 30) return '${(difference / 7).floor()} weeks ago';
-    return '${(difference / 30).floor()} months ago';
+
+    if (difference == 0) {
+      return LocalizationManager.translate('today');
+    } else if (difference == 1) {
+      return LocalizationManager.translate('yesterday');
+    } else if (difference < 7) {
+      return LocalizationManager.translate(
+        'days_ago',
+        params: {'count': difference.toString()},
+      );
+    } else if (difference < 30) {
+      return LocalizationManager.translate(
+        'weeks_ago',
+        params: {'count': (difference / 7).floor().toString()},
+      );
+    } else {
+      return LocalizationManager.translate(
+        'months_ago',
+        params: {'count': (difference / 30).floor().toString()},
+      );
+    }
   }
 }

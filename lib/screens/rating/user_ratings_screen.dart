@@ -24,7 +24,7 @@ class UserRatingsScreen extends StatefulWidget {
 
 class _UserRatingsScreenState extends State<UserRatingsScreen> {
   final _ratingService = RatingService();
-  
+
   RatingStatistics? _statistics;
   List<Rating> _ratings = [];
   bool _isLoading = true;
@@ -47,7 +47,7 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
         widget.userId,
         widget.userType,
       );
-      
+
       final ratings = await _ratingService.getUserRatings(
         widget.userId,
         widget.userType,
@@ -83,25 +83,17 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1F2937),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1F2937)),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadRatings,
-        child: _buildBody(),
-      ),
+      body: RefreshIndicator(onRefresh: _loadRatings, child: _buildBody()),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF1565C0),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF1565C0)),
       );
     }
 
@@ -112,18 +104,11 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
               const SizedBox(height: 16),
               Text(
                 _error!,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -146,9 +131,7 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
 
     // If no statistics (shouldn't happen but safety check)
     if (_statistics == null) {
-      return const Center(
-        child: Text('No data available'),
-      );
+      return const Center(child: Text('No data available'));
     }
 
     // If no ratings, show centered empty state
@@ -165,9 +148,7 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
       builder: (context, constraints) {
         return SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: constraints.maxHeight,
-            ),
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -199,7 +180,7 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Be the first to leave a rating!',
+                      LocalizationManager.translate('be'),
                       style: const TextStyle(
                         fontSize: 16,
                         color: Color(0xFF6B7280),
@@ -229,18 +210,13 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
-            child: RatingSummary(
-              statistics: _statistics!,
-            ),
+            child: RatingSummary(statistics: _statistics!),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Reviews Section
           Text(
             'Reviews (${_ratings.length})',
@@ -251,7 +227,7 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Reviews List
           ListView.separated(
             shrinkWrap: true,
@@ -264,10 +240,7 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                 ),
                 child: RatingCard(
                   rating: rating,
@@ -276,7 +249,7 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
               );
             },
           ),
-          
+
           const SizedBox(height: 24),
         ],
       ),
@@ -287,7 +260,7 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
     if (rating.isAnonymous) {
       return null; // Will show "Anonymous User" in RatingCard
     }
-    
+
     // In a real app, you would fetch the rater's name from a user service
     // For now, we'll show a placeholder
     return '${rating.raterType.capitalize()} User';

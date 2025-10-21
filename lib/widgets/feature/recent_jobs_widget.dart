@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/job_posting.dart';
 import '../../models/helper.dart';
 import '../cards/job_card_with_rating.dart';
+import '../../localization_manager.dart';
 
 class RecentJobsWidget extends StatelessWidget {
   final Helper? currentHelper;
@@ -163,8 +164,8 @@ class RecentJobsWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Recent Jobs',
+              Text(
+                LocalizationManager.translate('recent_jobs'),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

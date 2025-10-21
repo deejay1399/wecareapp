@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/job_posting.dart';
+import '../../localization_manager.dart';
 
 class JobPostingCard extends StatelessWidget {
   final JobPosting jobPosting;
@@ -93,7 +94,7 @@ class JobPostingCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Age: ${jobPosting.employer?.age.toString() ?? ''}',
+                  '${LocalizationManager.translate('age')}: ${jobPosting.employer?.age.toString() ?? ''}',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -104,7 +105,7 @@ class JobPostingCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Job title: ${jobPosting.title}',
+                  '${LocalizationManager.translate('job_title')}: ${jobPosting.title}',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -117,7 +118,7 @@ class JobPostingCard extends StatelessWidget {
 
                 // Description
                 Text(
-                  'Job description: ${jobPosting.description}',
+                  '${LocalizationManager.translate('job_description')}: ${jobPosting.description}',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),

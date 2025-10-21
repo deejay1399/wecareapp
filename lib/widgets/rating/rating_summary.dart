@@ -19,11 +19,7 @@ class RatingSummary extends StatelessWidget {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.star_outline,
-            size: 48,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.star_outline, size: 48, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             LocalizationManager.translate('no_ratings_yet'),
@@ -35,11 +31,8 @@ class RatingSummary extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Be the first to leave a rating!',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF9CA3AF),
-            ),
+            LocalizationManager.translate('be'),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
           ),
         ],
       );
@@ -97,7 +90,7 @@ class RatingSummary extends StatelessWidget {
                 ],
               ),
             ),
-            if (showDistribution && statistics.totalRatings > 0) 
+            if (showDistribution && statistics.totalRatings > 0)
               _buildRatingDistribution(context),
           ],
         ),
@@ -124,11 +117,7 @@ class RatingSummary extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Icon(
-                  Icons.star,
-                  size: 14,
-                  color: Colors.amber[600],
-                ),
+                Icon(Icons.star, size: 14, color: Colors.amber[600]),
                 const SizedBox(width: 8),
                 Container(
                   width: 80,

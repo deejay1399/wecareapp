@@ -27,22 +27,17 @@ class HelperRatingBadge extends StatelessWidget {
         horizontal: isCompact ? 8 : 12,
         vertical: isCompact ? 4 : 6,
       ),
-      decoration: showBackground ? BoxDecoration(
-        color: _getBackgroundColor(),
-        borderRadius: BorderRadius.circular(isCompact ? 8 : 12),
-        border: Border.all(
-          color: _getBorderColor(),
-          width: 1,
-        ),
-      ) : null,
+      decoration: showBackground
+          ? BoxDecoration(
+              color: _getBackgroundColor(),
+              borderRadius: BorderRadius.circular(isCompact ? 8 : 12),
+              border: Border.all(color: _getBorderColor(), width: 1),
+            )
+          : null,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.star,
-            size: isCompact ? 14 : 16,
-            color: _getStarColor(),
-          ),
+          Icon(Icons.star, size: isCompact ? 14 : 16, color: _getStarColor()),
           SizedBox(width: isCompact ? 4 : 6),
           Text(
             statistics.formattedAverageRating,
@@ -68,10 +63,7 @@ class HelperRatingBadge extends StatelessWidget {
     );
 
     if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: badgeContent,
-      );
+      return GestureDetector(onTap: onTap, child: badgeContent);
     }
 
     return badgeContent;
@@ -81,22 +73,17 @@ class HelperRatingBadge extends StatelessWidget {
     if (isCompact) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: showBackground ? BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.grey[300]!,
-            width: 1,
-          ),
-        ) : null,
+        decoration: showBackground
+            ? BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!, width: 1),
+              )
+            : null,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.star_border,
-              size: 14,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.star_border, size: 14, color: Colors.grey[400]),
             const SizedBox(width: 4),
             Text(
               'No ratings',
@@ -113,22 +100,17 @@ class HelperRatingBadge extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: showBackground ? BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1,
-        ),
-      ) : null,
+      decoration: showBackground
+          ? BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!, width: 1),
+            )
+          : null,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.star_border,
-            size: 16,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.star_border, size: 16, color: Colors.grey[400]),
           const SizedBox(width: 6),
           Text(
             'New helper',
@@ -217,10 +199,7 @@ class EnhancedHelperRating extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HelperRatingBadge(
-            statistics: statistics,
-            onTap: onTap,
-          ),
+          HelperRatingBadge(statistics: statistics, onTap: onTap),
           if (showDescription) ...[
             const SizedBox(height: 4),
             Text(
@@ -239,10 +218,7 @@ class EnhancedHelperRating extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        HelperRatingBadge(
-          statistics: statistics,
-          onTap: onTap,
-        ),
+        HelperRatingBadge(statistics: statistics, onTap: onTap),
         if (showDescription) ...[
           const SizedBox(height: 4),
           Text(

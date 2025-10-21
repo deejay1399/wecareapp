@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/job_opportunity.dart';
+import '../../localization_manager.dart';
 
 class JobOpportunityCard extends StatelessWidget {
   final JobOpportunity jobOpportunity;
@@ -53,10 +54,7 @@ class JobOpportunityCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               color: Colors.white,
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,12 +74,17 @@ class JobOpportunityCard extends StatelessWidget {
                     ),
                     if (jobOpportunity.isUrgent)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                            color: const Color(
+                              0xFFEF4444,
+                            ).withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),
@@ -137,16 +140,18 @@ class JobOpportunityCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         jobOpportunity.location,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: jobOpportunity.jobTypeColor.withValues(alpha: 0.1),
+                        color: jobOpportunity.jobTypeColor.withValues(
+                          alpha: 0.1,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -197,9 +202,14 @@ class JobOpportunityCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF6366F1,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -274,10 +284,13 @@ class JobOpportunityCard extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
                         ),
-                        child: const Text(
-                          'Apply',
+                        child: Text(
+                          LocalizationManager.translate('apply'),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,

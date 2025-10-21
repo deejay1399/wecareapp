@@ -63,11 +63,26 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
     final now = DateTime.now();
     final difference = now.difference(date).inDays;
 
-    if (difference == 0) return 'today';
-    if (difference == 1) return 'yesterday';
-    if (difference < 7) return '$difference days ago';
-    if (difference < 30) return '${(difference / 7).floor()} weeks ago';
-    return '${(difference / 30).floor()} months ago';
+    if (difference == 0) {
+      return LocalizationManager.translate('today');
+    } else if (difference == 1) {
+      return LocalizationManager.translate('yesterday');
+    } else if (difference < 7) {
+      return LocalizationManager.translate(
+        'days_ago',
+        params: {'count': difference.toString()},
+      );
+    } else if (difference < 30) {
+      return LocalizationManager.translate(
+        'weeks_ago',
+        params: {'count': (difference / 7).floor().toString()},
+      );
+    } else {
+      return LocalizationManager.translate(
+        'months_ago',
+        params: {'count': (difference / 30).floor().toString()},
+      );
+    }
   }
 
   @override
@@ -346,8 +361,8 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            child: const Text(
-                              'Apply',
+                            child: Text(
+                              LocalizationManager.translate('apply'),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
