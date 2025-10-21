@@ -6,12 +6,14 @@ import '../../services/session_service.dart';
 import '../../utils/constants/subscription_constants.dart';
 import '../../widgets/subscription/subscription_plan_card.dart';
 import '../../widgets/subscription/trial_status_card.dart';
+import '../../localization_manager.dart';
 
 class HelperSubscriptionScreen extends StatefulWidget {
   const HelperSubscriptionScreen({super.key});
 
   @override
-  State<HelperSubscriptionScreen> createState() => _HelperSubscriptionScreenState();
+  State<HelperSubscriptionScreen> createState() =>
+      _HelperSubscriptionScreenState();
 }
 
 class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
@@ -27,7 +29,8 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
 
   Future<void> _loadSubscriptionStatus() async {
     try {
-      final status = await SubscriptionService.getCurrentUserSubscriptionStatus();
+      final status =
+          await SubscriptionService.getCurrentUserSubscriptionStatus();
       setState(() {
         _subscriptionStatus = status;
         _isLoading = false;
@@ -47,19 +50,21 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
     try {
       // Simulate payment processing
       await Future.delayed(const Duration(seconds: 2));
-      
+
       // Create subscription
       final userId = await SessionService.getCurrentUserId();
       if (userId != null) {
         await SubscriptionService.createSubscription(userId, 'Helper', plan);
-        
+
         // Reload status
         await _loadSubscriptionStatus();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Successfully subscribed to ${plan.name}!'),
+              content: Text(
+                '${LocalizationManager.translate('successfully_subscribed_to')} ${plan.name}!',
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -69,7 +74,9 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Subscription failed: $e'),
+            content: Text(
+              '${LocalizationManager.translate('subscription_failed')} $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -86,12 +93,9 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Subscription Plans',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
+        title: Text(
+          LocalizationManager.translate('subscription_plans'),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
@@ -111,7 +115,7 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                       usage: _subscriptionStatus!['usage'] as UsageTracking,
                       userType: 'Helper',
                     ),
-                  
+
                   // Current Subscription Status
                   if (_subscriptionStatus?['hasSubscription'] == true)
                     Container(
@@ -132,7 +136,9 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Active Subscription',
+                            LocalizationManager.translate(
+                              'active_subscription',
+                            ),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -141,7 +147,9 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'You have unlimited access to all features',
+                            LocalizationManager.translate(
+                              'you_have_unlimited_access_to_all_features',
+                            ),
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.green[700],
@@ -153,8 +161,8 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                     ),
 
                   // Header
-                  const Text(
-                    'Choose Your Plan',
+                  Text(
+                    LocalizationManager.translate('choose_your_plan'),
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -163,7 +171,9 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Unlock unlimited job opportunities and connect with employers in your area',
+                    LocalizationManager.translate(
+                      'unlock_unlimited_job_opportunities_and_connect_with_employers_in_your_area'
+                    ),
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[600],
@@ -177,12 +187,13 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: SubscriptionConstants.availablePlans.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final plan = SubscriptionConstants.availablePlans[index];
                       final isSelected = _selectedPlanId == plan.id;
                       final isPopular = plan.id == 'standard';
-                      
+
                       return SubscriptionPlanCard(
                         plan: plan,
                         isPopular: isPopular,
@@ -212,8 +223,8 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'What\'s Included',
+                        Text(
+                          LocalizationManager.translate('whats_included'),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -221,12 +232,36 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _buildFeatureItem('Unlimited job applications'),
-                        _buildFeatureItem('Connect with verified employers'),
-                        _buildFeatureItem('Access to premium job listings'),
-                        _buildFeatureItem('Priority application status'),
-                        _buildFeatureItem('Advanced profile visibility'),
-                        _buildFeatureItem('In-app messaging with employers'),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'unlimited_job_applications',
+                          ),
+                        ),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'connect_with_verified_employers',
+                          ),
+                        ),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'access_to_premium_job_listings',
+                          ),
+                        ),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'priority_application_status',
+                          ),
+                        ),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'advanced_profile_visibility',
+                          ),
+                        ),
+                        _buildFeatureItem(
+                          LocalizationManager.translate(
+                            'in_app_messaging_with_employers',
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -243,19 +278,12 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: Colors.green[600],
-            size: 20,
-          ),
+          Icon(Icons.check_circle, color: Colors.green[600], size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               feature,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
           ),
         ],

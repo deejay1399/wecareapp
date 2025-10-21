@@ -4,6 +4,7 @@ import '../../models/rating_statistics.dart';
 import '../../services/rating_service.dart';
 import '../../widgets/rating/rating_summary.dart';
 import '../../widgets/rating/rating_card.dart';
+import '../../localization_manager.dart';
 
 class UserRatingsScreen extends StatefulWidget {
   final String userId;
@@ -188,7 +189,7 @@ class _UserRatingsScreenState extends State<UserRatingsScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'No ratings yet',
+                      LocalizationManager.translate('no_ratings_yet'),
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

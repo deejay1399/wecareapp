@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/usage_tracking.dart';
+import '../../localization_manager.dart';
 
 class TrialStatusCard extends StatelessWidget {
   final UsageTracking usage;
@@ -15,7 +16,7 @@ class TrialStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNearLimit = usage.remainingTrialUses <= 2;
     final isAtLimit = usage.hasExceededTrial;
-    
+
     Color statusColor;
     Color backgroundColor;
     IconData statusIcon;
@@ -25,17 +26,17 @@ class TrialStatusCard extends StatelessWidget {
       statusColor = Colors.red[600]!;
       backgroundColor = Colors.red[50]!;
       statusIcon = Icons.warning;
-      statusText = 'Trial Expired';
+      statusText = LocalizationManager.translate('trial_expired');
     } else if (isNearLimit) {
       statusColor = Colors.orange[600]!;
       backgroundColor = Colors.orange[50]!;
       statusIcon = Icons.access_time;
-      statusText = 'Trial Ending Soon';
+      statusText = LocalizationManager.translate('trial_ending_soon');
     } else {
       statusColor = Colors.blue[600]!;
       backgroundColor = Colors.blue[50]!;
       statusIcon = Icons.rocket_launch;
-      statusText = 'Trial Active';
+      statusText = LocalizationManager.translate('trial_active');
     }
 
     return Container(
@@ -52,11 +53,7 @@ class TrialStatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                statusIcon,
-                color: statusColor,
-                size: 24,
-              ),
+              Icon(statusIcon, color: statusColor, size: 24),
               const SizedBox(width: 12),
               Text(
                 statusText,
@@ -69,7 +66,7 @@ class TrialStatusCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Progress bar
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,7 +75,7 @@ class TrialStatusCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Trial Usage',
+                    LocalizationManager.translate('trial_usage'),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -107,13 +104,13 @@ class TrialStatusCard extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Status message
           if (isAtLimit)
             Text(
-              'Your trial has ended. Subscribe now to continue using WeCare.',
+              LocalizationManager.translate('trial_has_ended_subscribe_now'),
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[700],
@@ -122,7 +119,15 @@ class TrialStatusCard extends StatelessWidget {
             )
           else
             Text(
-              'You have ${usage.remainingTrialUses} free ${usage.remainingTrialUses == 1 ? 'use' : 'uses'} remaining. Subscribe for unlimited access.',
+              LocalizationManager.translate(
+                'remaining_trial_uses_message',
+                params: {
+                  'count': usage.remainingTrialUses.toString(),
+                  'use_word': usage.remainingTrialUses == 1
+                      ? LocalizationManager.translate('use_single')
+                      : LocalizationManager.translate('use_plural'),
+                },
+              ),
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[700],

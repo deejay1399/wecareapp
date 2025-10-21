@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/rating_statistics.dart';
 import 'star_rating_display.dart';
+import '../../localization_manager.dart';
 
 class RatingSummary extends StatelessWidget {
   final RatingStatistics statistics;
@@ -25,7 +26,7 @@ class RatingSummary extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No ratings yet',
+            LocalizationManager.translate('no_ratings_yet'),
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

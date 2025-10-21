@@ -1,17 +1,19 @@
+import '../../localization_manager.dart';
+
 class PaymentFrequencyConstants {
-  static const List<String> frequencies = [
-    'Per Hour',
-    'Per Day', 
-    'Per Week',
-    'bi weekly',
-    'Per Month',
+  static List<String> frequencies = [
+    LocalizationManager.translate('per_hour'),
+    LocalizationManager.translate('per_day'),
+    LocalizationManager.translate('per_week'),
+    LocalizationManager.translate('bi_weekly'),
+    LocalizationManager.translate('per_month'),
   ];
 
-  static const Map<String, String> frequencyLabels = {
-    'Per Hour': 'Per Hour',
-    'Per Day': 'Per Day',
-    'Per Week': 'Per Week', 
-    'bi weekly': 'Bi-Weekly',
-    'Per Month': 'Per Month',
+  static Map<String, String> frequencyLabels = {
+    'per_hour': LocalizationManager.translate('per_hour'),
+    'per_day': LocalizationManager.translate('per_day'),
+    'per_week': LocalizationManager.translate('per_week'),
+    'bi_weekly': LocalizationManager.translate('bi_weekly'),
+    'per_month': LocalizationManager.translate('per_month'),
   };
 }

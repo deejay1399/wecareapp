@@ -175,7 +175,7 @@ class _EmployerSubscriptionScreenState
                   const SizedBox(height: 8),
                   Text(
                     LocalizationManager.translate(
-                      'unlock_unlimited_access_to_connect_with_helpers_and_post_job_opportunities',
+                      'unlock_unlimited_access_to_connect_with_helpers'
                     ),
                     style: TextStyle(
                       fontSize: 16,

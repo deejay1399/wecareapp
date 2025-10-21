@@ -4,6 +4,7 @@ import '../../models/helper.dart';
 import '../../services/application_service.dart';
 import '../../services/session_service.dart';
 import '../../utils/constants/payment_frequency_constants.dart';
+import '../../localization_manager.dart';
 
 class ApplyJobScreen extends StatefulWidget {
   final JobPosting jobPosting;
@@ -61,11 +62,14 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       _coverLetterError = null;
 
       if (_characterCount == 0) {
-        _coverLetterError = 'Applicant\'s message is required';
+        _coverLetterError = LocalizationManager.translate(
+          'applicants_message_required',
+        );
         isValid = false;
       } else if (_characterCount < 50) {
-        _coverLetterError =
-            'Applicant\'s message must be at least 50 characters';
+        _coverLetterError = LocalizationManager.translate(
+          'applicants_message_minimum_length',
+        );
         isValid = false;
       }
     });
@@ -90,10 +94,14 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Application submitted successfully!'),
-            backgroundColor: Color(0xFF10B981),
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate(
+                'application_submitted_successfully',
+              ),
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            duration: const Duration(seconds: 3),
           ),
         );
 
@@ -103,7 +111,9 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit application: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_submit_application')}: $e',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -177,8 +187,8 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
           const SizedBox(height: 16),
 
           // Description
-          const Text(
-            'Job Description',
+          Text(
+            LocalizationManager.translate('job_description'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -198,8 +208,8 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
           const SizedBox(height: 16),
 
           // Required skills
-          const Text(
-            'Required Skills',
+          Text(
+            LocalizationManager.translate('required_skills'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -251,8 +261,8 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Your Application',
+          Text(
+            LocalizationManager.translate('your_application'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -260,15 +270,15 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Tell the employer why you\'re the perfect fit for this job.',
+          Text(
+            LocalizationManager.translate('tell_the_employer'),
             style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 24),
 
           // Cover Letter
-          const Text(
-            'Applicant\'s message',
+          Text(
+            LocalizationManager.translate('applicants_message'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -291,12 +301,11 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
               controller: _coverLetterController,
               maxLines: 8,
               maxLength: 500,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 contentPadding: EdgeInsets.all(16),
                 border: InputBorder.none,
                 counterText: '', // Hide the built-in counter
-                hintText:
-                    'Explain your experience, skills, and why you\'re interested in this position. Include relevant achievements and what makes you stand out...',
+                hintText: LocalizationManager.translate('explain_experience'),
                 hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 16),
               ),
               style: const TextStyle(color: Color(0xFF374151), fontSize: 16),
@@ -311,7 +320,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
           ],
           const SizedBox(height: 12),
           Text(
-            '$_characterCount/500 characters (minimum 50)',
+            '${_characterCount}/500 ${LocalizationManager.translate('characters_minimum_50')}',
             style: TextStyle(
               fontSize: 12,
               color: _characterCount < 50
@@ -335,8 +344,8 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8F00)),
         ),
-        title: const Text(
-          'Apply for Job',
+        title: Text(
+          LocalizationManager.translate('apply_for_job'),
           style: TextStyle(
             color: Color(0xFFFF8F00),
             fontSize: 20,
@@ -386,8 +395,8 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
-                          'Submit Application',
+                      : Text(
+                          LocalizationManager.translate('submit_application'),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

@@ -8,6 +8,7 @@ import '../../services/application_service.dart';
 import '../../services/database_messaging_service.dart';
 import '../../services/session_service.dart';
 import '../messaging/chat_screen.dart';
+import '../../localization_manager.dart';
 
 class HelperApplicationDetailsScreen extends StatefulWidget {
   final Application application;
@@ -71,19 +72,21 @@ class _HelperApplicationDetailsScreenState
         await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Withdraw Application'),
-            content: const Text(
-              'Are you sure you want to withdraw this application? This action cannot be undone.',
+            title: Text(LocalizationManager.translate('withdraw_application')),
+            content: Text(
+              LocalizationManager.translate(
+                'withdraw_application_confirmation',
+              ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: Text(LocalizationManager.translate('cancel')),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Withdraw'),
+                child: Text(LocalizationManager.translate('withdraw')),
               ),
             ],
           ),
@@ -114,7 +117,7 @@ class _HelperApplicationDetailsScreenState
             helperLocation: _application.helperLocation,
             coverLetter: _application.coverLetter,
             appliedDate: _application.appliedDate,
-            status: 'withdrawn',
+            status: LocalizationManager.translate('withdrawn'),
             helperPhone: _application.helperPhone,
             helperEmail: _application.helperEmail,
             helperSkills: _application.helperSkills,
@@ -124,8 +127,12 @@ class _HelperApplicationDetailsScreenState
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Application withdrawn successfully'),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate(
+                'application_withdrawn_successfully',
+              ),
+            ),
             backgroundColor: Color(0xFF10B981),
           ),
         );
@@ -141,7 +148,9 @@ class _HelperApplicationDetailsScreenState
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to withdraw application: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_withdraw_application')}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -186,7 +195,9 @@ class _HelperApplicationDetailsScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to start chat: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_start_chat')}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -236,7 +247,7 @@ class _HelperApplicationDetailsScreenState
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Applied ${_application.formatAppliedDate()}',
+                      '${LocalizationManager.translate('applied')}: ${_application.formatAppliedDate()}',
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6B7280),
@@ -297,8 +308,8 @@ class _HelperApplicationDetailsScreenState
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),
-        child: const Text(
-          'Job information not available',
+        child: Text(
+          LocalizationManager.translate('job_information_not_available'),
           style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
         ),
       );
@@ -314,8 +325,8 @@ class _HelperApplicationDetailsScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Job Information',
+          Text(
+            LocalizationManager.translate('job_information'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -369,17 +380,26 @@ class _HelperApplicationDetailsScreenState
           const SizedBox(height: 20),
 
           // Job Details
-          _buildInfoRow('Salary', '₱${_jobPosting!.salary.toStringAsFixed(2)}'),
+          _buildInfoRow(
+            LocalizationManager.translate('salary'),
+            '₱${_jobPosting!.salary.toStringAsFixed(2)}',
+          ),
           const SizedBox(height: 12),
-          _buildInfoRow('Payment', _jobPosting!.paymentFrequency),
+          _buildInfoRow(
+            LocalizationManager.translate('payment'),
+            _jobPosting!.paymentFrequency,
+          ),
           const SizedBox(height: 12),
-          _buildInfoRow('Status', _jobPosting!.status),
+          _buildInfoRow(
+            LocalizationManager.translate('status'),
+            _jobPosting!.status,
+          ),
 
           const SizedBox(height: 20),
 
           // Job Description
-          const Text(
-            'Job Description',
+          Text(
+            LocalizationManager.translate('job_description'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -408,8 +428,8 @@ class _HelperApplicationDetailsScreenState
           const SizedBox(height: 20),
 
           // Required Skills
-          const Text(
-            'Required Skills',
+          Text(
+            LocalizationManager.translate('required_skills'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -486,8 +506,8 @@ class _HelperApplicationDetailsScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Your Applicant\'s message',
+          Text(
+            LocalizationManager.translate('your_applicants_message'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -506,7 +526,9 @@ class _HelperApplicationDetailsScreenState
             child: Text(
               _application.coverLetter.isNotEmpty
                   ? _application.coverLetter
-                  : 'No applicant\'s message provided',
+                  : LocalizationManager.translate(
+                      'no_applicants_message_provided',
+                    ),
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF374151),
@@ -537,8 +559,8 @@ class _HelperApplicationDetailsScreenState
               child: ElevatedButton.icon(
                 onPressed: _startChat,
                 icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                label: const Text(
-                  'Message Employer',
+                label: Text(
+                  LocalizationManager.translate('message_employer'),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -568,7 +590,7 @@ class _HelperApplicationDetailsScreenState
                   ),
                 ),
                 child: _isWithdrawing
-                    ? const Row(
+                    ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SizedBox(
@@ -583,7 +605,7 @@ class _HelperApplicationDetailsScreenState
                           ),
                           SizedBox(width: 12),
                           Text(
-                            'Withdrawing...',
+                            LocalizationManager.translate('withdrawing'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -591,8 +613,8 @@ class _HelperApplicationDetailsScreenState
                           ),
                         ],
                       )
-                    : const Text(
-                        'Withdraw Application',
+                    : Text(
+                        LocalizationManager.translate('withdraw_application'),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -618,9 +640,9 @@ class _HelperApplicationDetailsScreenState
                     size: 20,
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'This application was not accepted. Keep applying to other opportunities!',
+                      LocalizationManager.translate('application_not_accepted'),
                       style: TextStyle(fontSize: 14, color: Color(0xFF991B1B)),
                     ),
                   ),
@@ -643,9 +665,11 @@ class _HelperApplicationDetailsScreenState
                     size: 20,
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'You have withdrawn this application.',
+                      LocalizationManager.translate(
+                        'withdrawn_application_message',
+                      ),
                       style: TextStyle(fontSize: 14, color: Color(0xFF374151)),
                     ),
                   ),
@@ -669,8 +693,8 @@ class _HelperApplicationDetailsScreenState
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8A50)),
         ),
-        title: const Text(
-          'Application Details',
+        title: Text(
+          LocalizationManager.translate('application_details'),
           style: TextStyle(
             color: Color(0xFFFF8A50),
             fontSize: 20,

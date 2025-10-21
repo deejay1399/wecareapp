@@ -21,6 +21,9 @@ import '../messaging/conversations_screen.dart';
 import '../shared/completed_jobs_screen.dart';
 import '../../models/rating_statistics.dart';
 
+import '../../localization_manager.dart';
+import '../../language_manager.dart';
+
 class HelperHomeScreen extends StatefulWidget {
   const HelperHomeScreen({super.key});
 
@@ -53,7 +56,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     try {
       final stats = await _ratingService.getUserRatingStatistics(
         _matchedJobs[0].employerId,
-        'employer',
+        LocalizationManager.translate('employer'),
       );
 
       if (mounted) {
@@ -215,8 +218,12 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
       if (mounted) {
         // Application submitted successfully
         ScaffoldMessenger.of(this.context).showSnackBar(
-          const SnackBar(
-            content: Text('Application submitted successfully!'),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate(
+                'application_submitted_successfully!',
+              ),
+            ),
             backgroundColor: Color(0xFF10B981),
           ),
         );
@@ -230,7 +237,9 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
   void _onServiceTap(BuildContext context, HelperServicePosting service) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Viewing service: ${service.title}'),
+        content: Text(
+          '${LocalizationManager.translate('viewing_service')}: ${service.title}',
+        ),
         backgroundColor: const Color(0xFFFF8A50),
       ),
     );
@@ -254,9 +263,11 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     if (result == 'deleted') {
       if (mounted) {
         ScaffoldMessenger.of(this.context).showSnackBar(
-          const SnackBar(
-            content: Text('Service deleted successfully'),
-            backgroundColor: Color(0xFF10B981),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('service_deleted_successfully'),
+            ),
+            backgroundColor: const Color(0xFF10B981),
           ),
         );
       }
@@ -282,8 +293,8 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No Job Opportunities Available',
+          Text(
+            LocalizationManager.translate('no_job_opportunities_available'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -291,8 +302,10 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Check back later for new job postings from employers',
+          Text(
+            LocalizationManager.translate(
+              'check_back_later_for_new_job_postings',
+            ),
             style: TextStyle(
               fontSize: 14,
               color: Color(0xFF6B7280),
@@ -324,8 +337,8 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No Services Posted Yet',
+          Text(
+            LocalizationManager.translate('no_services_posted_yet'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -333,8 +346,8 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Start offering your services to employers by posting your first service above',
+          Text(
+            LocalizationManager.translate('start_offering_your_services'),
             style: TextStyle(
               fontSize: 14,
               color: Color(0xFF6B7280),
@@ -369,7 +382,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Good ${_getGreeting()}!',
+                                '${LocalizationManager.translate('good')} ${LocalizationManager.translate(_getGreeting())}!',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   color: Color(0xFF6B7280),
@@ -377,8 +390,10 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                'Ready to help today?',
+                              Text(
+                                LocalizationManager.translate(
+                                  'ready_to_help_today',
+                                ),
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
@@ -412,6 +427,64 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                             ),
                           ),
                         ),
+                        Container(
+                          width: 48,
+                          height: 48,
+                          margin: const EdgeInsets.only(left: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF8A50).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFFF8A50).withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: PopupMenuButton<String>(
+                            icon: const Icon(
+                              Icons.language,
+                              color: Color(0xFFFF8A50),
+                              size: 24,
+                            ),
+                            offset: const Offset(
+                              0,
+                              50,
+                            ), // 👈 dropdown appears BELOW icon
+                            color: Colors.white.withOpacity(
+                              0.9,
+                            ), // 👈 slight transparency
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            onSelected: (String code) async {
+                              await LanguageManager.setLanguage(code);
+                              await LocalizationManager.loadLanguage();
+                              if (context.mounted) setState(() {});
+                            },
+                            itemBuilder: (BuildContext context) => const [
+                              PopupMenuItem(
+                                value: 'English',
+                                child: Text(
+                                  'English',
+                                  style: TextStyle(color: Color(0xFFFF8A50)),
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'Tagalog',
+                                child: Text(
+                                  'Tagalog',
+                                  style: TextStyle(color: Color(0xFFFF8A50)),
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'Cebuano',
+                                child: Text(
+                                  'Cebuano',
+                                  style: TextStyle(color: Color(0xFFFF8A50)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -429,8 +502,10 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SectionHeader(
-                  title: 'Quick Actions',
-                  subtitle: 'Manage your helper profile',
+                  title: LocalizationManager.translate('quick_actions'),
+                  subtitle: LocalizationManager.translate(
+                    'manage_your_helper_profile',
+                  ),
                 ),
               ),
 
@@ -444,8 +519,8 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                     Expanded(
                       child: _buildQuickActionCard(
                         context,
-                        'Messages',
-                        'Chat with employers',
+                        LocalizationManager.translate('messages'),
+                        LocalizationManager.translate('chat_with_employers'),
                         Icons.chat_bubble_outline,
                         const Color(0xFFFF8A50),
                         _onMessagesTap,
@@ -456,8 +531,10 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                     Expanded(
                       child: _buildQuickActionCard(
                         context,
-                        'Completed Jobs',
-                        'Rate your past experiences',
+                        LocalizationManager.translate('completed_jobs'),
+                        LocalizationManager.translate(
+                          'rate_your_past_experiences',
+                        ),
                         Icons.history_outlined,
                         const Color(0xFF10B981),
                         _onCompletedJobsTap,
@@ -478,14 +555,22 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SectionHeader(
-                  title: 'Latest Job Opportunities',
-                  subtitle: 'Explore all available job postings',
+                  title: LocalizationManager.translate(
+                    'latest_job_opportunities',
+                  ),
+                  subtitle: LocalizationManager.translate(
+                    'explore_all_available_job_postings',
+                  ),
                   onSeeAll: _matchedJobs.isNotEmpty
                       ? () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('View All Jobs - Coming Soon'),
-                              backgroundColor: Color(0xFFFF8A50),
+                            SnackBar(
+                              content: Text(
+                                LocalizationManager.translate(
+                                  'view_all_jobs_coming_soon',
+                                ),
+                              ),
+                              backgroundColor: const Color(0xFFFF8A50),
                             ),
                           );
                         }
@@ -526,13 +611,19 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SectionHeader(
-                  title: 'My Posted Services',
-                  subtitle: 'Manage your service offerings',
+                  title: LocalizationManager.translate('my_posted_services'),
+                  subtitle: LocalizationManager.translate(
+                    'manage_your_service_offerings',
+                  ),
                   onSeeAll: _myServices.length > 2
                       ? () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('View All Services - Coming Soon'),
+                            SnackBar(
+                              content: Text(
+                                LocalizationManager.translate(
+                                  'view_all_services_coming_soon',
+                                ),
+                              ),
                               backgroundColor: Color(0xFFFF8A50),
                             ),
                           );
@@ -625,7 +716,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
 
                 const SizedBox(height: 12),
                 Text(
-                  "Age: ${job.employer?.age ?? 'N/A'}",
+                  "${LocalizationManager.translate('age')}: ${job.employer?.age ?? 'N/A'}",
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -662,7 +753,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  "Job title: ${job.title}",
+                  "${LocalizationManager.translate('job_title')}: ${job.title}",
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -676,7 +767,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
 
                 // Description
                 Text(
-                  "Job description: ${job.description}",
+                  "${LocalizationManager.translate('job_description')}: ${job.description}",
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -699,7 +790,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Employer Rating:',
+                          '${LocalizationManager.translate('employer_rating')}:',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -725,7 +816,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Employer Rating:',
+                          '${LocalizationManager.translate('employer_rating')}:',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -734,7 +825,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'No ratings yet',
+                          LocalizationManager.translate('no_ratings_yet'),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -791,8 +882,8 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'Apply',
+                    child: Text(
+                      LocalizationManager.translate('apply'),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -911,8 +1002,8 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'morning';
-    if (hour < 17) return 'afternoon';
-    return 'evening';
+    if (hour < 12) return LocalizationManager.translate('morning');
+    if (hour < 17) return LocalizationManager.translate('afternoon');
+    return LocalizationManager.translate('evening');
   }
 }

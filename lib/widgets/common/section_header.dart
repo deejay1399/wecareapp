@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization_manager.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
@@ -48,11 +49,11 @@ class SectionHeader extends StatelessWidget {
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFF1565C0),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'See All',
+                  LocalizationManager.translate('see_all'),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

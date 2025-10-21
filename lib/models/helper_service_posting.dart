@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization_manager.dart';
 
 class HelperServicePosting {
   final String id;
@@ -44,7 +45,7 @@ class HelperServicePosting {
     if (difference == 0) return 'Created today';
     if (difference == 1) return 'Created yesterday';
     if (difference < 7) return 'Created $difference days ago';
-    return 'Created ${(difference / 7).floor()} weeks ago';
+    return '${LocalizationManager.translate('created')} ${(difference / 7).floor()} ${LocalizationManager.translate('week_ago')}';
   }
 
   Color get statusColor {
@@ -63,11 +64,11 @@ class HelperServicePosting {
   String get statusDisplayText {
     switch (status) {
       case 'active':
-        return 'Active';
+        return LocalizationManager.translate('active');
       case 'paused':
-        return 'Paused';
+        return LocalizationManager.translate('paused');
       case 'inactive':
-        return 'Inactive';
+        return LocalizationManager.translate('status_inactive');
       default:
         return status;
     }
@@ -90,6 +91,6 @@ class HelperServicePosting {
     if (serviceAreas.isEmpty) return '';
     if (serviceAreas.length == 1) return serviceAreas.first;
     if (serviceAreas.length == 2) return '${serviceAreas.first} & ${serviceAreas.last}';
-    return '${serviceAreas.first} +${serviceAreas.length - 1} more';
+    return '${serviceAreas.first} +${serviceAreas.length - 1} ${LocalizationManager.translate('more')}';
   }
 }

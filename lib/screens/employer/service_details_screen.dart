@@ -10,6 +10,7 @@ import '../../widgets/rating/star_rating_display.dart';
 
 import '../messaging/chat_screen.dart';
 import '../rating/user_ratings_screen.dart';
+import '../../localization_manager.dart';
 
 class ServiceDetailsScreen extends StatefulWidget {
   final HelperServicePosting servicePosting;
@@ -49,7 +50,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
         await HelperServicePostingService.incrementViewsCount(
           widget.servicePosting.id,
           currentEmployer.id,
-          'employer',
+          LocalizationManager.translate('employer'),
         );
       }
     } catch (e) {
@@ -61,7 +62,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     try {
       final stats = await _ratingService.getUserRatingStatistics(
         widget.servicePosting.helperId,
-        'helper',
+        LocalizationManager.translate('helper'),
       );
 
       if (mounted) {
@@ -88,14 +89,20 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     );
     final salaryController = TextEditingController();
     final locationController = TextEditingController();
-    String paymentFrequency = 'hourly';
+    String paymentFrequency = LocalizationManager.translate('hourly');
     List<String> requiredSkills = [...widget.servicePosting.skills];
 
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Send Job Offer to ${widget.servicePosting.helperName}'),
+          title: Text(
+            LocalizationManager.translate(
+              'send_job_offer_to',
+              params: {'name': widget.servicePosting.helperName},
+            ),
+          ),
+
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
@@ -104,17 +111,19 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                 children: [
                   TextFormField(
                     controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Job Title',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: LocalizationManager.translate('job_title'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Job Description',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: LocalizationManager.translate(
+                        'job_description',
+                      ),
+                      border: const OutlineInputBorder(),
                     ),
                     maxLines: 3,
                   ),
@@ -124,9 +133,11 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: salaryController,
-                          decoration: const InputDecoration(
-                            labelText: 'Salary Amount',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: LocalizationManager.translate(
+                              'salary_amount',
+                            ),
+                            border: const OutlineInputBorder(),
                             prefixText: '₱',
                           ),
                           keyboardType: TextInputType.number,
@@ -135,31 +146,41 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          initialValue: paymentFrequency,
-                          decoration: const InputDecoration(
-                            labelText: 'Payment',
-                            border: OutlineInputBorder(),
+                          value: paymentFrequency,
+                          decoration: InputDecoration(
+                            labelText: LocalizationManager.translate('payment'),
+                            border: const OutlineInputBorder(),
                           ),
-                          items: const [
+                          items: [
                             DropdownMenuItem(
                               value: 'hourly',
-                              child: Text('Per Hour'),
+                              child: Text(
+                                LocalizationManager.translate('per_hour'),
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'daily',
-                              child: Text('Per Day'),
+                              child: Text(
+                                LocalizationManager.translate('per_day'),
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'weekly',
-                              child: Text('Per Week'),
+                              child: Text(
+                                LocalizationManager.translate('per_week'),
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'monthly',
-                              child: Text('Per Month'),
+                              child: Text(
+                                LocalizationManager.translate('per_month'),
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'one-time',
-                              child: Text('One-time'),
+                              child: Text(
+                                LocalizationManager.translate('one_time'),
+                              ),
                             ),
                           ],
                           onChanged: (value) =>
@@ -171,9 +192,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: locationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Job Location',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: LocalizationManager.translate('job_location'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -183,7 +204,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: Text(LocalizationManager.translate('cancel')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -192,8 +213,12 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     salaryController.text.trim().isEmpty ||
                     locationController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please fill in all fields'),
+                    SnackBar(
+                      content: Text(
+                        LocalizationManager.translate(
+                          'please_fill_in_all_fields',
+                        ),
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -205,7 +230,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                 backgroundColor: const Color(0xFF1565C0),
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Send Job Offer'),
+              child: Text(LocalizationManager.translate('send_job_offer')),
             ),
           ],
         ),
@@ -247,7 +272,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       // Get current employer info
       final currentEmployer = await SessionService.getCurrentEmployer();
       if (currentEmployer == null) {
-        throw Exception('Employer session not found');
+        throw Exception(
+          LocalizationManager.translate('employer_session_not_found'),
+        );
       }
 
       // Create or get conversation
@@ -280,8 +307,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       // Send an initial message about the job offer
       await DatabaseMessagingService.sendMessage(
         conversationId: conversation.id,
-        content:
-            'I\'ve sent you a job offer! Please check the details above and let me know if you\'re interested.',
+        content: LocalizationManager.translate('job_offer_message_initial'),
       );
 
       // Increment contacts count
@@ -302,20 +328,26 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
         );
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Job offer sent! Opening chat...'),
-            backgroundColor: Color(0xFF10B981),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('job_offer_sent_opening_chat'),
+            ),
+            backgroundColor: const Color(0xFF10B981),
           ),
         );
 
-        // Clear the message field
         _messageController.clear();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send job offer: $e'),
+            content: Text(
+              LocalizationManager.translate(
+                'failed_to_send_job_offer',
+                params: {'error': e.toString()},
+              ),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -370,7 +402,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Helper Profile',
+                      LocalizationManager.translate('helper_profile'),
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
@@ -396,9 +428,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'View Reviews',
-                  style: TextStyle(fontSize: 12),
+                child: Text(
+                  LocalizationManager.translate('view_reviews'),
+                  style: const TextStyle(fontSize: 12),
                 ),
               ),
             ],
@@ -413,7 +445,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
               ),
             ] else ...[
               Text(
-                'No ratings yet',
+                LocalizationManager.translate('no_ratings_yet'),
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
@@ -473,7 +505,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                   ),
                 ),
                 child: Text(
-                  widget.servicePosting.statusDisplayText,
+                  LocalizationManager.translate(
+                    widget.servicePosting.statusDisplayText,
+                  ),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -518,7 +552,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  widget.servicePosting.availability,
+                  LocalizationManager.translate(
+                    widget.servicePosting.availability,
+                  ),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -541,7 +577,10 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Experience: ${widget.servicePosting.experienceLevel}',
+                LocalizationManager.translateWithArgs(
+                  'experience_level_label',
+                  {'level': widget.servicePosting.experienceLevel},
+                ),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -566,9 +605,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Service Description',
-            style: TextStyle(
+          Text(
+            LocalizationManager.translate('service_description'),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1F2937),
@@ -599,9 +638,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Helper\'s Expertise',
-            style: TextStyle(
+          Text(
+            LocalizationManager.translate('helpers_expertise'),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1F2937),
@@ -652,17 +691,17 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.location_on_outlined,
                 size: 20,
                 color: Color(0xFF6B7280),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
-                'Service Areas',
-                style: TextStyle(
+                LocalizationManager.translate('service_areas'),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1F2937),
@@ -715,9 +754,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Service Statistics',
-            style: TextStyle(
+          Text(
+            LocalizationManager.translate('service_statistics'),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1F2937),
@@ -730,7 +769,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                 child: _buildStatItem(
                   Icons.visibility_outlined,
                   '${widget.servicePosting.viewsCount}',
-                  'Views',
+                  LocalizationManager.translate('views'),
                   const Color(0xFF3B82F6),
                 ),
               ),
@@ -738,7 +777,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                 child: _buildStatItem(
                   Icons.message_outlined,
                   '${widget.servicePosting.contactsCount}',
-                  'Contacts',
+                  LocalizationManager.translate('contacts'),
                   const Color(0xFF10B981),
                 ),
               ),
@@ -749,7 +788,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     'Created ',
                     '',
                   ),
-                  'Posted',
+                  LocalizationManager.translate('posted'),
                   const Color(0xFF6B7280),
                 ),
               ),
@@ -798,26 +837,27 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Send Job Offer',
-            style: TextStyle(
+          Text(
+            LocalizationManager.translate('send_job_offer'),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1F2937),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Interested in hiring this helper? Send them a formal job offer with your requirements.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+          Text(
+            LocalizationManager.translate('send_job_offer_description'),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _messageController,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText:
-                  'Describe your job requirements and what you need help with...',
+              hintText: LocalizationManager.translate(
+                'describe_job_requirements',
+              ),
               hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
               filled: true,
               fillColor: Colors.white,
@@ -862,7 +902,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     )
                   : const Icon(Icons.send),
               label: Text(
-                _isContactingHelper ? 'Sending Job Offer...' : 'Send Job Offer',
+                _isContactingHelper
+                    ? LocalizationManager.translate('sending_job_offer')
+                    : LocalizationManager.translate('send_job_offer'),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

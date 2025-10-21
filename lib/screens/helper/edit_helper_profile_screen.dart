@@ -12,6 +12,7 @@ import '../../services/file_picker_service.dart';
 import '../../utils/constants/helper_constants.dart';
 import '../../utils/constants/barangay_constants.dart';
 import '../../utils/validators/form_validators.dart';
+import '../../localization_manager.dart';
 
 class EditHelperProfileScreen extends StatefulWidget {
   final Helper helper;
@@ -95,10 +96,14 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
       }
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error picking image: $e'),
+          content: Text(
+            '${LocalizationManager.translate('error_picking_image')}: $e',
+          ),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
         ),
       );
     }
@@ -108,10 +113,12 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_hasChanges) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No changes to save'),
+        SnackBar(
+          content: Text(LocalizationManager.translate('no_changes_to_save')),
           backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 3),
         ),
       );
       return;
@@ -153,24 +160,25 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
       if (result['success']) {
         // Update session with new data
         await SessionService.updateCurrentUser(result['helper'].toMap());
+
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message']),
+            content: Text(LocalizationManager.translate('message')),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
           ),
         );
 
-        Navigator.pop(
-          context,
-          true,
-        ); // Return true to indicate changes were saved
+        Navigator.pop(context, true); // Return true to indicate success
       } else {
-        _showErrorMessage(result['message']);
+        _showErrorMessage(LocalizationManager.translate(result['message']));
       }
     } catch (e) {
       if (!mounted) return;
-      _showErrorMessage('Update failed: $e');
+      _showErrorMessage(
+        '${LocalizationManager.translate('update_failed')}: $e',
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -205,8 +213,8 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
             ),
           ),
         ),
-        title: const Text(
-          'Edit Profile',
+        title: Text(
+          LocalizationManager.translate('edit_profile'),
           style: TextStyle(
             color: Color(0xFFFF8A50),
             fontSize: 20,
@@ -220,8 +228,8 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
               margin: const EdgeInsets.only(right: 16),
               child: TextButton(
                 onPressed: _isLoading ? null : _saveProfile,
-                child: const Text(
-                  'Save',
+                child: Text(
+                  LocalizationManager.translate('save'),
                   style: TextStyle(
                     color: Color(0xFFFF8A50),
                     fontSize: 16,
@@ -273,7 +281,7 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Helper Profile',
+                      LocalizationManager.translate('helper_profile'),
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
@@ -283,7 +291,9 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
               const SizedBox(height: 32),
 
               // Profile Picture Section
-              _buildSectionHeader('Profile Picture'),
+              _buildSectionHeader(
+                LocalizationManager.translate('profile_picture'),
+              ),
               const SizedBox(height: 16),
 
               ProfilePictureUploadField(
@@ -300,29 +310,36 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
               const SizedBox(height: 24),
 
               // Personal Information Section
-              _buildSectionHeader('Personal Information'),
+              _buildSectionHeader(
+                LocalizationManager.translate('personal_information'),
+              ),
               const SizedBox(height: 16),
 
               CustomTextField(
                 controller: _firstNameController,
-                label: 'First Name',
-                hint: 'Enter your first name',
-                validator: (value) =>
-                    FormValidators.validateRequired(value, 'first name'),
+                label: LocalizationManager.translate('first_name'),
+                hint: LocalizationManager.translate('enter_first_name'),
+                validator: (value) => FormValidators.validateRequired(
+                  value,
+                  LocalizationManager.translate('first_name'),
+                ),
               ),
 
               CustomTextField(
                 controller: _lastNameController,
-                label: 'Last Name',
-                hint: 'Enter your last name',
-                validator: (value) =>
-                    FormValidators.validateRequired(value, 'last name'),
+                label: LocalizationManager.translate('last_name'),
+                hint: LocalizationManager.translate('enter_last_name'),
+                validator: (value) => FormValidators.validateRequired(
+                  value,
+                  LocalizationManager.translate('last_name'),
+                ),
               ),
 
               const SizedBox(height: 24),
 
-              // Skills & Experience Section
-              _buildSectionHeader('Skills & Experience'),
+              _buildSectionHeader(
+                LocalizationManager.translate('skills_and_experience'),
+              ),
               const SizedBox(height: 16),
 
               SkillsDropdown(
@@ -349,17 +366,23 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
 
               const SizedBox(height: 24),
 
-              // Contact Information Section
-              _buildSectionHeader('Contact Information'),
+              _buildSectionHeader(
+                LocalizationManager.translate('contact_information'),
+              ),
               const SizedBox(height: 16),
 
-              _buildReadOnlyField('Email', widget.helper.email),
-              _buildReadOnlyField('Phone', widget.helper.phone),
+              _buildReadOnlyField(
+                LocalizationManager.translate('email'),
+                widget.helper.email,
+              ),
+              _buildReadOnlyField(
+                LocalizationManager.translate('phone'),
+                widget.helper.phone,
+              ),
 
               const SizedBox(height: 24),
 
-              // Location Section
-              _buildSectionHeader('Location'),
+              _buildSectionHeader(LocalizationManager.translate('location')),
               const SizedBox(height: 16),
 
               BarangayDropdown(
@@ -369,15 +392,14 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                     ? _selectedMunicipality
                     : null,
                 barangayList: LocationConstants.getSortedMunicipalities(),
-                label: 'Select Municipality',
-                hint: 'Select your Municipality',
+                label: LocalizationManager.translate('select_municipality'),
+                hint: LocalizationManager.translate('select_your_municipality'),
                 onChanged: (String? value) {
                   setState(() {
                     _selectedMunicipality = value;
-                    // Update barangay list based on selected municipality
                     _barangayList =
                         LocationConstants.municipalityBarangays[value] ?? [];
-                    _selectedBarangay = null; // reset barangay selection
+                    _selectedBarangay = null;
                   });
                 },
               ),
@@ -389,11 +411,10 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                     ? _selectedBarangay
                     : null,
                 barangayList: _barangayList,
-                label: 'Select Barangay',
-                hint: 'Select your barangay',
+                label: LocalizationManager.translate('select_barangay'),
+                hint: LocalizationManager.translate('select_your_barangay'),
                 onChanged: (String? value) {
                   setState(() {
-                    // Only allow values that exist in _barangayList
                     if (value == null || _barangayList.contains(value)) {
                       _selectedBarangay = value;
                     }
@@ -416,18 +437,22 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
               const SizedBox(height: 24),
 
               // Documents Section
-              _buildSectionHeader('Documents'),
+              _buildSectionHeader(LocalizationManager.translate('documents')),
               const SizedBox(height: 16),
 
               FileUploadField(
-                label: 'Barangay Clearance Image',
+                label: LocalizationManager.translate(
+                  'barangay_clearance_image',
+                ),
                 fileName:
                     _barangayClearanceFileName ??
                     (widget.helper.barangayClearanceBase64 != null
-                        ? 'Current document'
+                        ? LocalizationManager.translate('current_document')
                         : null),
                 onTap: _pickBarangayClearance,
-                placeholder: 'Upload Barangay Clearance Image (JPG, PNG)',
+                placeholder: LocalizationManager.translate(
+                  'upload_barangay_clearance_image',
+                ),
               ),
 
               const SizedBox(height: 32),
@@ -459,7 +484,9 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                           ),
                         )
                       : Text(
-                          _hasChanges ? 'Save Changes' : 'No Changes',
+                          _hasChanges
+                              ? LocalizationManager.translate('save_changes')
+                              : LocalizationManager.translate('no_changes'),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

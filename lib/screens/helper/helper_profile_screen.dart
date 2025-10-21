@@ -10,6 +10,7 @@ import '../role_selection_screen.dart';
 import '../rating/user_ratings_screen.dart';
 import 'edit_helper_profile_screen.dart';
 import 'helper_subscription_screen.dart';
+import '../../localization_manager.dart';
 
 class HelperProfileScreen extends StatefulWidget {
   const HelperProfileScreen({super.key});
@@ -47,7 +48,7 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
           // Load rating statistics
           final stats = await _ratingService.getUserRatingStatistics(
             finalHelper.id,
-            'helper',
+            LocalizationManager.translate('helper'),
           );
 
           if (mounted) {
@@ -61,7 +62,7 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
           // Load rating statistics for cached helper
           final stats = await _ratingService.getUserRatingStatistics(
             helper.id,
-            'helper',
+            LocalizationManager.translate('helper'),
           );
 
           if (mounted) {
@@ -108,12 +109,14 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(LocalizationManager.translate('logout')),
+        content: Text(
+          LocalizationManager.translate('are_you_sure_you_want_to_logout'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(LocalizationManager.translate('cancel')),
           ),
           TextButton(
             onPressed: () async {
@@ -122,14 +125,12 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
               if (!mounted) return;
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const RoleSelectionScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
                 (route) => false,
               );
             },
-            child: const Text(
-              'Logout',
+            child: Text(
+              LocalizationManager.translate('logout'),
               style: TextStyle(color: Colors.red),
             ),
           ),
@@ -144,9 +145,7 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
       return const Scaffold(
         backgroundColor: Colors.white,
         body: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF8A50),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFFF8A50)),
         ),
       );
     }
@@ -158,18 +157,11 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.grey,
-              ),
+              const Icon(Icons.error_outline, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text(
-                'Unable to load profile',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                ),
+              Text(
+                LocalizationManager.translate('unable_to_load_profile'),
+                style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -178,7 +170,7 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Logout'),
+                child: Text(LocalizationManager.translate('logout')),
               ),
             ],
           ),
@@ -233,7 +225,7 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Helper',
+                        LocalizationManager.translate('helper'),
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.white.withValues(alpha: 0.9),
@@ -247,15 +239,36 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
 
                 // Profile Information
                 _buildInfoSection(
-                  'Personal Informationss',
+                  LocalizationManager.translate('personal_information'),
                   [
-                    _buildInfoRow('First Name', _currentHelper!.firstName),
-                    _buildInfoRow('Last Name', _currentHelper!.lastName),
-                    _buildInfoRow('Birth date', _currentHelper!.barangay),
-                    _buildInfoRow('Age', '${_currentHelper!.age} years old'),
-                    _buildInfoRow('Email', _currentHelper!.email),
-                    _buildInfoRow('Phone', _currentHelper!.phone),
-                    _buildInfoRow('Barangay', _currentHelper!.barangay),
+                    _buildInfoRow(
+                      LocalizationManager.translate('first_name'),
+                      _currentHelper!.firstName,
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('last_name'),
+                      _currentHelper!.lastName,
+                    ),
+                    // _buildInfoRow(
+                    //   LocalizationManager.translate('birth_date'),
+                    //   _currentHelper!.barangay,
+                    // ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('age'),
+                      '${_currentHelper!.age} years old',
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('email'),
+                      _currentHelper!.email,
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('phone'),
+                      _currentHelper!.phone,
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('barangay'),
+                      _currentHelper!.barangay,
+                    ),
                   ],
                 ),
 
@@ -263,11 +276,16 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
 
                 // Skills & Experience Information
                 _buildInfoSection(
-                  'Skills & Experience',
+                  LocalizationManager.translate('skills_experience'),
                   [
-                    _buildInfoRow('Primary Skill', _currentHelper!.skill),
                     _buildInfoRow(
-                        'Experience Level', _currentHelper!.experience),
+                      LocalizationManager.translate('primary_skill'),
+                      _currentHelper!.skill,
+                    ),
+                    _buildInfoRow(
+                      LocalizationManager.translate('experience_level'),
+                      _currentHelper!.experience,
+                    ),
                   ],
                 ),
 
@@ -275,15 +293,21 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
 
                 // Account Information
                 _buildInfoSection(
-                  'Account Information',
+                  LocalizationManager.translate('account_information'),
                   [
                     _buildInfoRow(
-                        'Member Since', _formatDate(_currentHelper!.createdAt)),
+                      LocalizationManager.translate('member_since'),
+                      _formatDate(_currentHelper!.createdAt),
+                    ),
                     _buildInfoRow(
-                        'Last Updated', _formatDate(_currentHelper!.updatedAt)),
+                      LocalizationManager.translate('last_updated'),
+                      _formatDate(_currentHelper!.updatedAt),
+                    ),
                     _buildInfoRow(
-                      'Verification Status',
-                      _currentHelper!.isVerified ? 'Verified' : 'Pending',
+                      LocalizationManager.translate('verification_status'),
+                      _currentHelper!.isVerified
+                          ? LocalizationManager.translate('verified')
+                          : LocalizationManager.translate('pending'),
                       valueColor: _currentHelper!.isVerified
                           ? Colors.green
                           : Colors.orange,
@@ -308,9 +332,11 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                       children: [
                         Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Text(
-                                'My Ratings & Reviews',
+                                LocalizationManager.translate(
+                                  'my_ratings_reviews',
+                                ),
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -331,8 +357,8 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                                   ),
                                 );
                               },
-                              child: const Text(
-                                'View All',
+                              child: Text(
+                                LocalizationManager.translate('view_all'),
                                 style: TextStyle(
                                   color: Color(0xFFFF8A50),
                                   fontSize: 14,
@@ -361,8 +387,8 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _navigateToEditProfile,
                         icon: const Icon(Icons.edit),
-                        label: const Text(
-                          'Edit Profile',
+                        label: Text(
+                          LocalizationManager.translate('edit_profile'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -371,7 +397,9 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFFFF8A50),
                           side: const BorderSide(
-                              color: Color(0xFFFF8A50), width: 2),
+                            color: Color(0xFFFF8A50),
+                            width: 2,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -393,8 +421,8 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                           );
                         },
                         icon: const Icon(Icons.credit_card),
-                        label: const Text(
-                          'Manage Subscription',
+                        label: Text(
+                          LocalizationManager.translate('manage_subscription'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -416,8 +444,8 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _logout,
                         icon: const Icon(Icons.logout),
-                        label: const Text(
-                          'Logout',
+                        label: Text(
+                          LocalizationManager.translate('logout'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

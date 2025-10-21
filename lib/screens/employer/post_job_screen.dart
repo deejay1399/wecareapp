@@ -353,7 +353,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                           ),
                           border: InputBorder.none,
                           hintText: LocalizationManager.translate(
-                            'enter_amount_(e.g., 500.00)',
+                            'enter_amount',
                           ),
                           hintStyle: TextStyle(
                             color: Color(0xFF9CA3AF),

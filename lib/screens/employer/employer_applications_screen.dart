@@ -369,101 +369,122 @@ class _EmployerApplicationsScreenState
 
   Widget _buildEmptyState() {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Icon container
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1565C0).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: const Color(0xFF1565C0).withValues(alpha: 0.2),
-                  width: 2,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 400, // Prevent wide text overflow on small screens
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Icon container
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1565C0).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: const Color(0xFF1565C0).withOpacity(0.2),
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.inbox_outlined,
+                  size: 60,
+                  color: Color(0xFF1565C0),
                 ),
               ),
-              child: const Icon(
-                Icons.inbox_outlined,
-                size: 60,
-                color: Color(0xFF1565C0),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              LocalizationManager.translate('no_applications_yet'),
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1F2937),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                LocalizationManager.translate(
-                  'once_you_post_jobs_helper_applications_will_appear_here_for_you_to_review_and_manage',
+              const SizedBox(height: 32),
+
+              // Title
+              Text(
+                LocalizationManager.translate('no_applications_yet'),
+                textAlign: TextAlign.center,
+                softWrap: true,
+                overflow: TextOverflow.visible,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
                 ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Subtitle
+              Text(
+                LocalizationManager.translate('once_you_post_jobs'),
+                textAlign: TextAlign.center,
+                softWrap: true,
+                overflow: TextOverflow.visible,
                 style: const TextStyle(
                   fontSize: 16,
                   color: Color(0xFF6B7280),
                   height: 1.5,
                 ),
-                textAlign: TextAlign.center,
               ),
-            ),
 
-            const SizedBox(height: 32),
-            // Benefits list
-            Column(
-              children: [
-                _buildBenefitItem(
-                  Icons.person_search,
-                  LocalizationManager.translate(
-                    'review_helper_profiles_and_ratings',
+              const SizedBox(height: 32),
+
+              // Benefits
+              Column(
+                children: [
+                  _buildBenefitItem(
+                    Icons.person_search,
+                    LocalizationManager.translate(
+                      'review_helper_profiles_and_ratings',
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildBenefitItem(
-                  Icons.chat_bubble_outline,
-                  LocalizationManager.translate(
-                    'read_applicants_message_and_experience',
+                  const SizedBox(height: 12),
+                  _buildBenefitItem(
+                    Icons.chat_bubble_outline,
+                    LocalizationManager.translate(
+                      'read_applicants_message_and_experience',
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildBenefitItem(
-                  Icons.thumb_up_outlined,
-                  LocalizationManager.translate(
-                    'accept_or_reject_applications_easily',
+                  const SizedBox(height: 12),
+                  _buildBenefitItem(
+                    Icons.thumb_up_outlined,
+                    LocalizationManager.translate(
+                      'accept_or_reject_applications_easily',
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildBenefitItem(IconData icon, String text) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 20, color: const Color(0xFF1565C0)),
-        const SizedBox(width: 12),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF6B7280),
-            fontWeight: FontWeight.w500,
+    return Center(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: const Color(0xFF1565C0)),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              softWrap: true,
+              overflow: TextOverflow.visible,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF6B7280),
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

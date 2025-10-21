@@ -434,6 +434,7 @@ import '../../widgets/feature/best_matches_widget.dart';
 import '../../widgets/feature/saved_jobs_widget.dart';
 import 'apply_job_screen.dart';
 import '../../utils/constants/barangay_constants.dart';
+import '../../localization_manager.dart';
 
 class HelperFindJobsScreen extends StatefulWidget {
   const HelperFindJobsScreen({super.key});
@@ -557,8 +558,10 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
   Future<void> _onJobTap(JobPosting job) async {
     if (_currentHelper == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in to apply for jobs'),
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('please_log_in_to_apply_for_jobs'),
+          ),
           backgroundColor: Color(0xFFFF9800),
         ),
       );
@@ -571,8 +574,12 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
       );
       if (hasApplied && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You have already applied to this job'),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate(
+                'you_have_already_applied_to_this_job',
+              ),
+            ),
             backgroundColor: Color(0xFFFF9800),
           ),
         );
@@ -590,8 +597,12 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
           _appliedJobIds.add(job.id);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Application submitted successfully!'),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate(
+                'application_submitted_successfully',
+              ),
+            ),
             backgroundColor: Color(0xFF10B981),
           ),
         );
@@ -599,7 +610,10 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('${LocalizationManager.translate('error')}: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -608,8 +622,10 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
   Future<void> _onSaveToggle(JobPosting job, bool shouldSave) async {
     if (_currentHelper == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in to save jobs'),
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('please_log_in_to_save_jobs'),
+          ),
           backgroundColor: Color(0xFFFF9800),
         ),
       );
@@ -628,7 +644,9 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Saved "${job.title}" to your bookmarks'),
+              content: Text(
+                '${LocalizationManager.translate('saved')} "${job.title}" ${LocalizationManager.translate('to_your_bookmarks')}',
+              ),
               backgroundColor: const Color(0xFF10B981),
             ),
           );
@@ -645,7 +663,9 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Removed "${job.title}" from bookmarks'),
+              content: Text(
+                '${LocalizationManager.translate('removed')} "${job.title}" ${LocalizationManager.translate('from_bookmarks')}',
+              ),
               backgroundColor: const Color(0xFF6B7280),
             ),
           );
@@ -655,7 +675,9 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving job: $e'),
+            content: Text(
+              '${LocalizationManager.translate('error_saving_job')}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -766,9 +788,9 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Find Jobs',
+                  LocalizationManager.translate('find_jobs'),
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -832,19 +854,26 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Location: ${_currentHelper!.barangay}',
+                    LocalizationManager.translate(
+                      'locations',
+                      params: {'barangay': _currentHelper!.barangay},
+                    ),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFFFF8A50),
                     ),
                   ),
+
                   const SizedBox(width: 16),
                   const Icon(Icons.work, size: 16, color: Color(0xFFFF8A50)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Skills: ${_currentHelper!.skill}',
+                      LocalizationManager.translate(
+                        'skill',
+                        params: {'skills': _currentHelper!.skill},
+                      ),
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -874,8 +903,10 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
                 child: DropdownButtonFormField<String>(
                   initialValue: _selectedMunicipality,
                   decoration: InputDecoration(
-                    labelText: 'Municipality',
-                    hintText: 'Select municipality',
+                    labelText: LocalizationManager.translate('municipality'),
+                    hintText: LocalizationManager.translate(
+                      'select_municipality',
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -898,7 +929,9 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
               ),
               const SizedBox(width: 8),
               IconButton(
-                tooltip: 'Clear location filters',
+                tooltip: LocalizationManager.translate(
+                  'clear_location_filters',
+                ),
                 icon: const Icon(Icons.clear, color: Color(0xFFFF8A50)),
                 onPressed: () {
                   setState(() {
@@ -916,8 +949,8 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
           DropdownButtonFormField<String>(
             initialValue: _selectedBarangay,
             decoration: InputDecoration(
-              labelText: 'Barangay',
-              hintText: 'Select barangay',
+              labelText: LocalizationManager.translate('barangay'),
+              hintText: LocalizationManager.translate('select_barangay'),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

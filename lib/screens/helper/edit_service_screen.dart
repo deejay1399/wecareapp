@@ -5,14 +5,12 @@ import '../../widgets/forms/custom_text_field.dart';
 import '../../utils/validators/form_validators.dart';
 import '../../utils/constants/helper_constants.dart';
 import '../../utils/constants/barangay_constants.dart';
+import '../../localization_manager.dart';
 
 class EditServiceScreen extends StatefulWidget {
   final HelperServicePosting servicePosting;
 
-  const EditServiceScreen({
-    super.key,
-    required this.servicePosting,
-  });
+  const EditServiceScreen({super.key, required this.servicePosting});
 
   @override
   State<EditServiceScreen> createState() => _EditServiceScreenState();
@@ -23,7 +21,7 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _hourlyRateController = TextEditingController();
-  
+
   List<String> _selectedSkills = [];
   String _selectedExperience = '';
   String _selectedAvailability = '';
@@ -34,10 +32,10 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
   bool _isUpdatingStatus = false;
 
   final List<String> _availabilityOptions = [
-    'Full-time',
-    'Part-time', 
-    'Weekends',
-    'Flexible'
+    LocalizationManager.translate('full_time'),
+    LocalizationManager.translate('part_time'),
+    LocalizationManager.translate('weekends'),
+    LocalizationManager.translate('flexible'),
   ];
 
   @override
@@ -66,14 +64,15 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
   }
 
   Future<void> _saveChanges() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     if (_selectedSkills.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one skill'),
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('please_select_one_skill'),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -81,18 +80,19 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
     }
 
     if (_selectedAreas.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one service area'),
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('please_select_one_service_area'),
+          ),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
 
     try {
       await HelperServicePostingService.updateServicePosting(
@@ -106,29 +106,30 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
         serviceAreas: _selectedAreas,
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Service updated successfully!'),
-            backgroundColor: Color(0xFF10B981),
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('service_updated_successfully'),
           ),
-        );
-        Navigator.pop(context, true); // Return true to indicate success
-      }
+          backgroundColor: const Color(0xFF10B981),
+        ),
+      );
+
+      Navigator.pop(context, true); // Return true to indicate success
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update service: $e'),
-            backgroundColor: Colors.red,
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${LocalizationManager.translate('failed_to_update_service')}: $e',
           ),
-        );
-      }
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -138,21 +139,19 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Service'),
-        content: const Text(
-          'Are you sure you want to delete this service posting? This action cannot be undone.',
+        title: Text(LocalizationManager.translate('delete_service')),
+        content: Text(
+          LocalizationManager.translate('confirm_delete_service_message'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(LocalizationManager.translate('cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
-            child: const Text('Delete'),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(LocalizationManager.translate('delete')),
           ),
         ],
       ),
@@ -160,46 +159,43 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
 
     if (confirmed != true) return;
 
-    setState(() {
-      _isDeleting = true;
-    });
+    setState(() => _isDeleting = true);
 
     try {
-      await HelperServicePostingService.deleteServicePosting(widget.servicePosting.id);
+      await HelperServicePostingService.deleteServicePosting(
+        widget.servicePosting.id,
+      );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Service deleted successfully'),
-            backgroundColor: Color(0xFF10B981),
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('service_deleted_successfully'),
           ),
-        );
-        Navigator.pop(context, 'deleted'); // Return 'deleted' to indicate deletion
-      }
+          backgroundColor: const Color(0xFF10B981),
+        ),
+      );
+
+      Navigator.pop(context, 'deleted');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to delete service: $e'),
-            backgroundColor: Colors.red,
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${LocalizationManager.translate('failed_to_delete_service')}: $e',
           ),
-        );
-      }
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isDeleting = false;
-        });
-      }
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
 
   Future<void> _toggleServiceStatus() async {
     final newStatus = _currentStatus == 'active' ? 'paused' : 'active';
-    
-    setState(() {
-      _isUpdatingStatus = true;
-    });
+
+    setState(() => _isUpdatingStatus = true);
 
     try {
       await HelperServicePostingService.updateServicePostingStatus(
@@ -207,39 +203,37 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
         newStatus,
       );
 
-      if (mounted) {
-        setState(() {
-          _currentStatus = newStatus;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              newStatus == 'active' 
-                ? 'Service is now active and visible to employers' 
-                : 'Service is now paused and hidden from employers',
-            ),
-            backgroundColor: newStatus == 'active' 
-                ? const Color(0xFF10B981) 
-                : const Color(0xFFF59E0B),
+      if (!mounted) return;
+
+      setState(() {
+        _currentStatus = newStatus;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newStatus == 'active'
+                ? LocalizationManager.translate('service_now_active')
+                : LocalizationManager.translate('service_now_paused'),
           ),
-        );
-      }
+          backgroundColor: newStatus == 'active'
+              ? const Color(0xFF10B981)
+              : const Color(0xFFF59E0B),
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update service status: $e'),
-            backgroundColor: Colors.red,
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${LocalizationManager.translate('failed_to_update_service_status')}: $e',
           ),
-        );
-      }
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isUpdatingStatus = false;
-        });
-      }
+      if (mounted) setState(() => _isUpdatingStatus = false);
     }
   }
 
@@ -259,11 +253,11 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
   String get _statusDisplayText {
     switch (_currentStatus) {
       case 'active':
-        return 'Active';
+        return LocalizationManager.translate('status_active');
       case 'paused':
-        return 'Paused';
+        return LocalizationManager.translate('status_paused');
       case 'inactive':
-        return 'Inactive';
+        return LocalizationManager.translate('status_inactive');
       default:
         return _currentStatus;
     }
@@ -275,10 +269,7 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,14 +277,16 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
           Row(
             children: [
               Icon(
-                _currentStatus == 'active' ? Icons.visibility : Icons.visibility_off,
+                _currentStatus == 'active'
+                    ? Icons.visibility
+                    : Icons.visibility_off,
                 color: _statusColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Service Visibility',
-                style: TextStyle(
+              Text(
+                LocalizationManager.translate('service_visibility'),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1F2937),
@@ -327,7 +320,7 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Status: $_statusDisplayText',
+                      '${LocalizationManager.translate('status')}: $_statusDisplayText',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -339,8 +332,12 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
                 const SizedBox(height: 8),
                 Text(
                   _currentStatus == 'active'
-                      ? 'Your service is currently visible to employers and they can contact you.'
-                      : 'Your service is currently hidden from employers. Activate it to start receiving contacts.',
+                      ? LocalizationManager.translate(
+                          'service_visible_description',
+                        )
+                      : LocalizationManager.translate(
+                          'service_hidden_description',
+                        ),
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -353,10 +350,12 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton.icon(
-                      onPressed: _isUpdatingStatus ? null : _toggleServiceStatus,
+                      onPressed: _isUpdatingStatus
+                          ? null
+                          : _toggleServiceStatus,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _currentStatus == 'active' 
-                            ? const Color(0xFFF59E0B) 
+                        backgroundColor: _currentStatus == 'active'
+                            ? const Color(0xFFF59E0B)
                             : const Color(0xFF10B981),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
@@ -369,17 +368,21 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : Icon(
-                              _currentStatus == 'active' ? Icons.pause : Icons.play_arrow,
+                              _currentStatus == 'active'
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
                               size: 20,
                             ),
                       label: Text(
-                        _currentStatus == 'active' 
-                            ? 'Pause Service' 
-                            : 'Activate Service',
+                        _currentStatus == 'active'
+                            ? LocalizationManager.translate('pause_service')
+                            : LocalizationManager.translate('activate_service'),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -402,31 +405,24 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Edit Your Service',
-            style: TextStyle(
+          Text(
+            LocalizationManager.translate('edit_your_service'),
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1F2937),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Update your service details to attract more employers',
-            style: TextStyle(
-              fontSize: 16,
-              color: Color(0xFF6B7280),
-            ),
+          Text(
+            LocalizationManager.translate('update_service_details'),
+            style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
           ),
-
         ],
       ),
     );
@@ -438,55 +434,53 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-                         // Service Title
-             CustomTextField(
-               controller: _titleController,
-               label: 'Service Title',
-               hint: 'What service do you offer?',
-               validator: (value) => FormValidators.validateRequired(value, 'service title'),
-             ),
+            // Service Title
+            CustomTextField(
+              controller: _titleController,
+              label: LocalizationManager.translate('service_title'),
+              hint: LocalizationManager.translate('service_title_hint'),
+              validator: (value) => FormValidators.validateRequired(
+                value,
+                LocalizationManager.translate('service_title'),
+              ),
+            ),
 
-             // Description
-             CustomTextField(
-               controller: _descriptionController,
-               label: 'Service Description',
-               hint: 'Describe your service in detail',
-               validator: (value) => FormValidators.validateRequired(value, 'service description'),
-             ),
+            // Description
+            CustomTextField(
+              controller: _descriptionController,
+              label: LocalizationManager.translate('service_description'),
+              hint: LocalizationManager.translate('service_description_hint'),
+              validator: (value) => FormValidators.validateRequired(
+                value,
+                LocalizationManager.translate('service_description'),
+              ),
+            ),
 
-             // Skills - Create a multi-select dropdown
-             _buildSkillsSelector(),
-
-             const SizedBox(height: 20),
-
-             // Experience Level
-             _buildExperienceDropdown(),
-
+            _buildSkillsSelector(),
+            const SizedBox(height: 20),
+            _buildExperienceDropdown(),
             const SizedBox(height: 20),
 
             // Hourly Rate
             CustomTextField(
               controller: _hourlyRateController,
-              label: 'Hourly Rate (₱)',
-              hint: 'Enter your hourly rate',
+              label: LocalizationManager.translate('hourly_rate'),
+              hint: LocalizationManager.translate('hourly_rate_hint'),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter hourly rate';
+                  return LocalizationManager.translate('enter_hourly_rate');
                 }
                 final rate = double.tryParse(value);
                 if (rate == null || rate <= 0) {
-                  return 'Please enter a valid hourly rate';
+                  return LocalizationManager.translate('invalid_hourly_rate');
                 }
                 return null;
               },
@@ -496,9 +490,11 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
 
             // Availability
             DropdownButtonFormField<String>(
-              initialValue: _selectedAvailability.isEmpty ? null : _selectedAvailability,
+              initialValue: _selectedAvailability.isEmpty
+                  ? null
+                  : _selectedAvailability,
               decoration: InputDecoration(
-                labelText: 'Availability',
+                labelText: LocalizationManager.translate('availability'),
                 labelStyle: const TextStyle(
                   color: Color(0xFF374151),
                   fontWeight: FontWeight.w600,
@@ -511,15 +507,18 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFFF8A50), width: 2),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFFF8A50),
+                    width: 2,
+                  ),
                 ),
               ),
-              items: _availabilityOptions.map((option) {
-                return DropdownMenuItem(
-                  value: option,
-                  child: Text(option),
-                );
-              }).toList(),
+              items: _availabilityOptions
+                  .map(
+                    (option) =>
+                        DropdownMenuItem(value: option, child: Text(option)),
+                  )
+                  .toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedAvailability = value ?? '';
@@ -527,16 +526,14 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
               },
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please select availability';
+                  return LocalizationManager.translate('select_availability');
                 }
                 return null;
               },
             ),
 
             const SizedBox(height: 20),
-
-                         // Service Areas
-             _buildServiceAreasSelector(),
+            _buildServiceAreasSelector(),
           ],
         ),
       ),
@@ -547,9 +544,9 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Skills & Expertise',
-          style: TextStyle(
+        Text(
+          LocalizationManager.translate('skills_and_expertise'),
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: Color(0xFF1565C0),
@@ -592,14 +589,19 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
   }
 
   Widget _buildExperienceDropdown() {
-    final experienceLevels = ['Entry Level', 'Intermediate', 'Experienced', 'Expert'];
-    
+    final experienceLevels = [
+      LocalizationManager.translate('entry_level'),
+      LocalizationManager.translate('intermediate'),
+      LocalizationManager.translate('experienced'),
+      LocalizationManager.translate('expert'),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Experience Level',
-          style: TextStyle(
+        Text(
+          LocalizationManager.translate('experience_level'),
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: Color(0xFF1565C0),
@@ -616,11 +618,14 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedExperience.isEmpty ? null : _selectedExperience,
-              hint: const Text(
-                'Select experience level',
-                style: TextStyle(color: Color(0xFF9E9E9E)),
+              hint: Text(
+                LocalizationManager.translate('select_experience_level'),
+                style: const TextStyle(color: Color(0xFF9E9E9E)),
               ),
-              icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF1565C0)),
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Color(0xFF1565C0),
+              ),
               isExpanded: true,
               items: experienceLevels.map((String experience) {
                 return DropdownMenuItem<String>(
@@ -645,9 +650,9 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Service Areas',
-          style: TextStyle(
+        Text(
+          LocalizationManager.translate('service_areas'),
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: Color(0xFF1565C0),
@@ -695,10 +700,7 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
         children: [
@@ -716,30 +718,32 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
                 ),
               ),
               child: _isSaving
-                  ? const Row(
+                  ? Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Text(
-                          'Saving Changes...',
-                          style: TextStyle(
+                          LocalizationManager.translate('saving_changes'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     )
-                  : const Text(
-                      'Save Changes',
-                      style: TextStyle(
+                  : Text(
+                      LocalizationManager.translate('save_changes'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -763,30 +767,32 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
                 ),
               ),
               child: _isDeleting
-                  ? const Row(
+                  ? Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.red,
+                            ),
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Text(
-                          'Deleting Service...',
-                          style: TextStyle(
+                          LocalizationManager.translate('deleting_service'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     )
-                  : const Text(
-                      'Delete Service',
-                      style: TextStyle(
+                  : Text(
+                      LocalizationManager.translate('delete_service'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -805,8 +811,8 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Edit Service',
+        title: Text(
+          LocalizationManager.translate('edit_service'),
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -815,10 +821,7 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
         ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFFFF8A50),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8A50)),
         ),
       ),
       body: SafeArea(

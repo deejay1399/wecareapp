@@ -5,6 +5,7 @@ import '../../services/session_service.dart';
 import '../../utils/constants/barangay_constants.dart';
 import '../../widgets/forms/custom_text_field.dart';
 import '../../widgets/forms/skills_input_field.dart';
+import '../../localization_manager.dart';
 
 class PostServiceScreen extends StatefulWidget {
   const PostServiceScreen({super.key});
@@ -27,17 +28,17 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
   bool _isLoading = false;
 
   final List<String> _experienceLevels = [
-    'Entry Level',
-    'Intermediate',
-    'Experienced',
-    'Expert',
+    LocalizationManager.translate('entry_level'),
+    LocalizationManager.translate('intermediate'),
+    LocalizationManager.translate('experienced'),
+    LocalizationManager.translate('expert'),
   ];
 
   final List<String> _availabilityOptions = [
-    'Full-time',
-    'Part-time',
-    'Weekends',
-    'Flexible',
+    LocalizationManager.translate('full_time'),
+    LocalizationManager.translate('part_time'),
+    LocalizationManager.translate('weekends'),
+    LocalizationManager.translate('flexible'),
   ];
 
   @override
@@ -74,8 +75,12 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
 
     if (_skills.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one skill to showcase your expertise'),
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate(
+              'please_add_at_least_one_skill_to_showcase_your_expertise',
+            ),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -84,8 +89,12 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
 
     if (_selectedServiceAreas.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select where you can provide your services'),
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate(
+              'please_select_where_you_can_provide_your_services',
+            ),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -111,8 +120,10 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Your service is now live! Employers can find and contact you.'),
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('your_service_is_now_live'),
+            ),
             backgroundColor: Color(0xFF10B981),
             duration: Duration(seconds: 4),
           ),
@@ -122,7 +133,9 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to post service: $e'),
+            content: Text(
+              '${LocalizationManager.translate('failed_to_post_service')}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -153,10 +166,7 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
               value: level,
               child: Text(
                 level,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF1F2937),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF1F2937)),
               ),
             );
           }).toList(),
@@ -190,10 +200,7 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
               value: option,
               child: Text(
                 option,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF1F2937),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF1F2937)),
               ),
             );
           }).toList(),
@@ -214,8 +221,8 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Where Can You Provide Services?',
+        Text(
+          LocalizationManager.translate('where_can_you_provide_services'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -223,12 +230,9 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Select the municipalities in Bohol where you can offer your services',
-          style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFF6B7280),
-          ),
+        Text(
+          LocalizationManager.translate('select_the_municipalities'),
+          style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
         ),
         const SizedBox(height: 12),
         Container(
@@ -244,15 +248,21 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: LocationConstants.boholMunicipalities.map((municipality) {
-                  final isSelected = _selectedServiceAreas.contains(municipality);
+                children: LocationConstants.boholMunicipalities.map((
+                  municipality,
+                ) {
+                  final isSelected = _selectedServiceAreas.contains(
+                    municipality,
+                  );
                   return FilterChip(
                     label: Text(
                       municipality,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF6B7280),
                       ),
                     ),
                     selected: isSelected,
@@ -269,8 +279,8 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                     selectedColor: const Color(0xFFFF8A50),
                     checkmarkColor: Colors.white,
                     side: BorderSide(
-                      color: isSelected 
-                          ? const Color(0xFFFF8A50) 
+                      color: isSelected
+                          ? const Color(0xFFFF8A50)
                           : const Color(0xFFE5E7EB),
                     ),
                   );
@@ -290,8 +300,8 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Offer Your Services',
+        title: Text(
+          LocalizationManager.translate('offer_your_services'),
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -300,10 +310,7 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
         ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF6B7280),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF6B7280)),
         ),
       ),
       body: SafeArea(
@@ -334,7 +341,9 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF8A50).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFFFF8A50,
+                              ).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -344,12 +353,14 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Showcase Your Skills',
+                                  LocalizationManager.translate(
+                                    'showcase_your_skills',
+                                  ),
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -357,7 +368,9 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                                   ),
                                 ),
                                 Text(
-                                  'Let employers know what services you can provide',
+                                  LocalizationManager.translate(
+                                    'let_employers_know_services',
+                                  ),
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF6B7280),
@@ -375,8 +388,8 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                 const SizedBox(height: 32),
 
                 // Service Title
-                const Text(
-                  'What Service Do You Offer?',
+                Text(
+                  LocalizationManager.translate('what_service_do_you_offer'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -387,10 +400,12 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                 CustomTextField(
                   controller: _titleController,
                   label: '',
-                  hint: 'e.g., Professional House Cleaning, Gardening Services, Tutoring',
+                  hint: LocalizationManager.translate('service_title_hint'),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter what service you offer';
+                      return LocalizationManager.translate(
+                        'please_enter_service',
+                      );
                     }
                     return null;
                   },
@@ -399,8 +414,8 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                 const SizedBox(height: 24),
 
                 // Description
-                const Text(
-                  'Describe What You Can Do',
+                Text(
+                  LocalizationManager.translate('describe_what_you_can_do'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -408,12 +423,9 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Tell employers about your service, experience, and what makes you the best choice',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
-                  ),
+                Text(
+                  LocalizationManager.translate('tell_employers'),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -421,16 +433,25 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                   maxLines: 5,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please describe what you can do';
+                      return LocalizationManager.translate(
+                        'please_describe_service',
+                      );
                     }
                     if (value.trim().length < 20) {
-                      return 'Please provide more details (at least 20 characters)';
+                      return LocalizationManager.translate(
+                        'describe_service_min_20',
+                      );
                     }
                     return null;
                   },
                   decoration: InputDecoration(
-                    hintText: 'I provide professional house cleaning services with 3+ years experience. I can deep clean kitchens, bathrooms, and living areas. I use eco-friendly products and ensure every corner is spotless...',
-                    hintStyle: const TextStyle(color: Color(0xFF9E9E9E), fontSize: 14),
+                    hintText: LocalizationManager.translate(
+                      'service_description_hint',
+                    ),
+                    hintStyle: const TextStyle(
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 14,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -439,21 +460,27 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF8A50), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF8A50),
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Colors.red, width: 1),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
                 ),
 
                 const SizedBox(height: 24),
 
                 // Skills
-                const Text(
-                  'Your Skills & Expertise',
+                Text(
+                  LocalizationManager.translate('your_skills_expertise'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -461,12 +488,9 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Add skills that showcase your abilities and help employers find you',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
-                  ),
+                Text(
+                  LocalizationManager.translate('add_skills_to_showcase'),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 8),
                 SkillsInputField(
@@ -476,14 +500,14 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                       _skills = newSkills;
                     });
                   },
-                  hintText: 'e.g., House Cleaning, Cooking, Gardening...',
+                  hintText: LocalizationManager.translate('e.g.'),
                 ),
 
                 const SizedBox(height: 24),
 
                 // Experience Level
-                const Text(
-                  'Your Experience Level',
+                Text(
+                  LocalizationManager.translate('your_experience_level'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -491,12 +515,11 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Help employers understand your level of expertise',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
+                Text(
+                  LocalizationManager.translate(
+                    'help_employers_understand_expertise',
                   ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 8),
                 _buildExperienceDropdown(),
@@ -504,8 +527,8 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                 const SizedBox(height: 24),
 
                 // Hourly Rate
-                const Text(
-                  'Your Service Rate (₱/hour)',
+                Text(
+                  LocalizationManager.translate('your_service_rate'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -513,29 +536,28 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Set your competitive hourly rate that reflects your skills and experience',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
-                  ),
+                Text(
+                  LocalizationManager.translate('set_competitive_rate_hint'),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 8),
                 CustomTextField(
                   controller: _hourlyRateController,
                   label: '',
-                  hint: 'e.g., 200 (competitive rates: ₱150-300/hour)',
+                  hint: LocalizationManager.translate('hourly_rate_hint'),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your service rate';
+                      return LocalizationManager.translate('hourly_rate_empty');
                     }
                     final rate = double.tryParse(value);
                     if (rate == null || rate <= 0) {
-                      return 'Please enter a valid rate';
+                      return LocalizationManager.translate(
+                        'hourly_rate_invalid',
+                      );
                     }
                     if (rate < 50) {
-                      return 'Rate should be at least ₱50/hour';
+                      return LocalizationManager.translate('hourly_rate_min');
                     }
                     return null;
                   },
@@ -544,8 +566,8 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                 const SizedBox(height: 24),
 
                 // Availability
-                const Text(
-                  'When Can You Work?',
+                Text(
+                  LocalizationManager.translate('when_can_you_work'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -553,12 +575,11 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Let employers know your availability schedule',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
+                Text(
+                  LocalizationManager.translate(
+                    'let_employers_know_availability',
                   ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 8),
                 _buildAvailabilityDropdown(),
@@ -589,11 +610,15 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
-                        : const Text(
-                            'Start Offering My Services',
+                        : Text(
+                            LocalizationManager.translate(
+                              'start_offering_my_services',
+                            ),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

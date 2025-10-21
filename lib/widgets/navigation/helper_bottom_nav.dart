@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization_manager.dart';
 
 class HelperBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -48,7 +49,7 @@ class HelperBottomNav extends StatelessWidget {
             fontSize: 11,
           ),
           elevation: 0,
-          items: const [
+          items: [
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4),
@@ -58,7 +59,7 @@ class HelperBottomNav extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.home, size: 24),
               ),
-              label: 'Home',
+              label: LocalizationManager.translate('home'),
             ),
             BottomNavigationBarItem(
               icon: Padding(
@@ -69,7 +70,7 @@ class HelperBottomNav extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.search, size: 24),
               ),
-              label: 'Find Jobs',
+              label: LocalizationManager.translate('my_jobs'),
             ),
             BottomNavigationBarItem(
               icon: Padding(
@@ -80,7 +81,7 @@ class HelperBottomNav extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.assignment, size: 24),
               ),
-              label: 'My Applications',
+              label: LocalizationManager.translate('applications'),
             ),
 
             BottomNavigationBarItem(
@@ -92,7 +93,7 @@ class HelperBottomNav extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.person, size: 24),
               ),
-              label: 'Profile',
+              label: LocalizationManager.translate('profile'),
             ),
           ],
         ),

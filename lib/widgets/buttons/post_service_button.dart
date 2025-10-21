@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization_manager.dart';
 
 class PostServiceButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -50,8 +51,8 @@ class PostServiceButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                const Text(
-                  'Post Your First Service',
+                Text(
+                  LocalizationManager.translate('post_your_first_service'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

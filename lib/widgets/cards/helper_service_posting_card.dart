@@ -3,6 +3,7 @@ import '../../models/helper_service_posting.dart';
 import '../../models/rating_statistics.dart';
 import '../../services/rating_service.dart';
 import '../rating/star_rating_display.dart';
+import '../../localization_manager.dart';
 
 class HelperServicePostingCard extends StatefulWidget {
   final HelperServicePosting servicePosting;
@@ -197,7 +198,7 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'No ratings yet',
+                          LocalizationManager.translate('no_ratings_yet'),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -216,8 +217,8 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Expertise:',
+                          Text(
+                            LocalizationManager.translate('expertise'),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -233,8 +234,8 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text(
-                          'Rate:',
+                        Text(
+                          LocalizationManager.translate('rates'),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,

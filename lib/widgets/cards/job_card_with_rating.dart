@@ -4,6 +4,7 @@ import '../../models/rating_statistics.dart';
 import '../../services/rating_service.dart';
 import '../../utils/constants/payment_frequency_constants.dart';
 import '../rating/star_rating_display.dart';
+import '../../localization_manager.dart';
 
 class JobCardWithRating extends StatefulWidget {
   final JobPosting job;
@@ -258,7 +259,7 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'No ratings yet',
+                          LocalizationManager.translate('no_ratings_yet'),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
