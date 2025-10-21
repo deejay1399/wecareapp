@@ -56,6 +56,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
     _titleController.text = widget.jobPosting.title;
     _descriptionController.text = widget.jobPosting.description;
     _salaryController.text = widget.jobPosting.salary.toString();
+    _selectedPaymentFrequency = widget.jobPosting.paymentFrequency;
     _selectedMunicipality = widget.jobPosting.municipality;
     _barangayList =
         LocationConstants.municipalityBarangays[_selectedMunicipality] ?? [];
