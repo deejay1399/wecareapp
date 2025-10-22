@@ -25,9 +25,9 @@ class JobPostingCard extends StatelessWidget {
     final now = DateTime.now();
     final difference = now.difference(date).inDays;
 
-    if (difference == 0) return 'Today';
-    if (difference == 1) return 'Yesterday';
-    return '$difference days ago';
+    if (difference == 0) return LocalizationManager.translate('today');
+    if (difference == 1) return LocalizationManager.translate('yesterday');
+    return '$difference ${LocalizationManager.translate('days_ago')}';
   }
 
   String _formatSalary() {
@@ -60,7 +60,7 @@ class JobPostingCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        jobPosting.employer?.fullName.toString() ?? '',
+                        jobPosting.title,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -92,33 +92,12 @@ class JobPostingCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  '${LocalizationManager.translate('age')}: ${jobPosting.employer?.age.toString() ?? ''}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '${LocalizationManager.translate('job_title')}: ${jobPosting.title}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+
                 const SizedBox(height: 12),
 
                 // Description
                 Text(
-                  '${LocalizationManager.translate('job_description')}: ${jobPosting.description}',
+                  jobPosting.description,
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -185,7 +164,7 @@ class JobPostingCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${jobPosting.applicationsCount} applications',
+                          '${jobPosting.applicationsCount} ${LocalizationManager.translate('applications')}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],

@@ -320,7 +320,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
           ],
           const SizedBox(height: 12),
           Text(
-            '${_characterCount}/500 ${LocalizationManager.translate('characters_minimum_50')}',
+            '$_characterCount/500 ${LocalizationManager.translate('characters_minimum_50')}',
             style: TextStyle(
               fontSize: 12,
               color: _characterCount < 50

@@ -146,7 +146,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: paymentFrequency,
+                          initialValue: paymentFrequency,
                           decoration: InputDecoration(
                             labelText: LocalizationManager.translate('payment'),
                             border: const OutlineInputBorder(),

@@ -42,7 +42,7 @@ class PaymentFrequencyDropdown extends StatelessWidget {
             color: Colors.white,
           ),
           child: DropdownButtonFormField<String>(
-            value: frequencies.containsKey(value)
+            initialValue: frequencies.containsKey(value)
                 ? value
                 : null, // ✅ Safe value
             onChanged: onChanged,
