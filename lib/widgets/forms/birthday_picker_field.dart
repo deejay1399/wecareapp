@@ -53,14 +53,17 @@ class BirthdayPickerField extends StatelessWidget {
                 firstDate: DateTime(1900),
                 lastDate: DateTime.now(),
               );
+
               if (pickedDate != null) {
-                birthdayController.text =
-                    "${pickedDate.toLocal()}".split(' ')[0];
+                birthdayController.text = "${pickedDate.toLocal()}".split(
+                  ' ',
+                )[0];
                 int age = _calculateAge(pickedDate);
                 ageController.text = age.toString();
               }
             },
-            validator: validator ??
+            validator:
+                validator ??
                 (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please select your birthday';
@@ -78,16 +81,20 @@ class BirthdayPickerField extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: Color(0xFF1565C0), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1565C0),
+                  width: 2,
+                ),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Colors.red, width: 1),
               ),
               prefixIcon: const Icon(Icons.cake, color: Color(0xFF9E9E9E)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
             ),
           ),
         ],

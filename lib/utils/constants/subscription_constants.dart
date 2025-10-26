@@ -12,7 +12,7 @@ class SubscriptionConstants {
       id: 'starter',
       name: LocalizationManager.translate('starter_plan'),
       description: LocalizationManager.translate('starter_plan_description'),
-      price: 50.0,
+      price: 100.0,
       durationInDays: 28, // 4 weeks
       currency: 'PHP',
     ),
@@ -20,7 +20,7 @@ class SubscriptionConstants {
       id: 'standard',
       name: LocalizationManager.translate('standard_plan'),
       description: LocalizationManager.translate('standard_plan_description'),
-      price: 100.0,
+      price: 200.0,
       durationInDays: 90, // 3 months
       currency: 'PHP',
     ),
@@ -28,7 +28,7 @@ class SubscriptionConstants {
       id: 'premium',
       name: LocalizationManager.translate('premium_plan'),
       description: LocalizationManager.translate('premium_plan_description'),
-      price: 199.0,
+      price: 299.0,
       durationInDays: 180, // 6 months
       currency: 'PHP',
     ),
