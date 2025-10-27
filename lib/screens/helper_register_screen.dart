@@ -49,6 +49,9 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
   bool _isLoading = false;
   bool _isPickingFile = false;
   DateTime? _selectedBirthday;
+  bool _aiVerifying = false;
+  bool _aiVerified = false; // must be true to proceed
+  double _aiConfidence = 0.0; // 0.0 - 100.0
   List<String> _barangayList = [];
   @override
   void dispose() {
@@ -248,6 +251,45 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
     );
   }
 
+  // Helper widget for showing AI status (confidence meter)
+  Widget _buildAiStatusWidget() {
+    if (_isPickingFile) {
+      return const SizedBox(); // while file picking -> no status
+    }
+
+    if (_aiVerifying) {
+      return Row(
+        children: const [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 8),
+          Text('Verifying document...', style: TextStyle(color: Colors.blue)),
+        ],
+      );
+    }
+
+    if (_aiConfidence > 0) {
+      final verified = _aiVerified;
+      final color = verified ? Colors.green : Colors.red;
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(verified ? Icons.check_circle : Icons.error, color: color),
+          const SizedBox(width: 8),
+          Text(
+            'AI Confidence: ${_aiConfidence.toStringAsFixed(1)}% — ${verified ? 'Verified' : 'Failed'}',
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+    }
+
+    return const SizedBox();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -417,19 +459,6 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
                   },
                 ),
 
-                // BarangayDropdown(
-                //   selectedBarangay: _selectedBarangay,
-                //   barangayList: LocationConstants.getSortedMunicipalities(),
-                //   label: 'Location in Bohol',
-                //   hint: 'Select your location in Bohol',
-                //   onChanged: (String? value) {
-                //     setState(() {
-                //       _selectedBarangay = value;
-                //     });
-                //   },
-                // ),
-
-                // Document Upload Section
                 const SectionHeader(title: 'Required Documents'),
 
                 FileUploadField(
@@ -441,6 +470,10 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
                       : 'Upload Barangay Clearance Image (JPG, PNG)',
                   isLoading: _isPickingFile,
                 ),
+                const SizedBox(height: 8),
+                // AI status / confidence meter
+                _buildAiStatusWidget(),
+                const SizedBox(height: 16),
 
                 // Security Section
                 const SectionHeader(title: 'Security'),

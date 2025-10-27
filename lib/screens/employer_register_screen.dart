@@ -1,5 +1,10 @@
+// EmployerRegisterScreen.dart
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:wecareapp/widgets/forms/birthday_picker_field.dart';
 import '../widgets/forms/custom_text_field.dart';
 import '../widgets/forms/phone_text_field.dart';
@@ -43,7 +48,11 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   bool _isPickingFile = false;
+  bool _aiVerifying = false;
+  bool _aiVerified = false; // must be true to proceed
+  double _aiConfidence = 0.0; // 0.0 - 100.0
   List<String> _barangayList = [];
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -56,6 +65,115 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
     super.dispose();
   }
 
+  /// Helper: compute a heuristic confidence based on text found
+  double _computeConfidence({
+    required String ocrText,
+    required bool hasKeywords,
+    required bool nameMatch,
+  }) {
+    // Basic heuristic:
+    // base 10 -> +30 if keywords present -> +40 if name match -> scale by text length factor
+    double score = 10.0;
+    if (hasKeywords) score += 30.0; // found barangay + clearance
+    if (nameMatch) score += 40.0; // name found
+    // text length factor: longer readable text increases confidence (cap)
+    final lengthFactor = (ocrText.length.clamp(0, 200) / 200.0) * 20.0;
+    score += lengthFactor;
+    if (score > 100.0) score = 100.0;
+    return double.parse(score.toStringAsFixed(1));
+  }
+
+  /// 🔹 AI Barangay Clearance Verification (FREE & Offline via MLKit)
+  Future<bool> _verifyBarangayClearanceAI(String base64Image) async {
+    setState(() {
+      _aiVerifying = true;
+      _aiVerified = false;
+      _aiConfidence = 0.0;
+    });
+
+    try {
+      // Convert Base64 image to File
+      final bytes = base64Decode(base64Image);
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/temp_barangay_clearance.png';
+      final file = File(filePath);
+      await file.writeAsBytes(bytes);
+
+      // Initialize text recognizer
+      final textRecognizer = TextRecognizer(
+        script: TextRecognitionScript.latin,
+      );
+      final inputImage = InputImage.fromFile(file);
+      final recognizedText = await textRecognizer.processImage(inputImage);
+      await textRecognizer.close();
+
+      final text = recognizedText.text.toLowerCase();
+      debugPrint('DEBUG: OCR extracted text: $text');
+
+      // Basic checks for keywords
+      final hasBarangay = text.contains('barangay');
+      final hasClearance = text.contains('clearance');
+      final hasKeywords = hasBarangay && hasClearance;
+
+      // Name matching (loose)
+      final first = _firstNameController.text.trim().toLowerCase();
+      final last = _lastNameController.text.trim().toLowerCase();
+      final nameMatch =
+          first.isNotEmpty &&
+          last.isNotEmpty &&
+          text.contains(first) &&
+          text.contains(last);
+
+      // Compute confidence
+      final confidence = _computeConfidence(
+        ocrText: text,
+        hasKeywords: hasKeywords,
+        nameMatch: nameMatch,
+      );
+
+      setState(() {
+        _aiConfidence = confidence;
+        // decide verified if confidence >= 70 (heuristic)
+        _aiVerified = confidence >= 70.0;
+      });
+
+      // Provide clear messages for user
+      if (!_aiVerified) {
+        if (!hasKeywords) {
+          _showErrorMessage(
+            'AI check failed: document does not look like a Barangay Clearance.',
+          );
+        } else if (!nameMatch) {
+          _showErrorMessage(
+            'AI check failed: name on document does not match the form.',
+          );
+        } else {
+          _showErrorMessage(
+            'AI check failed: document quality too low. Try a clearer photo.',
+          );
+        }
+      }
+
+      return _aiVerified;
+    } catch (e) {
+      debugPrint('AI Verification Error: $e');
+      _showErrorMessage(
+        'Failed to verify document. Please upload a clearer image.',
+      );
+      setState(() {
+        _aiConfidence = 0.0;
+        _aiVerified = false;
+      });
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _aiVerifying = false;
+        });
+      }
+    }
+  }
+
   Future<void> _pickBarangayClearance() async {
     // Prevent multiple concurrent file picks
     if (_isPickingFile) {
@@ -65,7 +183,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
       return;
     }
 
-    // Check if file picker is already active globally
+    // Check if file picker is already active globally (if your service exposes it)
     if (FilePickerService.isPickerActive) {
       _showErrorMessage(
         'Another file picker operation is in progress. Please wait and try again.',
@@ -77,7 +195,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
 
     try {
       debugPrint('DEBUG: Starting file picker...');
-      // Get both filename and base64 data in single call
+
       final result = await FilePickerService.pickImageWithBase64();
       debugPrint(
         'DEBUG: File picker result: ${result != null ? 'Success' : 'Cancelled'}',
@@ -90,41 +208,44 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
         setState(() {
           _barangayClearanceFileName = result.fileName;
           _barangayClearanceBase64 = result.base64Data;
+          // reset previous AI state on new upload
+          _aiVerified = false;
+          _aiConfidence = 0.0;
         });
 
-        // Show success message
+        // Show verifying indicator
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('File "${result.fileName}" uploaded successfully!'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
+          const SnackBar(
+            content: Text('Verifying Barangay Clearance with AI...'),
+            backgroundColor: Colors.blue,
           ),
         );
-        debugPrint('DEBUG: File upload state updated successfully');
+
+        final verified = await _verifyBarangayClearanceAI(result.base64Data);
+
+        if (!verified) {
+          // clear uploaded file if verification failed (you requested this behavior)
+          setState(() {
+            _barangayClearanceBase64 = null;
+            _barangayClearanceFileName = null;
+          });
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Barangay Clearance verified successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } else if (result == null) {
-        debugPrint('DEBUG: File selection was cancelled by user');
+        debugPrint('DEBUG: File selection cancelled by user.');
       }
     } catch (e) {
       debugPrint('DEBUG: File picker error: $e');
-      if (!mounted) return;
-
-      String errorMessage = e.toString();
-      // Remove "Exception: " prefix if present
-      if (errorMessage.startsWith('Exception: ')) {
-        errorMessage = errorMessage.substring(11);
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      _showErrorMessage('Error picking file: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isPickingFile = false);
-      }
+      if (mounted) setState(() => _isPickingFile = false);
     }
   }
 
@@ -136,8 +257,11 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
       return;
     }
 
-    if (_barangayClearanceBase64 == null) {
-      _showErrorMessage('Please upload your barangay clearance image');
+    // Prevent registration if AI verification hasn't passed
+    if (!_aiVerified || _barangayClearanceBase64 == null) {
+      _showErrorMessage(
+        'Barangay Clearance must be uploaded and AI-verified before proceeding.',
+      );
       return;
     }
 
@@ -148,7 +272,6 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
       return;
     }
 
-    // Check if Supabase is initialized
     if (!SupabaseService.isInitialized) {
       _showErrorMessage(
         'Database connection not available. Please check your configuration.',
@@ -156,22 +279,14 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
       return;
     }
 
-    debugPrint('DEBUG: Starting employer registration process...');
-    debugPrint(
-      'DEBUG: Base64 data length: ${_barangayClearanceBase64?.length ?? 0}',
-    );
-    debugPrint('DEBUG: File name: $_barangayClearanceFileName');
-
     setState(() => _isLoading = true);
 
     try {
-      // Format phone number to include +63 prefix
       String phoneNumber = _phoneController.text.trim();
       if (!phoneNumber.startsWith('+63')) {
         phoneNumber = '+63$phoneNumber';
       }
 
-      debugPrint('DEBUG: Calling EmployerAuthService.registerEmployer...');
       final result = await EmployerAuthService.registerEmployer(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
@@ -186,22 +301,15 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
         profilePictureBase64: _profilePictureBase64,
       );
 
-      debugPrint('DEBUG: Employer registration result: ${result['success']}');
-      debugPrint('DEBUG: Employer registration message: ${result['message']}');
-
       if (!mounted) return;
 
       if (result['success']) {
-        // Registration successful
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${result['message']} Please log in to continue.'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
           ),
         );
-
-        // Navigate to login screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -209,17 +317,12 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
           ),
         );
       } else {
-        // Registration failed
         _showErrorMessage(result['message']);
       }
     } catch (e) {
-      debugPrint('DEBUG: Employer registration exception: $e');
-      if (!mounted) return;
       _showErrorMessage('Registration failed: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -227,6 +330,45 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
+  }
+
+  // Helper widget for showing AI status (confidence meter)
+  Widget _buildAiStatusWidget() {
+    if (_isPickingFile) {
+      return const SizedBox(); // while file picking -> no status
+    }
+
+    if (_aiVerifying) {
+      return Row(
+        children: const [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 8),
+          Text('Verifying document...', style: TextStyle(color: Colors.blue)),
+        ],
+      );
+    }
+
+    if (_aiConfidence > 0) {
+      final verified = _aiVerified;
+      final color = verified ? Colors.green : Colors.red;
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(verified ? Icons.check_circle : Icons.error, color: color),
+          const SizedBox(width: 8),
+          Text(
+            'AI Confidence: ${_aiConfidence.toStringAsFixed(1)}% — ${verified ? 'Verified' : 'Failed'}',
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+    }
+
+    return const SizedBox();
   }
 
   @override
@@ -268,9 +410,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Picture Section (Optional)
                 const SectionHeader(title: 'Profile Picture (Optional)'),
-
                 ProfilePictureUploadField(
                   currentProfilePictureBase64: _profilePictureBase64,
                   fullName:
@@ -283,9 +423,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                   label: 'Profile Picture (Optional)',
                 ),
 
-                // Personal Information Section
                 const SectionHeader(title: 'Personal Information'),
-
                 CustomTextField(
                   controller: _firstNameController,
                   label: 'First Name',
@@ -293,7 +431,6 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                   validator: (value) =>
                       FormValidators.validateRequired(value, 'first name'),
                 ),
-
                 CustomTextField(
                   controller: _lastNameController,
                   label: 'Last Name',
@@ -301,7 +438,6 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                   validator: (value) =>
                       FormValidators.validateRequired(value, 'last name'),
                 ),
-
                 CustomTextField(
                   controller: _emailController,
                   label: 'Email',
@@ -317,12 +453,10 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                   ],
                   validator: FormValidators.validateEmail,
                 ),
-
                 PhoneTextField(
                   controller: _phoneController,
                   validator: FormValidators.validatePhoneNumber,
                 ),
-
                 BirthdayPickerField(
                   birthdayController: _birthdayController,
                   ageController: _ageController,
@@ -335,7 +469,6 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                     return null;
                   },
                 ),
-
                 CustomTextField(
                   controller: _ageController,
                   label: 'Age',
@@ -344,9 +477,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                   validator: FormValidators.validateAge,
                 ),
 
-                // Location Section
                 const SectionHeader(title: 'Location'),
-
                 BarangayDropdown(
                   selectedBarangay: _selectedMunicipality,
                   barangayList: LocationConstants.getSortedMunicipalities(),
@@ -355,14 +486,12 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                   onChanged: (String? value) {
                     setState(() {
                       _selectedMunicipality = value;
-                      // Update barangay list based on selected municipality
                       _barangayList =
                           LocationConstants.municipalityBarangays[value] ?? [];
                       _selectedBarangay = null; // reset barangay selection
                     });
                   },
                 ),
-
                 BarangayDropdown(
                   selectedBarangay: _selectedBarangay,
                   barangayList: _barangayList,
@@ -375,9 +504,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                   },
                 ),
 
-                // Document Upload Section
                 const SectionHeader(title: 'Required Documents'),
-
                 FileUploadField(
                   label: 'Barangay Clearance Image',
                   fileName: _barangayClearanceFileName,
@@ -387,10 +514,12 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                       : 'Upload Barangay Clearance Image (JPG, PNG)',
                   isLoading: _isPickingFile,
                 ),
+                const SizedBox(height: 8),
+                // AI status / confidence meter
+                _buildAiStatusWidget(),
+                const SizedBox(height: 16),
 
-                // Security Section
                 const SectionHeader(title: 'Security'),
-
                 CustomTextField(
                   controller: _passwordController,
                   label: 'Password',
@@ -422,7 +551,6 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                   ),
                 ),
 
-                // Terms and Conditions
                 TermsAgreementCheckbox(
                   isAgreed: _agreeToTerms,
                   onChanged: (bool value) {
@@ -433,7 +561,6 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Register Button
                 SizedBox(
                   width: double.infinity,
                   height: 56,
