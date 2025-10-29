@@ -108,8 +108,6 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
     }
 
     setState(() => _isLoading = true);
-    // print("haha");
-    // print(widget.employer.barangay);
     try {
       final result = await EmployerAuthService.updateEmployerProfile(
         id: widget.employer.id,
@@ -138,7 +136,6 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
       if (!mounted) return;
 
       if (result['success']) {
-        // Update session with new data
         await SessionService.updateCurrentUser(result['employer'].toMap());
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

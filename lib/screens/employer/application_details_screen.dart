@@ -144,6 +144,67 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
     }
   }
 
+  Future<void> _markAsComplete() async {
+    setState(() {
+      _isUpdatingStatus = true;
+    });
+
+    try {
+      await ApplicationService.updateApplicationStatus(
+        _application.id,
+        'completed',
+      );
+
+      if (mounted) {
+        setState(() {
+          _application = Application(
+            id: _application.id,
+            jobId: _application.jobId,
+            jobTitle: _application.jobTitle,
+            helperId: _application.helperId,
+            helperName: _application.helperName,
+            helperProfileImage: _application.helperProfileImage,
+            helperLocation: _application.helperLocation,
+            coverLetter: _application.coverLetter,
+            appliedDate: _application.appliedDate,
+            status: 'completed',
+            helperPhone: _application.helperPhone,
+            helperEmail: _application.helperEmail,
+            helperSkills: _application.helperSkills,
+            helperExperience: _application.helperExperience,
+          );
+          _isUpdatingStatus = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('marked_as_complete_success'),
+            ),
+            backgroundColor: const Color(0xFF10B981),
+          ),
+        );
+
+        Navigator.pop(context, _application);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUpdatingStatus = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${LocalizationManager.translate("failed_to_mark_complete")}: $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _sendAcceptanceMessage(String message) async {
     try {
       final currentUserId = await SessionService.getCurrentUserId();
@@ -226,6 +287,8 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
         return const Color(0xFF10B981);
       case 'rejected':
         return const Color(0xFFF87171);
+      case 'completed':
+        return const Color(0xFF3B82F6);
       default:
         return const Color(0xFF6B7280);
     }
@@ -598,7 +661,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
   }
 
   Widget _buildActionButtons() {
-    if (_application.status != 'pending') {
+    if (_application.status == 'pending') {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
@@ -606,23 +669,163 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),
-        child: SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: _startChat,
-            icon: const Icon(Icons.chat_bubble_outline, size: 20),
-            label: Text(
-              LocalizationManager.translate('message_helper'),
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1565C0),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _isUpdatingStatus
+                    ? null
+                    : () => _updateApplicationStatus('accepted'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isUpdatingStatus
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            LocalizationManager.translate('processing'),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        LocalizationManager.translate('accept_application'),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton(
+                onPressed: _isUpdatingStatus
+                    ? null
+                    : () => _updateApplicationStatus('rejected'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFF87171),
+                  side: const BorderSide(color: Color(0xFFF87171)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  LocalizationManager.translate('reject_application'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_application.status == 'accepted') {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        ),
+        child: Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: _startChat,
+                icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                label: Text(
+                  LocalizationManager.translate('message_helper'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1565C0),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: _isUpdatingStatus ? null : _markAsComplete,
+                icon: const Icon(Icons.check_circle_outline, size: 20),
+                label: Text(
+                  LocalizationManager.translate('mark_as_complete'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B82F6),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_application.status == 'completed') {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        ),
+        child: Text(
+          LocalizationManager.translate('application_already_completed'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFF6B7280),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
         ),
       );
@@ -635,81 +838,14 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
-      child: Column(
-        children: [
-          // Accept Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _isUpdatingStatus
-                  ? null
-                  : () => _updateApplicationStatus('accepted'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: _isUpdatingStatus
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          LocalizationManager.translate('processing'),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Text(
-                      LocalizationManager.translate('accept_application'),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Reject Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: OutlinedButton(
-              onPressed: _isUpdatingStatus
-                  ? null
-                  : () => _updateApplicationStatus('rejected'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFF87171),
-                side: const BorderSide(color: Color(0xFFF87171)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                LocalizationManager.translate('reject_application'),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
+      child: Text(
+        LocalizationManager.translate('application_rejected_info'),
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Color(0xFF6B7280),
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }

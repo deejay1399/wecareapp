@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import '../widgets/forms/custom_text_field.dart';
 import '../widgets/forms/birthday_picker_field.dart';
 import '../widgets/forms/phone_text_field.dart';
@@ -50,8 +54,8 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
   bool _isPickingFile = false;
   DateTime? _selectedBirthday;
   bool _aiVerifying = false;
-  bool _aiVerified = false; // must be true to proceed
-  double _aiConfidence = 0.0; // 0.0 - 100.0
+  bool _aiVerified = false;
+  double _aiConfidence = 0.0;
   List<String> _barangayList = [];
   @override
   void dispose() {
@@ -66,6 +70,112 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
     super.dispose();
   }
 
+  double _computeConfidence({
+    required String ocrText,
+    required bool hasKeywords,
+    required bool nameMatch,
+  }) {
+    double score = 10.0;
+    if (hasKeywords) score += 30.0;
+
+    if (nameMatch) score += 40.0;
+
+    final lengthFactor = (ocrText.length.clamp(0, 200) / 200.0) * 20.0;
+    score += lengthFactor;
+    if (score > 100.0) score = 100.0;
+    return double.parse(score.toStringAsFixed(1));
+  }
+
+  Future<bool> _verifyBarangayClearanceAI(String base64Image) async {
+    setState(() {
+      _aiVerifying = true;
+      _aiVerified = false;
+      _aiConfidence = 0.0;
+    });
+
+    try {
+      // Convert Base64 image to File
+      final bytes = base64Decode(base64Image);
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/temp_barangay_clearance.png';
+      final file = File(filePath);
+      await file.writeAsBytes(bytes);
+
+      // Initialize text recognizer
+      final textRecognizer = TextRecognizer(
+        script: TextRecognitionScript.latin,
+      );
+      final inputImage = InputImage.fromFile(file);
+      final recognizedText = await textRecognizer.processImage(inputImage);
+      await textRecognizer.close();
+
+      final text = recognizedText.text.toLowerCase();
+      debugPrint('DEBUG: OCR extracted text: $text');
+
+      // Basic checks for keywords
+      final hasBarangay = text.contains('barangay');
+      final hasClearance = text.contains('clearance');
+      final hasKeywords = hasBarangay && hasClearance;
+
+      // Name matching (loose)
+      final first = _firstNameController.text.trim().toLowerCase();
+      final last = _lastNameController.text.trim().toLowerCase();
+      final nameMatch =
+          first.isNotEmpty &&
+          last.isNotEmpty &&
+          text.contains(first) &&
+          text.contains(last);
+
+      // Compute confidence
+      final confidence = _computeConfidence(
+        ocrText: text,
+        hasKeywords: hasKeywords,
+        nameMatch: nameMatch,
+      );
+
+      setState(() {
+        _aiConfidence = confidence;
+        // decide verified if confidence >= 70 (heuristic)
+        _aiVerified = confidence >= 70.0;
+      });
+
+      // Provide clear messages for user
+      if (!_aiVerified) {
+        if (!hasKeywords) {
+          _showErrorMessage(
+            'AI check failed: document does not look like a Barangay Clearance.',
+          );
+        } else if (!nameMatch) {
+          _showErrorMessage(
+            'AI check failed: name on document does not match the form.',
+          );
+        } else {
+          _showErrorMessage(
+            'AI check failed: document quality too low. Try a clearer photo.',
+          );
+        }
+      }
+
+      return _aiVerified;
+    } catch (e) {
+      debugPrint('AI Verification Error: $e');
+      _showErrorMessage(
+        'Failed to verify document. Please upload a clearer image.',
+      );
+      setState(() {
+        _aiConfidence = 0.0;
+        _aiVerified = false;
+      });
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _aiVerifying = false;
+        });
+      }
+    }
+  }
+
   Future<void> _pickBarangayClearance() async {
     // Prevent multiple concurrent file picks
     if (_isPickingFile) {
@@ -75,7 +185,7 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
       return;
     }
 
-    // Check if file picker is already active globally
+    // Check if file picker is already active globally (if your service exposes it)
     if (FilePickerService.isPickerActive) {
       _showErrorMessage(
         'Another file picker operation is in progress. Please wait and try again.',
@@ -87,7 +197,7 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
 
     try {
       debugPrint('DEBUG: Starting file picker...');
-      // Get both filename and base64 data in single call
+
       final result = await FilePickerService.pickImageWithBase64();
       debugPrint(
         'DEBUG: File picker result: ${result != null ? 'Success' : 'Cancelled'}',
@@ -100,41 +210,44 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
         setState(() {
           _barangayClearanceFileName = result.fileName;
           _barangayClearanceBase64 = result.base64Data;
+          // reset previous AI state on new upload
+          _aiVerified = false;
+          _aiConfidence = 0.0;
         });
 
-        // Show success message
+        // Show verifying indicator
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('File "${result.fileName}" uploaded successfully!'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
+          const SnackBar(
+            content: Text('Verifying Barangay Clearance with AI...'),
+            backgroundColor: Colors.blue,
           ),
         );
-        debugPrint('DEBUG: File upload state updated successfully');
+
+        final verified = await _verifyBarangayClearanceAI(result.base64Data);
+
+        if (!verified) {
+          // clear uploaded file if verification failed (you requested this behavior)
+          setState(() {
+            _barangayClearanceBase64 = null;
+            _barangayClearanceFileName = null;
+          });
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Barangay Clearance verified successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } else if (result == null) {
-        debugPrint('DEBUG: File selection was cancelled by user');
+        debugPrint('DEBUG: File selection cancelled by user.');
       }
     } catch (e) {
       debugPrint('DEBUG: File picker error: $e');
-      if (!mounted) return;
-
-      String errorMessage = e.toString();
-      // Remove "Exception: " prefix if present
-      if (errorMessage.startsWith('Exception: ')) {
-        errorMessage = errorMessage.substring(11);
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      _showErrorMessage('Error picking file: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isPickingFile = false);
-      }
+      if (mounted) setState(() => _isPickingFile = false);
     }
   }
 
@@ -460,7 +573,6 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
                 ),
 
                 const SectionHeader(title: 'Required Documents'),
-
                 FileUploadField(
                   label: 'Barangay Clearance Image',
                   fileName: _barangayClearanceFileName,

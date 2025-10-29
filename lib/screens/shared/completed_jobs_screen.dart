@@ -31,7 +31,6 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
     });
 
     try {
-      // Check if user is helper or employer
       final helper = await SessionService.getCurrentHelper();
       final employer = await SessionService.getCurrentEmployer();
 
@@ -99,9 +98,7 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFFF8A50),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFFFF8A50)),
       );
     }
 
@@ -141,11 +138,7 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             Text(
               'Something went wrong',
@@ -157,10 +150,8 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
             const SizedBox(height: 8),
             Text(
               _errorMessage ?? 'Unknown error occurred',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
               textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -184,11 +175,7 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.work_off_outlined,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            const Icon(Icons.work_off_outlined, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             Text(
               'No completed jobs yet',
@@ -202,10 +189,8 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
               _userType == 'helper'
                   ? 'Complete your first job to see it here and rate your experience.'
                   : 'Mark your first job as completed to see it here and rate the helper.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
               textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
             ),
           ],
         ),

@@ -4,7 +4,6 @@ import '../services/supabase_service.dart';
 class JobPostingService {
   static const String _tableName = 'job_postings';
 
-  /// Create a new job posting
   static Future<JobPosting> createJobPosting({
     required String employerId,
     required String title,
@@ -42,7 +41,6 @@ class JobPostingService {
     }
   }
 
-  /// Assign helper to job (when application is accepted)
   static Future<JobPosting> assignHelperToJob({
     required String jobId,
     required String helperId,
@@ -67,7 +65,6 @@ class JobPostingService {
     }
   }
 
-  /// Mark job as completed
   static Future<JobPosting> markJobAsCompleted(String jobId) async {
     try {
       final response = await SupabaseService.client
@@ -86,7 +83,6 @@ class JobPostingService {
     }
   }
 
-  /// Get jobs that are in progress for a specific helper
   static Future<List<JobPosting>> getInProgressJobsForHelper(
     String helperId,
   ) async {
@@ -106,7 +102,6 @@ class JobPostingService {
     }
   }
 
-  /// Get jobs that are in progress for a specific employer
   static Future<List<JobPosting>> getInProgressJobsForEmployer(
     String employerId,
   ) async {
@@ -126,32 +121,76 @@ class JobPostingService {
     }
   }
 
-  /// Get completed jobs for rating purposes
   static Future<List<JobPosting>> getCompletedJobsForUser({
     required String userId,
-    required String userType, // 'employer' or 'helper'
+    required String userType, // 'helper' or 'employer'
   }) async {
+    final supabase = SupabaseService.client;
+
     try {
-      String filterField = userType == 'employer'
-          ? 'employer_id'
-          : 'assigned_helper_id';
+      dynamic response;
 
-      final response = await SupabaseService.client
-          .from(_tableName)
-          .select()
-          .eq(filterField, userId)
-          .eq('status', 'completed')
-          .order('updated_at', ascending: false);
+      if (userType == 'helper') {
+        // 🔹 Get jobs where the helper's application is completed
+        response = await supabase
+            .from('applications')
+            .select('''
+            job_postings (
+              id,
+              employer_id,
+              title,
+              description,
+              municipality,
+              barangay,
+              salary,
+              payment_frequency,
+              required_skills,
+              status,
+              assigned_helper_name,
+              created_at
+            )
+          ''')
+            .eq('helper_id', userId)
+            .eq('status', 'completed')
+            .order('applied_at', ascending: false);
+      } else {
+        response = await supabase
+            .from('applications')
+            .select('''
+            job_postings (
+              id,
+              employer_id,
+              title,
+              description,
+              municipality,
+              barangay,
+              salary,
+              payment_frequency,
+              required_skills,
+              status,
+              assigned_helper_name,
+              created_at
+            )
+          ''')
+            .eq('status', 'completed')
+            .eq('job_postings.employer_id', userId)
+            .order('applied_at', ascending: false);
+      }
 
-      return (response as List)
-          .map((data) => JobPosting.fromMap(data))
+      if (response == null || response.isEmpty) return [];
+
+      final jobs = (response as List)
+          .map((app) => app['job_postings'])
+          .where((job) => job != null)
+          .map((job) => JobPosting.fromMap(job))
           .toList();
+
+      return jobs;
     } catch (e) {
-      throw Exception('Failed to fetch completed jobs: $e');
+      throw Exception('Failed to load completed jobs: $e');
     }
   }
 
-  /// Get all job postings for a specific employer
   static Future<List<JobPosting>> getJobPostingsByEmployer(
     String employerId,
   ) async {
@@ -165,7 +204,6 @@ class JobPostingService {
           .order('created_at', ascending: false);
 
       return (response as List).map((data) {
-        // Map employer full name from nested employers object
         if (data['employers'] != null) {
           final employerData = data['employers'];
           data['employer'] = {
@@ -186,7 +224,6 @@ class JobPostingService {
     }
   }
 
-  /// Get all active job postings
   static Future<List<JobPosting>> getActiveJobPostings() async {
     try {
       final response = await SupabaseService.client
@@ -203,14 +240,12 @@ class JobPostingService {
     }
   }
 
-  /// Get job postings that match helper's skills and location
   static Future<List<JobPosting>> getMatchedJobsForHelper({
     required String helperSkills,
     required String helperBarangay,
     int limit = 2,
   }) async {
     try {
-      // Convert helper skills string to list
       final skillsList = helperSkills
           .split(',')
           .map((skill) => skill.trim().toLowerCase())
@@ -218,7 +253,6 @@ class JobPostingService {
           .toList();
 
       if (skillsList.isEmpty) {
-        // If no skills, just return recent jobs in same barangay
         final response = await SupabaseService.client
             .from(_tableName)
             .select()
@@ -232,7 +266,6 @@ class JobPostingService {
             .toList();
       }
 
-      // Get all active jobs
       final allJobsResponse = await SupabaseService.client
           .from(_tableName)
           .select()
@@ -243,35 +276,29 @@ class JobPostingService {
           .map((data) => JobPosting.fromMap(data))
           .toList();
 
-      // Filter and score jobs based on skill matching
       final List<MapEntry<JobPosting, int>> scoredJobs = [];
 
       for (final job in allJobs) {
         int matchScore = 0;
 
-        // Check skill matches
         for (final requiredSkill in job.requiredSkills) {
           final normalizedRequired = requiredSkill.toLowerCase().trim();
           for (final helperSkill in skillsList) {
             if (normalizedRequired.contains(helperSkill) ||
                 helperSkill.contains(normalizedRequired)) {
-              matchScore += 3; // High score for skill match
+              matchScore += 3;
             }
           }
         }
-
-        // Bonus points for same barangay
         if (job.barangay == helperBarangay) {
           matchScore += 2;
         }
 
-        // Only include jobs with some match
         if (matchScore > 0) {
           scoredJobs.add(MapEntry(job, matchScore));
         }
       }
 
-      // Sort by score and take top matches
       scoredJobs.sort((a, b) => b.value.compareTo(a.value));
 
       return scoredJobs.take(limit).map((entry) => entry.key).toList();
@@ -280,7 +307,6 @@ class JobPostingService {
     }
   }
 
-  /// Get job postings by barangay
   static Future<List<JobPosting>> getJobPostingsByBarangay(
     String barangay,
   ) async {
@@ -300,7 +326,6 @@ class JobPostingService {
     }
   }
 
-  /// Update job posting
   static Future<JobPosting> updateJobPosting(JobPosting jobPosting) async {
     try {
       final response = await SupabaseService.client
@@ -316,7 +341,6 @@ class JobPostingService {
     }
   }
 
-  /// Update job posting status
   static Future<JobPosting> updateJobPostingStatus(
     String jobId,
     String status,
@@ -335,7 +359,6 @@ class JobPostingService {
     }
   }
 
-  /// Delete job posting
   static Future<void> deleteJobPosting(String jobId) async {
     try {
       await SupabaseService.client.from(_tableName).delete().eq('id', jobId);
@@ -344,7 +367,6 @@ class JobPostingService {
     }
   }
 
-  /// Get job posting by ID
   static Future<JobPosting> getJobPostingById(String jobId) async {
     try {
       final response = await SupabaseService.client
@@ -359,7 +381,6 @@ class JobPostingService {
     }
   }
 
-  /// Get recent job postings (latest 20 jobs)
   static Future<List<JobPosting>> getRecentJobPostings({
     int limit = 100,
   }) async {
@@ -382,7 +403,6 @@ class JobPostingService {
     }
   }
 
-  // In your JobPostingService
   static Future<List<JobPosting>> getJobPostingsByLocation({
     String? municipality,
     String? barangay,
@@ -398,23 +418,6 @@ class JobPostingService {
       var jobs = (response as List)
           .map((data) => JobPosting.fromMap(data))
           .toList();
-
-      // Filter client-side if Supabase Dart doesn't support .eq()
-      // if (municipality != null && municipality.isNotEmpty) {
-      //   jobs = jobs
-      //       .where(
-      //         (job) =>
-      //             job.municipality.toLowerCase() == municipality.toLowerCase(),
-      //       )
-      //       .toList();
-      // }
-      // if (barangay != null && barangay.isNotEmpty) {
-      //   jobs = jobs
-      //       .where(
-      //         (job) => job.barangay.toLowerCase() == barangay.toLowerCase(),
-      //       )
-      //       .toList();
-      // }
 
       if (municipality != null && municipality.isNotEmpty) {
         jobs = jobs
@@ -448,17 +451,14 @@ class JobPostingService {
     int limit = 10,
   }) async {
     try {
-      // Convert helper skills string to list
       final skillsList = helperSkills
           .split(',')
           .map((skill) => skill.trim().toLowerCase())
           .where((skill) => skill.isNotEmpty)
           .toList();
 
-      // Get all active jobs
       final allJobsResponse = await SupabaseService.client
           .from(_tableName)
-          // .select()
           .select(
             '*, employers(id, first_name, last_name, profile_picture_base64)',
           )
@@ -469,7 +469,6 @@ class JobPostingService {
           .map((data) => JobPosting.fromMap(data))
           .toList();
 
-      // Apply location filter if provided
       if (municipality != null && municipality.isNotEmpty) {
         allJobs = allJobs
             .where(
@@ -488,50 +487,43 @@ class JobPostingService {
             .toList();
       }
 
-      // If no skills, return recent jobs in filtered location
       if (skillsList.isEmpty) {
         return allJobs.take(limit).toList();
       }
 
-      // Filter and score jobs based on skill matching and location
       final List<MapEntry<JobPosting, int>> scoredJobs = [];
 
       for (final job in allJobs) {
         int matchScore = 0;
 
-        // Check skill matches (high priority)
         for (final requiredSkill in job.requiredSkills) {
           final normalizedRequired = requiredSkill.toLowerCase().trim();
           for (final helperSkill in skillsList) {
             if (normalizedRequired.contains(helperSkill) ||
                 helperSkill.contains(normalizedRequired)) {
-              matchScore += 5; // High score for skill match
+              matchScore += 5;
             }
           }
         }
 
-        // Location matching (medium priority)
         if (barangay != null &&
             barangay.isNotEmpty &&
             (job.barangay ?? '').toLowerCase() == barangay.toLowerCase()) {
-          matchScore += 3; // Bonus for same barangay
+          matchScore += 3;
         }
 
-        // Recent jobs get slight boost (low priority)
         final daysSincePosted = DateTime.now().difference(job.createdAt).inDays;
         if (daysSincePosted <= 1) {
-          matchScore += 2; // Bonus for jobs posted today/yesterday
+          matchScore += 2;
         } else if (daysSincePosted <= 7) {
-          matchScore += 1; // Small bonus for jobs posted this week
+          matchScore += 1;
         }
 
-        // Only include jobs with some match
         if (matchScore > 0) {
           scoredJobs.add(MapEntry(job, matchScore));
         }
       }
 
-      // Sort by score and take top matches
       scoredJobs.sort((a, b) => b.value.compareTo(a.value));
 
       return scoredJobs.take(limit).map((entry) => entry.key).toList();
@@ -540,92 +532,6 @@ class JobPostingService {
     }
   }
 
-  /// Get best matching jobs for a helper based on skills and location
-  // static Future<List<JobPosting>> getBestMatchesForHelper({
-  //   required String helperSkills,
-  //   required String helperBarangay,
-  //   int limit = 10,
-  // }) async {
-  //   try {
-  //     // Convert helper skills string to list
-  //     final skillsList = helperSkills
-  //         .split(',')
-  //         .map((skill) => skill.trim().toLowerCase())
-  //         .where((skill) => skill.isNotEmpty)
-  //         .toList();
-
-  //     if (skillsList.isEmpty) {
-  //       // If no skills, return recent jobs in same barangay
-  //       final response = await SupabaseService.client
-  //           .from(_tableName)
-  //           .select()
-  //           .eq('status', 'active')
-  //           .eq('barangay', helperBarangay)
-  //           .order('created_at', ascending: false)
-  //           .limit(limit);
-
-  //       return (response as List)
-  //           .map((data) => JobPosting.fromMap(data))
-  //           .toList();
-  //     }
-
-  //     // Get all active jobs
-  //     final allJobsResponse = await SupabaseService.client
-  //         .from(_tableName)
-  //         .select()
-  //         .eq('status', 'active')
-  //         .order('created_at', ascending: false);
-
-  //     final allJobs = (allJobsResponse as List)
-  //         .map((data) => JobPosting.fromMap(data))
-  //         .toList();
-
-  //     // Filter and score jobs based on skill matching and location
-  //     final List<MapEntry<JobPosting, int>> scoredJobs = [];
-
-  //     for (final job in allJobs) {
-  //       int matchScore = 0;
-
-  //       // Check skill matches (high priority)
-  //       for (final requiredSkill in job.requiredSkills) {
-  //         final normalizedRequired = requiredSkill.toLowerCase().trim();
-  //         for (final helperSkill in skillsList) {
-  //           if (normalizedRequired.contains(helperSkill) ||
-  //               helperSkill.contains(normalizedRequired)) {
-  //             matchScore += 5; // High score for skill match
-  //           }
-  //         }
-  //       }
-
-  //       // Location matching (medium priority)
-  //       if (job.barangay == helperBarangay) {
-  //         matchScore += 3; // Bonus for same barangay
-  //       }
-
-  //       // Recent jobs get slight boost (low priority)
-  //       final daysSincePosted = DateTime.now().difference(job.createdAt).inDays;
-  //       if (daysSincePosted <= 1) {
-  //         matchScore += 2; // Bonus for jobs posted today/yesterday
-  //       } else if (daysSincePosted <= 7) {
-  //         matchScore += 1; // Small bonus for jobs posted this week
-  //       }
-
-  //       // Only include jobs with some match
-  //       if (matchScore > 0) {
-  //         scoredJobs.add(MapEntry(job, matchScore));
-  //       }
-  //     }
-
-  //     // Sort by score and take top matches
-  //     scoredJobs.sort((a, b) => b.value.compareTo(a.value));
-
-  //     return scoredJobs.take(limit).map((entry) => entry.key).toList();
-  //   } catch (e) {
-  //     throw Exception('Failed to fetch best matches: $e');
-  //   }
-  // }
-
-  /// Get jobs posted today for "Recent" section emphasis
   static Future<List<JobPosting>> getTodaysJobPostings() async {
     try {
       final today = DateTime.now();
@@ -648,12 +554,10 @@ class JobPostingService {
     }
   }
 
-  /// Get trending jobs (jobs with most applications in last 7 days)
   static Future<List<JobPosting>> getTrendingJobPostings({
     int limit = 10,
   }) async {
     try {
-      // Get jobs from last 7 days with application counts
       final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
 
       final response = await SupabaseService.client
@@ -674,7 +578,6 @@ class JobPostingService {
         return MapEntry(job, applicationCount);
       }).toList();
 
-      // Sort by application count (trending), then by creation date
       jobsWithCounts.sort((a, b) {
         final countComparison = b.value.compareTo(a.value);
         if (countComparison != 0) return countComparison;

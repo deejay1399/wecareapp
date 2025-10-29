@@ -546,5 +546,6 @@
     "standard_plan": "Standard Plan",
     "standard_plan_description": "Best value for regular users",
     "premium_plan": "Premium Plan",
-    "premium_plan_description": "Maximum benefits for power users"
+    "premium_plan_description": "Maximum benefits for power users",
+    "application_already_completed": "Your application has already been completed."
 }

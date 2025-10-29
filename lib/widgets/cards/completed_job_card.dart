@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/job_posting.dart';
 import '../../models/rating.dart';
 import '../../services/rating_service.dart';
+import '../../services/employer_service.dart';
+import '../../services/helper_service.dart';
 import '../../screens/rating/rating_dialog_screen.dart';
 import '../../screens/rating/user_ratings_screen.dart';
 import '../rating/star_rating_display.dart';
@@ -9,7 +11,7 @@ import '../../localization_manager.dart';
 
 class CompletedJobCard extends StatefulWidget {
   final JobPosting job;
-  final String userType;
+  final String userType; // 'employer' or 'helper'
   final String userId;
   final VoidCallback? onRatingSubmitted;
 
@@ -30,10 +32,62 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
   Rating? _existingRating;
   bool _isLoadingRating = true;
 
+  String? _displayName;
+  bool _isLoadingName = true;
+
   @override
   void initState() {
     super.initState();
     _loadExistingRating();
+    _loadDisplayName(); // Load employer/helper name dynamically
+  }
+
+  Future<void> _loadDisplayName() async {
+    try {
+      if (widget.userType == 'helper') {
+        // Show Employer name
+        if (widget.job.employer != null) {
+          _displayName = widget.job.employer!.fullName.isNotEmpty
+              ? widget.job.employer!.fullName
+              : 'Employer';
+        } else if (widget.job.employerId.isNotEmpty) {
+          final employer = await EmployerService().getEmployerById(
+            widget.job.employerId,
+          );
+          _displayName = employer?.fullName.isNotEmpty == true
+              ? employer!.fullName
+              : 'Employer';
+        } else {
+          _displayName = 'Employer';
+        }
+      } else {
+        // Show Helper name
+        if (widget.job.assignedHelperName != null &&
+            widget.job.assignedHelperName!.isNotEmpty) {
+          _displayName = widget.job.assignedHelperName;
+        } else if (widget.job.assignedHelper != null) {
+          _displayName = widget.job.assignedHelper!.fullName.isNotEmpty
+              ? widget.job.assignedHelper!.fullName
+              : 'Helper';
+        } else if (widget.job.assignedHelperId != null &&
+            widget.job.assignedHelperId!.isNotEmpty) {
+          final helper = await HelperService().getHelperById(
+            widget.job.assignedHelperId!,
+          );
+          _displayName = helper?.fullName.isNotEmpty == true
+              ? helper!.fullName
+              : 'Helper';
+        } else {
+          _displayName = 'Not assigned';
+        }
+      }
+    } catch (e) {
+      _displayName = 'Unknown';
+    }
+
+    if (mounted) {
+      setState(() => _isLoadingName = false);
+    }
   }
 
   Future<void> _loadExistingRating() async {
@@ -85,8 +139,8 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
               : widget.job.assignedHelperId!,
           ratedType: widget.userType == 'helper' ? 'employer' : 'helper',
           ratedName: widget.userType == 'helper'
-              ? 'Employer'
-              : widget.job.assignedHelperName ?? 'Helper',
+              ? _displayName ?? 'Employer'
+              : _displayName ?? 'Helper',
           jobPostingId: widget.job.id,
           title: _existingRating != null ? 'Update Rating' : 'Rate Experience',
         ),
@@ -94,7 +148,6 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
     );
 
     if (result != null) {
-      // Rating was submitted/updated
       await _loadExistingRating();
       widget.onRatingSubmitted?.call();
     }
@@ -109,9 +162,7 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
               ? widget.job.employerId
               : widget.job.assignedHelperId ?? '',
           userType: widget.userType == 'helper' ? 'employer' : 'helper',
-          userName: widget.userType == 'helper'
-              ? 'Employer'
-              : widget.job.assignedHelperName ?? 'Helper',
+          userName: _displayName ?? 'Unknown',
         ),
       ),
     );
@@ -160,12 +211,13 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ✅ Title wraps text
                       Text(
                         widget.job.title,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -204,20 +256,20 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
 
             const SizedBox(height: 12),
 
-            // Job Details
+            // ✅ Job Description - wrap text instead of ellipsis
             if (widget.job.description.isNotEmpty) ...[
               Text(
                 widget.job.description,
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                softWrap: true,
+                overflow: TextOverflow.visible,
               ),
               const SizedBox(height: 12),
             ],
 
-            // People involved
+            // Employer / Helper info
             Row(
               children: [
                 Icon(
@@ -227,14 +279,15 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: Text(
-                    widget.userType == 'helper'
-                        ? 'Employer: Unknown'
-                        : 'Helper: ${widget.job.assignedHelperName ?? "Not assigned"}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                  ),
+                  child: _isLoadingName
+                      ? const Text("Loading...")
+                      : Text(
+                          widget.userType == 'helper'
+                              ? 'Employer: ${_displayName ?? "Unknown"}'
+                              : 'Helper: ${_displayName ?? "Not assigned"}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.grey[600]),
+                        ),
                 ),
               ],
             ),
@@ -278,7 +331,6 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   ] else if (_existingRating != null) ...[
-                    // Show existing rating
                     Row(
                       children: [
                         StarRatingDisplay(
@@ -313,12 +365,11 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
                           fontStyle: FontStyle.italic,
                           color: Colors.grey[600],
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
                       ),
                     ],
                   ] else ...[
-                    // No rating yet - show rate button
                     Row(
                       children: [
                         Text(
@@ -352,18 +403,12 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
 
             const SizedBox(height: 12),
 
-            // Action Buttons
+            // View Reviews Button
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed:
-                        widget.userType == 'employer' &&
-                            widget.job.assignedHelperId != null
-                        ? _viewRatings
-                        : widget.userType == 'helper'
-                        ? _viewRatings
-                        : null,
+                    onPressed: _viewRatings,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFFF8A50),
                       side: const BorderSide(color: Color(0xFFFF8A50)),
