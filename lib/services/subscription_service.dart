@@ -45,6 +45,7 @@ class SubscriptionService {
   }
 
   static const String _keyUsageTracking = 'usage_tracking_';
+  static const String _keyCompletedJobs = 'completed_jobs_';
   static const String _keySubscription = 'subscription_';
 
   // Get user usage tracking
@@ -55,7 +56,6 @@ class SubscriptionService {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keyUsageTracking$userId';
     final jsonString = prefs.getString(key);
-
     if (jsonString != null) {
       try {
         final Map<String, dynamic> data = {
@@ -63,9 +63,10 @@ class SubscriptionService {
           'user_id': userId,
           'user_type': userType,
           'usage_count': prefs.getInt('${key}_count') ?? 0,
-          'trial_limit': SubscriptionConstants.getTrialLimitForUserType(
-            userType,
-          ),
+          // Read persisted trial limit if present, otherwise fallback to default
+          'trial_limit':
+              prefs.getInt('${key}_limit') ??
+              SubscriptionConstants.getTrialLimitForUserType(userType),
           'last_used_at':
               prefs.getString('${key}_last_used') ??
               DateTime.now().toIso8601String(),
@@ -103,6 +104,8 @@ class SubscriptionService {
     );
 
     await prefs.setInt('${key}_count', tracking.usageCount);
+    // Persist the initial trial limit so it can be adjusted later
+    await prefs.setInt('${key}_limit', tracking.trialLimit);
     await prefs.setString(
       '${key}_last_used',
       tracking.lastUsedAt.toIso8601String(),
@@ -130,12 +133,17 @@ class SubscriptionService {
     await prefs.setInt('${key}_count', newCount);
     await prefs.setString('${key}_last_used', now.toIso8601String());
 
+    // Use persisted trial limit if available
+    final persistedLimit =
+        prefs.getInt('${key}_limit') ??
+        SubscriptionConstants.getTrialLimitForUserType(userType);
+
     final tracking = UsageTracking(
       id: userId,
       userId: userId,
       userType: userType,
       usageCount: newCount,
-      trialLimit: SubscriptionConstants.getTrialLimitForUserType(userType),
+      trialLimit: persistedLimit,
       lastUsedAt: now,
       createdAt: DateTime.parse(
         prefs.getString('${key}_created') ?? now.toIso8601String(),
@@ -144,6 +152,35 @@ class SubscriptionService {
     );
 
     return tracking;
+  }
+
+  // Increment completed jobs counter for a user and add free uses when threshold reached
+  // Returns number of free uses added (0 or >0)
+  static Future<int> incrementCompletedJobsAndMaybeAddFreeUses(
+    String userId,
+    String userType, {
+    int threshold = 5,
+    int bonusUses = 3,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final completedKey = '$_keyCompletedJobs$userId';
+
+    final current = prefs.getInt('${completedKey}_count') ?? 0;
+    final newCount = current + 1;
+    await prefs.setInt('${completedKey}_count', newCount);
+
+    if (newCount % threshold == 0) {
+      // add bonusUses to persisted trial limit
+      final usageKey = '$_keyUsageTracking$userId';
+      final currentLimit =
+          prefs.getInt('${usageKey}_limit') ??
+          SubscriptionConstants.getTrialLimitForUserType(userType);
+      final newLimit = currentLimit + bonusUses;
+      await prefs.setInt('${usageKey}_limit', newLimit);
+      return bonusUses;
+    }
+
+    return 0;
   }
 
   // Check if user can use the app (trial or subscription)

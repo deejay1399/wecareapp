@@ -287,6 +287,9 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
         phoneNumber = '+63$phoneNumber';
       }
 
+      debugPrint(
+        'DEBUG: profile picture base64 length: ${_profilePictureBase64?.length ?? 0}',
+      );
       final result = await EmployerAuthService.registerEmployer(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),

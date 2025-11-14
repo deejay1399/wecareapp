@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wecareapp/screens/admin/admin_subscription_page.dart';
+import 'package:wecareapp/screens/admin/admin_documents_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://ummiucjxysjuhirtrekw.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtbWl1Y2p4eXNqdWhpcnRyZWt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NjQ0NzYsImV4cCI6MjA3MjE0MDQ3Nn0.rcrhQ7by-AQk-SYtfEZYeUsUbMTj-aQHWj_2xGC_LfE', // 🔹 replace with your anon key
+  );
+
   runApp(const AdminApp());
 }
 
@@ -12,7 +22,7 @@ class AdminApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'WeCare Admin',
-      debugShowCheckedModeBanner: false, // ✅ Removes "debug" banner
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
         useMaterial3: true,
@@ -42,7 +52,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       _errorMessage = null;
     });
 
-    // Fake login for development
     Future.delayed(const Duration(seconds: 1), () {
       if (_emailController.text == 'admin' &&
           _passwordController.text == '1234') {
@@ -143,10 +152,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Use admin / 1234 to log in (dev mode)',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
               ],
             ),
           ),
@@ -167,90 +172,73 @@ class AdminHomePage extends StatelessWidget {
         backgroundColor: Colors.redAccent,
         foregroundColor: Colors.white,
       ),
-      body: Stack(
-        children: [
-          Container(
-            color: Colors.white,
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.dashboard_customize,
-                  color: Colors.redAccent,
-                  size: 80,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Welcome to the Admin Panel!',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {},
-                  icon: const Icon(Icons.description),
-                  label: const Text('Documents'),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminSubscriptionPage(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.subscriptions),
-                  label: const Text('Subscriptions'),
-                ),
-              ],
+      body: Container(
+        color: Colors.white,
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.dashboard_customize,
+              color: Colors.redAccent,
+              size: 80,
             ),
-          ),
-
-          // 🔸 Banner reminder
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              color: Colors.redAccent.withOpacity(0.9),
-              padding: const EdgeInsets.all(8),
-              child: const Center(
-                child: Text(
-                  '⚠️ Development Mode — Login Bypassed',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+            const SizedBox(height: 12),
+            const Text(
+              'Welcome to the Admin Panel!',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdminDocumentsPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.description),
+              label: const Text('Documents'),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdminSubscriptionPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.subscriptions),
+              label: const Text('Subscriptions'),
+            ),
+          ],
+        ),
       ),
     );
   }

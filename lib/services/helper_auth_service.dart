@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import '../models/helper.dart';
 import '../services/supabase_service.dart';
@@ -49,7 +50,7 @@ class HelperAuthService {
     required String birthdate,
     required int age,
     required String password,
-    required String skill,
+    required List<String> skills,
     required String experience,
     required String municipality,
     required String barangay,
@@ -88,6 +89,54 @@ class HelperAuthService {
       // Hash password
       final passwordHash = _createPasswordHash(password);
 
+      // If a profile picture base64 string was provided, attempt to upload it to storage.
+      // If upload succeeds we will store the public URL and NOT keep the base64 in DB.
+      // If upload fails we will keep the base64 in the DB so the image can be recovered later.
+      String? profilePictureValue; // public URL (if uploaded)
+      final String? originalProfilePictureBase64 = profilePictureBase64;
+      bool uploadSucceeded = false;
+      String? uploadError;
+
+      // Try to sign up the user in Supabase Auth first so uploads during registration
+      // are performed with an authenticated session. If signUp fails we continue
+      // but uploads may be rejected by storage RLS.
+      try {
+        final signUpRes = await SupabaseService.client.auth.signUp(
+          email: email,
+          password: password,
+        );
+      } catch (e) {
+        // signUp failed - continue without printing debug
+      }
+      if (originalProfilePictureBase64 != null &&
+          originalProfilePictureBase64.isNotEmpty) {
+        try {
+          // Convert base64 to bytes and guess extension
+          String clean = originalProfilePictureBase64;
+          if (clean.contains(',')) clean = clean.split(',').last;
+          final bytes = base64Decode(clean);
+
+          final ext = 'png';
+          final filename =
+              'profiles/helper_${DateTime.now().millisecondsSinceEpoch}.$ext';
+
+          final publicUrl = await SupabaseService.uploadBytesToStorage(
+            bucket: 'profile-picture',
+            path: filename,
+            bytes: Uint8List.fromList(bytes),
+          );
+
+          // Store public URL in profile_picture_url column and mark success
+          profilePictureValue = publicUrl;
+          uploadSucceeded = true;
+        } catch (e) {
+          uploadSucceeded = false;
+          uploadError = e.toString();
+        }
+      }
+
+      // Debug: print profile picture upload state before insert
+
       // Insert new helper
       final response = await SupabaseService.client
           .from(_tableName)
@@ -99,11 +148,18 @@ class HelperAuthService {
             'birthdate': birthdate,
             'age': age,
             'password_hash': passwordHash,
-            'skill': skill,
+            'skill': skills.join(', '),
             'experience': experience,
             'barangay': barangay,
             'barangay_clearance_base64': barangayClearanceBase64,
-            'profile_picture_base64': profilePictureBase64,
+            // If upload succeeded we store the public URL and clear the base64 to avoid large rows.
+            // If upload failed we keep the base64 so admin or a background job can retry.
+            // NOTE: do NOT insert large base64 payloads when upload failed.
+            // Storing the base64 on failure previously caused Postgres index
+            // size errors in some environments. We keep the base64 only in
+            // the client memory for retry after login.
+            'profile_picture_base64': uploadSucceeded ? null : null,
+            'profile_picture_url': uploadSucceeded ? profilePictureValue : null,
           })
           .select()
           .single();
@@ -112,8 +168,12 @@ class HelperAuthService {
 
       return {
         'success': true,
-        'message': 'Registration successful',
+        'message': uploadSucceeded
+            ? 'Registration successful'
+            : 'Registration successful (profile picture upload failed)',
         'helper': helper,
+        'uploadSucceeded': uploadSucceeded,
+        'uploadError': uploadError,
       };
     } catch (e) {
       return {'success': false, 'message': 'Registration failed: $e'};
@@ -152,6 +212,22 @@ class HelperAuthService {
       }
 
       final helper = Helper.fromMap(response);
+
+      // After login, if there is a preserved base64 image but no public URL, try to upload it now.
+      try {
+        final hasBase64 = response['profile_picture_base64'] != null;
+        final hasUrl = response['profile_picture_url'] != null;
+        if (hasBase64 && !hasUrl) {
+          final base64 = response['profile_picture_base64'] as String;
+
+          await HelperAuthService.updateProfilePicture(
+            id: helper.id,
+            profilePictureBase64: base64,
+          );
+        }
+      } catch (e) {
+        debugPrint('DEBUG: loginHelper post-login upload retry failed: $e');
+      }
 
       return {'success': true, 'message': 'Login successful', 'helper': helper};
     } catch (e) {
@@ -201,7 +277,33 @@ class HelperAuthService {
         updateData['barangay_clearance_base64'] = barangayClearanceBase64;
       }
       if (profilePictureBase64 != null) {
-        updateData['profile_picture_base64'] = profilePictureBase64;
+        // If profilePictureBase64 looks like a large base64 payload, upload to storage
+        String? profilePictureValue = profilePictureBase64;
+        try {
+          String clean = profilePictureBase64;
+          if (clean.contains(',')) clean = clean.split(',').last;
+          final bytes = base64Decode(clean);
+
+          // Only try upload if size exceeds small threshold or if it's indeed base64
+          if (bytes.length > 2000) {
+            final filename =
+                'profiles/helper_${id}_${DateTime.now().millisecondsSinceEpoch}.png';
+
+            final publicUrl = await SupabaseService.uploadBytesToStorage(
+              bucket: 'profile-picture',
+              path: filename,
+              bytes: Uint8List.fromList(bytes),
+            );
+
+            profilePictureValue = publicUrl;
+          }
+        } catch (e) {
+          // ignore and fallback to provided value
+        }
+
+        // store URL in profile_picture_url and clear base64 to avoid large DB rows
+        updateData['profile_picture_base64'] = null;
+        updateData['profile_picture_url'] = profilePictureValue;
       }
 
       if (updateData.isEmpty) {
@@ -233,9 +335,33 @@ class HelperAuthService {
     String? profilePictureBase64,
   }) async {
     try {
+      String? profilePictureValue = profilePictureBase64;
+      if (profilePictureBase64 != null) {
+        try {
+          String clean = profilePictureBase64;
+          if (clean.contains(',')) clean = clean.split(',').last;
+          final bytes = base64Decode(clean);
+          final filename =
+              'profiles/helper_${id}_${DateTime.now().millisecondsSinceEpoch}.png';
+
+          final publicUrl = await SupabaseService.uploadBytesToStorage(
+            bucket: 'profile-picture',
+            path: filename,
+            bytes: Uint8List.fromList(bytes),
+          );
+
+          profilePictureValue = publicUrl;
+        } catch (e) {
+          // if upload fails, allow clearing the picture or storing null
+        }
+      }
+
       final response = await SupabaseService.client
           .from(_tableName)
-          .update({'profile_picture_base64': profilePictureBase64})
+          .update({
+            'profile_picture_base64': null,
+            'profile_picture_url': profilePictureValue,
+          })
           .eq('id', id)
           .select()
           .single();

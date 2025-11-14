@@ -56,7 +56,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     try {
       final stats = await _ratingService.getUserRatingStatistics(
         _matchedJobs[0].employerId,
-        LocalizationManager.translate('employer'),
+        'employer',
       );
 
       if (mounted) {

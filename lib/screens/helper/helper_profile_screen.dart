@@ -48,7 +48,7 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
           // Load rating statistics
           final stats = await _ratingService.getUserRatingStatistics(
             finalHelper.id,
-            LocalizationManager.translate('helper'),
+            'helper',
           );
 
           if (mounted) {
@@ -62,7 +62,7 @@ class _HelperProfileScreenState extends State<HelperProfileScreen> {
           // Load rating statistics for cached helper
           final stats = await _ratingService.getUserRatingStatistics(
             helper.id,
-            LocalizationManager.translate('helper'),
+            'helper',
           );
 
           if (mounted) {

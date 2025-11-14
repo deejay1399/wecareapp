@@ -26,23 +26,23 @@ class ProfilePictureWidget extends StatelessWidget {
   String _getInitials(String name) {
     final nameParts = name.trim().split(' ');
     if (nameParts.isEmpty) return '?';
-    
+
     if (nameParts.length == 1) {
       return nameParts[0].isNotEmpty ? nameParts[0][0].toUpperCase() : '?';
     }
-    
+
     final firstInitial = nameParts[0].isNotEmpty ? nameParts[0][0] : '';
-    final lastInitial = nameParts[nameParts.length - 1].isNotEmpty 
-        ? nameParts[nameParts.length - 1][0] 
+    final lastInitial = nameParts[nameParts.length - 1].isNotEmpty
+        ? nameParts[nameParts.length - 1][0]
         : '';
-    
+
     return (firstInitial + lastInitial).toUpperCase();
   }
 
   // Generate background color from name
   Color _generateColorFromName(String name) {
     if (backgroundColor != null) return backgroundColor!;
-    
+
     final colors = [
       const Color(0xFF1565C0), // Blue
       const Color(0xFFFF8A50), // Orange
@@ -53,7 +53,7 @@ class ProfilePictureWidget extends StatelessWidget {
       const Color(0xFF607D8B), // Blue Grey
       const Color(0xFF795548), // Brown
     ];
-    
+
     final hash = name.hashCode;
     return colors[hash.abs() % colors.length];
   }
@@ -66,7 +66,7 @@ class ProfilePictureWidget extends StatelessWidget {
       if (base64String.contains(',')) {
         cleanBase64 = base64String.split(',').last;
       }
-      
+
       return base64Decode(cleanBase64);
     } catch (e) {
       debugPrint('Error decoding base64 image: $e');
@@ -81,27 +81,40 @@ class ProfilePictureWidget extends StatelessWidget {
 
     Widget profileWidget;
 
-    // Try to decode and display base64 image
+    // If the stored string is a URL, show network image. Otherwise try base64.
     if (profilePictureBase64 != null && profilePictureBase64!.isNotEmpty) {
-      final imageBytes = _decodeBase64(profilePictureBase64!);
-      
-      if (imageBytes != null) {
+      final value = profilePictureBase64!.trim();
+      if (value.startsWith('http://') || value.startsWith('https://')) {
         profileWidget = ClipOval(
-          child: Image.memory(
-            imageBytes,
+          child: Image.network(
+            value,
             width: size,
             height: size,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
-              // Fallback to initials if image fails to load
-              debugPrint('Error loading profile image: $error');
+              debugPrint('Error loading network profile image: $error');
               return _buildInitialsAvatar(initials, bgColor);
             },
           ),
         );
       } else {
-        // Fallback to initials if base64 decode fails
-        profileWidget = _buildInitialsAvatar(initials, bgColor);
+        final imageBytes = _decodeBase64(value);
+        if (imageBytes != null) {
+          profileWidget = ClipOval(
+            child: Image.memory(
+              imageBytes,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                debugPrint('Error loading profile image: $error');
+                return _buildInitialsAvatar(initials, bgColor);
+              },
+            ),
+          );
+        } else {
+          profileWidget = _buildInitialsAvatar(initials, bgColor);
+        }
       }
     } else {
       // No profile picture, show initials
@@ -110,7 +123,7 @@ class ProfilePictureWidget extends StatelessWidget {
 
     // Wrap with gesture detector if onTap is provided
     Widget finalWidget = profileWidget;
-    
+
     if (onTap != null) {
       finalWidget = GestureDetector(
         onTap: onTap,
@@ -119,10 +132,7 @@ class ProfilePictureWidget extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white,
-              width: 2,
-            ),
+            border: Border.all(color: Colors.white, width: 2),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.1),
@@ -176,10 +186,7 @@ class ProfilePictureWidget extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: bgColor,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
       child: Center(
         child: Text(
           initials,

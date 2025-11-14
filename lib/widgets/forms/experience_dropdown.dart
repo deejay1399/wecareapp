@@ -40,12 +40,19 @@ class ExperienceDropdown extends StatelessWidget {
                 'Select years of experience',
                 style: TextStyle(color: Color(0xFF9E9E9E)),
               ),
-              icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF1565C0)),
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Color(0xFF1565C0),
+              ),
               isExpanded: true,
               items: experienceList.map((String experience) {
                 return DropdownMenuItem<String>(
                   value: experience,
-                  child: Text('$experience years'),
+                  child: Text(
+                    experience.contains('year')
+                        ? experience
+                        : '$experience years',
+                  ),
                 );
               }).toList(),
               onChanged: onChanged,

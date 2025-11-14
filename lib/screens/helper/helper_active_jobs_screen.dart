@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/job_posting.dart';
 import '../../services/job_posting_service.dart';
 import '../../services/session_service.dart';
+import '../../services/subscription_service.dart';
 import '../rating/rating_dialog_screen.dart';
 import '../../localization_manager.dart';
 
@@ -91,6 +92,29 @@ class _HelperActiveJobsScreenState extends State<HelperActiveJobsScreen> {
 
     try {
       await JobPostingService.markJobAsCompleted(job.id);
+
+      // Track completed jobs and award free uses when threshold reached
+      final currentUserId = await SessionService.getCurrentUserId();
+      final currentUserType = await SessionService.getCurrentUserType();
+      if (currentUserId != null && currentUserType != null) {
+        final added =
+            await SubscriptionService.incrementCompletedJobsAndMaybeAddFreeUses(
+              currentUserId,
+              currentUserType,
+            );
+
+        if (added > 0 && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                // simple user-facing message; add localization key if desired
+                '${added.toString()} free uses added! ${LocalizationManager.translate('enjoy_extra_uses')}',
+              ),
+              backgroundColor: const Color(0xFF10B981),
+            ),
+          );
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

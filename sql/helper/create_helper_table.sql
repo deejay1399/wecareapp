@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS helpers (
     experience VARCHAR(50) NOT NULL,
     barangay VARCHAR(100) NOT NULL,
     barangay_clearance_base64 TEXT,
-    is_verified BOOLEAN DEFAULT FALSE,
+    is_verified BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

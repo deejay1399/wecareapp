@@ -47,10 +47,11 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       // Get current employer info
       final currentEmployer = await SessionService.getCurrentEmployer();
       if (currentEmployer != null) {
+        // viewerType should be the internal role key, not a localized label
         await HelperServicePostingService.incrementViewsCount(
           widget.servicePosting.id,
           currentEmployer.id,
-          LocalizationManager.translate('employer'),
+          'employer',
         );
       }
     } catch (e) {
@@ -62,7 +63,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     try {
       final stats = await _ratingService.getUserRatingStatistics(
         widget.servicePosting.helperId,
-        LocalizationManager.translate('helper'),
+        'helper',
       );
 
       if (mounted) {

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/helper.dart';
 import '../../services/session_service.dart';
 import '../../services/helper_auth_service.dart';
 import '../../widgets/forms/custom_text_field.dart';
-import '../../widgets/forms/skills_dropdown.dart';
+// import '../../widgets/forms/skills_dropdown.dart';
 import '../../widgets/forms/experience_dropdown.dart';
 import '../../widgets/forms/barangay_dropdown.dart';
 import '../../widgets/forms/file_upload_field.dart';
@@ -30,7 +31,7 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
   final _lastNameController = TextEditingController();
 
   String? _selectedMunicipality;
-  String? _selectedSkill;
+  List<String> _selectedSkills = [];
   String? _selectedExperience;
   String? _selectedBarangay;
   String? _barangayClearanceFileName;
@@ -50,7 +51,7 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
   void _initializeFields() {
     _firstNameController.text = widget.helper.firstName;
     _lastNameController.text = widget.helper.lastName;
-    _selectedSkill = widget.helper.skill;
+    _selectedSkills = widget.helper.skill.split(', ');
     _selectedExperience = widget.helper.experience;
     _selectedMunicipality = widget.helper.municipality;
     _selectedBarangay = widget.helper.barangay;
@@ -135,7 +136,10 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
         lastName: _lastNameController.text.trim() != widget.helper.lastName
             ? _lastNameController.text.trim()
             : null,
-        skill: _selectedSkill != widget.helper.skill ? _selectedSkill : null,
+        skill: !listEquals(_selectedSkills, widget.helper.skill.split(', '))
+            ? _selectedSkills.join(', ')
+            : null,
+
         experience: _selectedExperience != widget.helper.experience
             ? _selectedExperience
             : null,
@@ -252,7 +256,7 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
+                  color: const Color(0xFFFF8A50).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -342,12 +346,12 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
               ),
               const SizedBox(height: 16),
 
-              SkillsDropdown(
-                selectedSkill: _selectedSkill,
-                skillsList: HelperConstants.skills,
-                onChanged: (String? value) {
+              SkillsChecklist(
+                allSkills: HelperConstants.skills,
+                selectedSkills: _selectedSkills,
+                onChanged: (List<String> newSkills) {
                   setState(() {
-                    _selectedSkill = value;
+                    _selectedSkills = newSkills;
                     _hasChanges = true;
                   });
                 },
@@ -400,6 +404,7 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                     _barangayList =
                         LocationConstants.municipalityBarangays[value] ?? [];
                     _selectedBarangay = null;
+                    _hasChanges = true;
                   });
                 },
               ),
@@ -417,6 +422,7 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
                   setState(() {
                     if (value == null || _barangayList.contains(value)) {
                       _selectedBarangay = value;
+                      _hasChanges = true;
                     }
                   });
                 },
@@ -544,6 +550,42 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class SkillsChecklist extends StatelessWidget {
+  final List<String> allSkills;
+  final List<String> selectedSkills;
+  final ValueChanged<List<String>> onChanged;
+
+  const SkillsChecklist({
+    super.key,
+    required this.allSkills,
+    required this.selectedSkills,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: allSkills.map((skill) {
+        final isSelected = selectedSkills.contains(skill);
+        return CheckboxListTile(
+          title: Text(skill),
+          value: isSelected,
+          activeColor: const Color(0xFFFF8A50),
+          onChanged: (bool? checked) {
+            final updated = List<String>.from(selectedSkills);
+            if (checked == true) {
+              updated.add(skill);
+            } else {
+              updated.remove(skill);
+            }
+            onChanged(updated);
+          },
+        );
+      }).toList(),
     );
   }
 }

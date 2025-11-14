@@ -40,7 +40,10 @@ class Employer {
       municipality: map['municipality'] as String? ?? '',
       barangay: map['barangay'] as String? ?? '',
       barangayClearanceBase64: map['barangay_clearance_base64'] as String?,
-      profilePictureBase64: map['profile_picture_base64'] as String?,
+      // Accept either raw base64 or a URL stored in profile_picture_url
+      profilePictureBase64:
+          (map['profile_picture_base64'] as String?) ??
+          (map['profile_picture_url'] as String?),
       isVerified: map['is_verified'] as bool? ?? false,
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'] as String)

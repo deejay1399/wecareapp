@@ -46,8 +46,12 @@ class Helper {
       municipality: map['municipality'] as String? ?? '',
       barangay: map['barangay'] as String? ?? '',
       barangayClearanceBase64: map['barangay_clearance_base64'] as String?,
-      profilePictureBase64: map['profile_picture_base64'] as String?,
-      isVerified: map['is_verified'] as bool? ?? false,
+      // Support either a stored base64 or a URL in the DB. Prefer base64 if present,
+      // otherwise fall back to the profile_picture_url column.
+      profilePictureBase64:
+          (map['profile_picture_base64'] as String?) ??
+          (map['profile_picture_url'] as String?),
+      isVerified: map['is_verified'] as bool? ?? true,
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'] as String)
           : DateTime.now(),

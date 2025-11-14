@@ -55,11 +55,8 @@ class _EmployerSubscriptionScreenState
       // Create subscription
       final userId = await SessionService.getCurrentUserId();
       if (userId != null) {
-        await SubscriptionService.createSubscription(
-          userId,
-          LocalizationManager.translate('employer'),
-          plan,
-        );
+        // Pass internal role key for subscription record
+        await SubscriptionService.createSubscription(userId, 'employer', plan);
 
         // Reload status
         await _loadSubscriptionStatus();
@@ -175,7 +172,7 @@ class _EmployerSubscriptionScreenState
                   const SizedBox(height: 8),
                   Text(
                     LocalizationManager.translate(
-                      'unlock_unlimited_access_to_connect_with_helpers'
+                      'unlock_unlimited_access_to_connect_with_helpers',
                     ),
                     style: TextStyle(
                       fontSize: 16,

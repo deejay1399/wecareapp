@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import '../models/employer.dart';
 import '../services/supabase_service.dart';
@@ -86,6 +87,79 @@ class EmployerAuthService {
       // Hash password
       final passwordHash = _createPasswordHash(password);
 
+      // If a profile picture base64 string was provided, attempt upload.
+      // On success we store public URL and clear base64; on failure we keep the base64 so it can be retried later.
+      String? profilePictureValue;
+      final String? originalProfilePictureBase64 = profilePictureBase64;
+      bool uploadSucceeded = false;
+      String? uploadError;
+
+      // Try to sign up the user in Supabase Auth first so uploads during registration
+      // are performed with an authenticated session. If signUp fails we continue
+      // but uploads may be rejected by storage RLS.
+      try {
+        final signUpRes = await SupabaseService.client.auth.signUp(
+          email: email,
+          password: password,
+        );
+        debugPrint(
+          'DEBUG: employer.registerEmployer auth.signUp result: ${signUpRes.user != null}',
+        );
+        // Ensure we have an authenticated session; if not, try signInWithPassword
+        if (SupabaseService.client.auth.currentUser == null) {
+          try {
+            final signInRes = await SupabaseService.client.auth
+                .signInWithPassword(email: email, password: password);
+            debugPrint(
+              'DEBUG: employer.registerEmployer auth.signIn result: ${signInRes.user != null}',
+            );
+          } catch (e) {
+            debugPrint(
+              'DEBUG: employer.registerEmployer auth.signIn failed: $e',
+            );
+          }
+        }
+      } catch (e) {
+        debugPrint('DEBUG: employer.registerEmployer auth.signUp failed: $e');
+      }
+
+      if (originalProfilePictureBase64 != null &&
+          originalProfilePictureBase64.isNotEmpty) {
+        try {
+          String clean = originalProfilePictureBase64;
+          if (clean.contains(',')) clean = clean.split(',').last;
+          final bytes = base64Decode(clean);
+          final filename =
+              'profiles/employer_${DateTime.now().millisecondsSinceEpoch}.png';
+
+          debugPrint(
+            'DEBUG: employer.registerEmployer uploading profile picture bytes=${bytes.length}',
+          );
+          final publicUrl = await SupabaseService.uploadBytesToStorage(
+            bucket: 'profile-picture',
+            path: filename,
+            bytes: Uint8List.fromList(bytes),
+          );
+          debugPrint(
+            'DEBUG: employer.registerEmployer upload returned publicUrl=$publicUrl',
+          );
+
+          profilePictureValue = publicUrl;
+          uploadSucceeded = true;
+        } catch (e) {
+          debugPrint('DEBUG: employer.registerEmployer upload failed: $e');
+          // Avoid writing the large base64 blob into the DB when upload fails
+          // because that can trigger Postgres index size errors on some setups.
+          uploadSucceeded = false;
+          uploadError = e.toString();
+        }
+      }
+
+      // Debug: print profile picture upload state before insert
+      debugPrint(
+        'DEBUG: employer.registerEmployer uploadSucceeded=$uploadSucceeded, profilePictureValue=${profilePictureValue != null ? profilePictureValue.length : 0}, base64Length=${originalProfilePictureBase64 != null ? originalProfilePictureBase64.length : 0}',
+      );
+
       // Insert new employer
       final response = await SupabaseService.client
           .from(_tableName)
@@ -100,7 +174,10 @@ class EmployerAuthService {
             'municipality': municipality,
             'barangay': barangay,
             'barangay_clearance_base64': barangayClearanceBase64,
-            'profile_picture_base64': profilePictureBase64,
+            // NOTE: avoid inserting large base64 payloads on failure to prevent
+            // DB index size issues. The client should retry upload after login.
+            'profile_picture_base64': uploadSucceeded ? null : null,
+            'profile_picture_url': uploadSucceeded ? profilePictureValue : null,
           })
           .select()
           .single();
@@ -109,8 +186,12 @@ class EmployerAuthService {
 
       return {
         'success': true,
-        'message': 'Registration successful',
+        'message': uploadSucceeded
+            ? 'Registration successful'
+            : 'Registration successful (profile picture upload failed)',
         'employer': employer,
+        'uploadSucceeded': uploadSucceeded,
+        'uploadError': uploadError,
       };
     } catch (e) {
       return {'success': false, 'message': 'Registration failed: $e'};
@@ -149,6 +230,24 @@ class EmployerAuthService {
       }
 
       final employer = Employer.fromMap(response);
+
+      // After login, if there is a preserved base64 image but no public URL, try to upload it now.
+      try {
+        final hasBase64 = response['profile_picture_base64'] != null;
+        final hasUrl = response['profile_picture_url'] != null;
+        if (hasBase64 && !hasUrl) {
+          final base64 = response['profile_picture_base64'] as String;
+          debugPrint(
+            'DEBUG: loginEmployer found preserved base64, attempting upload...',
+          );
+          await EmployerAuthService.updateProfilePicture(
+            id: employer.id,
+            profilePictureBase64: base64,
+          );
+        }
+      } catch (e) {
+        debugPrint('DEBUG: loginEmployer post-login upload retry failed: $e');
+      }
 
       return {
         'success': true,
@@ -198,7 +297,42 @@ class EmployerAuthService {
         updateData['barangay_clearance_base64'] = barangayClearanceBase64;
       }
       if (profilePictureBase64 != null) {
-        updateData['profile_picture_base64'] = profilePictureBase64;
+        String? profilePictureValue;
+        final String originalProfilePictureBase64 = profilePictureBase64;
+        bool uploadSucceeded = false;
+        try {
+          String clean = profilePictureBase64;
+          if (clean.contains(',')) clean = clean.split(',').last;
+          final bytes = base64Decode(clean);
+          if (bytes.length > 2000) {
+            final filename =
+                'profiles/employer_${id}_${DateTime.now().millisecondsSinceEpoch}.png';
+            debugPrint(
+              'DEBUG: employer.updateEmployerProfile uploading profile picture bytes=${bytes.length}',
+            );
+            final publicUrl = await SupabaseService.uploadBytesToStorage(
+              bucket: 'profile-picture',
+              path: filename,
+              bytes: Uint8List.fromList(bytes),
+            );
+            debugPrint(
+              'DEBUG: employer.updateEmployerProfile upload returned publicUrl=$publicUrl',
+            );
+            profilePictureValue = publicUrl;
+            uploadSucceeded = true;
+          }
+        } catch (e) {
+          debugPrint('DEBUG: employer.updateEmployerProfile upload failed: $e');
+          uploadSucceeded = false;
+        }
+
+        // store URL in profile_picture_url and clear base64 only if upload succeeded
+        updateData['profile_picture_base64'] = uploadSucceeded
+            ? null
+            : originalProfilePictureBase64;
+        updateData['profile_picture_url'] = uploadSucceeded
+            ? profilePictureValue
+            : null;
       }
 
       if (updateData.isEmpty) {
@@ -230,9 +364,43 @@ class EmployerAuthService {
     String? profilePictureBase64,
   }) async {
     try {
+      final String? originalProfilePictureBase64 = profilePictureBase64;
+      String? profilePictureValue;
+      bool uploadSucceeded = false;
+      if (originalProfilePictureBase64 != null) {
+        try {
+          String clean = originalProfilePictureBase64;
+          if (clean.contains(',')) clean = clean.split(',').last;
+          final bytes = base64Decode(clean);
+          final filename =
+              'profiles/employer_${id}_${DateTime.now().millisecondsSinceEpoch}.png';
+          debugPrint(
+            'DEBUG: employer.updateProfilePicture uploading profile picture bytes=${bytes.length}',
+          );
+          final publicUrl = await SupabaseService.uploadBytesToStorage(
+            bucket: 'profile-picture',
+            path: filename,
+            bytes: Uint8List.fromList(bytes),
+          );
+          debugPrint(
+            'DEBUG: employer.updateProfilePicture upload returned publicUrl=$publicUrl',
+          );
+          profilePictureValue = publicUrl;
+          uploadSucceeded = true;
+        } catch (e) {
+          debugPrint('DEBUG: employer.updateProfilePicture upload failed: $e');
+          uploadSucceeded = false;
+        }
+      }
+
       final response = await SupabaseService.client
           .from(_tableName)
-          .update({'profile_picture_base64': profilePictureBase64})
+          .update({
+            'profile_picture_base64': uploadSucceeded
+                ? null
+                : originalProfilePictureBase64,
+            'profile_picture_url': uploadSucceeded ? profilePictureValue : null,
+          })
           .eq('id', id)
           .select()
           .single();

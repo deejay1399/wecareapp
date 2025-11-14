@@ -17,7 +17,8 @@ class ProfilePictureUploadField extends StatefulWidget {
   });
 
   @override
-  State<ProfilePictureUploadField> createState() => _ProfilePictureUploadFieldState();
+  State<ProfilePictureUploadField> createState() =>
+      _ProfilePictureUploadFieldState();
 }
 
 class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
@@ -33,13 +34,17 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
   Future<void> _pickProfilePicture() async {
     // Prevent multiple concurrent file picks
     if (_isPickingFile) {
-      _showErrorMessage('File picker is already open. Please wait for the current operation to complete.');
+      _showErrorMessage(
+        'File picker is already open. Please wait for the current operation to complete.',
+      );
       return;
     }
 
     // Check if file picker is already active globally
     if (FilePickerService.isPickerActive) {
-      _showErrorMessage('Another file picker operation is in progress. Please wait and try again.');
+      _showErrorMessage(
+        'Another file picker operation is in progress. Please wait and try again.',
+      );
       return;
     }
 
@@ -48,22 +53,31 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
     try {
       debugPrint('DEBUG: Starting profile picture picker...');
       // Get both filename and base64 data in single call
-      final result = await FilePickerService.pickImageWithBase64();
-      debugPrint('DEBUG: Profile picture picker result: ${result != null ? 'Success' : 'Cancelled'}');
-      
+      // Allow larger profile pictures (10MB) while keeping other uploads at the default 5MB
+      final result = await FilePickerService.pickImageWithBase64(
+        maxFileSizeBytes: 10 * 1024 * 1024,
+      );
+      debugPrint(
+        'DEBUG: Profile picture picker result: ${result != null ? 'Success' : 'Cancelled'}',
+      );
+
       if (result != null && mounted) {
-        debugPrint('DEBUG: Profile picture selected - Name: ${result.fileName}, Base64 length: ${result.base64Data.length}');
+        debugPrint(
+          'DEBUG: Profile picture selected - Name: ${result.fileName}, Base64 length: ${result.base64Data.length}',
+        );
         setState(() {
           _profilePictureBase64 = result.base64Data;
         });
-        
+
         // Notify parent widget
         widget.onProfilePictureChanged(_profilePictureBase64);
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Profile picture "${result.fileName}" uploaded successfully!'),
+            content: Text(
+              'Profile picture "${result.fileName}" uploaded successfully!',
+            ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -75,13 +89,13 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
     } catch (e) {
       debugPrint('DEBUG: Profile picture picker error: $e');
       if (!mounted) return;
-      
+
       String errorMessage = e.toString();
       // Remove "Exception: " prefix if present
       if (errorMessage.startsWith('Exception: ')) {
         errorMessage = errorMessage.substring(11);
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -101,7 +115,7 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
       _profilePictureBase64 = null;
     });
     widget.onProfilePictureChanged(null);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Profile picture removed'),
@@ -113,10 +127,7 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
 
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -134,7 +145,7 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Profile picture display and controls
         Center(
           child: Column(
@@ -146,9 +157,9 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
                 onTap: _isPickingFile ? null : _pickProfilePicture,
                 showEditIcon: true,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Action buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -156,19 +167,25 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
                   // Upload/Change button
                   ElevatedButton.icon(
                     onPressed: _isPickingFile ? null : _pickProfilePicture,
-                    icon: _isPickingFile 
+                    icon: _isPickingFile
                         ? const SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Icon(Icons.camera_alt),
-                    label: Text(_isPickingFile 
-                        ? 'Uploading...' 
-                        : (_profilePictureBase64 != null ? 'Change' : 'Upload')),
+                    label: Text(
+                      _isPickingFile
+                          ? 'Uploading...'
+                          : (_profilePictureBase64 != null
+                                ? 'Change'
+                                : 'Upload'),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1565C0),
                       foregroundColor: Colors.white,
@@ -177,7 +194,7 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
                       ),
                     ),
                   ),
-                  
+
                   // Remove button (only show if there's a profile picture)
                   if (_profilePictureBase64 != null) ...[
                     const SizedBox(width: 12),
@@ -196,21 +213,18 @@ class _ProfilePictureUploadFieldState extends State<ProfilePictureUploadField> {
                   ],
                 ],
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Help text
               Text(
-                'Upload a JPG or PNG image (max 5MB)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                'Upload a JPG or PNG image (max 10MB)',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
           ),
         ),
-        
+
         const SizedBox(height: 20),
       ],
     );

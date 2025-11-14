@@ -130,9 +130,10 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
         MaterialPageRoute(
           builder: (context) => RatingDialogScreen(
             raterId: currentUserId,
-            raterType: LocalizationManager.translate('employer'),
+            // Use internal role keys (not localized strings) for logic/DB
+            raterType: 'employer',
             ratedId: job.assignedHelperId!,
-            ratedType: LocalizationManager.translate('helper'),
+            ratedType: 'helper',
             ratedName:
                 job.assignedHelperName ??
                 LocalizationManager.translate('helper'),

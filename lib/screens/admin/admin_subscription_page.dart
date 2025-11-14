@@ -10,9 +10,11 @@ class AdminSubscriptionPage extends StatefulWidget {
 
 class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
   List<Map<String, dynamic>> _subscriptions = [];
+  List<Map<String, dynamic>> _filteredSubscriptions = [];
   bool _isLoading = true;
   String? _error;
 
+  String _selectedCategory = 'All'; // <-- Filter by status
   final Color mainRed = const Color(0xFFD32F2F); // Main red color
 
   @override
@@ -30,6 +32,7 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
       final results = await AdminService.getSubscriptions();
       setState(() {
         _subscriptions = results;
+        _applyFilter(); // Apply filter automatically
         _isLoading = false;
       });
     } catch (e) {
@@ -37,6 +40,17 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
         _error = 'Failed to load subscriptions: $e';
         _isLoading = false;
       });
+    }
+  }
+
+  void _applyFilter() {
+    if (_selectedCategory == 'All') {
+      _filteredSubscriptions = _subscriptions;
+    } else {
+      _filteredSubscriptions = _subscriptions.where((sub) {
+        final status = (sub['status'] ?? '').toString().toLowerCase();
+        return status == _selectedCategory.toLowerCase();
+      }).toList();
     }
   }
 
@@ -61,6 +75,70 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
     } catch (_) {
       return date;
     }
+  }
+
+  Widget _buildFilterButtons() {
+    final categories = ['All', 'Paid', 'Pending', 'Failed'];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: categories.map((cat) {
+          final isSelected = _selectedCategory == cat;
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isSelected ? mainRed : Colors.white,
+              foregroundColor: isSelected ? Colors.white : mainRed,
+              side: BorderSide(color: mainRed, width: 1.5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            onPressed: () {
+              setState(() {
+                _selectedCategory = cat;
+                _applyFilter();
+              });
+            },
+            child: Text(
+              cat,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox, size: 80, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            Text(
+              'No ${_selectedCategory == 'All' ? 'subscriptions' : _selectedCategory.toLowerCase()} items found.',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try refreshing or checking another category.',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -93,95 +171,115 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
               ),
             )
           : _subscriptions.isEmpty
-          ? const Center(
-              child: Text(
-                'No subscriptions found.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchSubscriptions,
-              color: mainRed,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _subscriptions.length,
-                itemBuilder: (context, index) {
-                  final sub = _subscriptions[index];
-                  final status = sub['status']?.toString() ?? 'Unknown';
-                  final planName = sub['plan_name'] ?? 'N/A';
-                  final expiryDate = _formatDate(sub['expiry_date']);
-                  final userId = sub['user_id'] ?? 'Unknown';
-                  final amount = sub['amount']?.toString() ?? '0.00';
+          ? _buildEmptyState()
+          : Column(
+              children: [
+                _buildFilterButtons(),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _fetchSubscriptions,
+                    color: mainRed,
+                    child: _filteredSubscriptions.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.5,
+                                child: _buildEmptyState(),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _filteredSubscriptions.length,
+                            itemBuilder: (context, index) {
+                              final sub = _filteredSubscriptions[index];
+                              final status =
+                                  sub['status']?.toString() ?? 'Unknown';
+                              final planName = sub['plan_name'] ?? 'N/A';
+                              final expiryDate = _formatDate(
+                                sub['expiry_date'],
+                              );
+                              final userId = sub['user_id'] ?? 'Unknown';
+                              final amount =
+                                  sub['amount']?.toString() ?? '0.00';
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      leading: CircleAvatar(
-                        backgroundColor: _getStatusColor(
-                          status,
-                        ).withOpacity(0.2),
-                        child: Icon(
-                          Icons.person,
-                          color: _getStatusColor(status),
-                        ),
-                      ),
-                      title: Text(
-                        planName,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 6),
-                          Text(
-                            'User: $userId',
-                            style: const TextStyle(fontSize: 14),
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(16),
+                                  leading: CircleAvatar(
+                                    backgroundColor: _getStatusColor(
+                                      status,
+                                    ).withOpacity(0.2),
+                                    child: Icon(
+                                      Icons.person,
+                                      color: _getStatusColor(status),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    planName,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'User: $userId',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Amount: ₱$amount',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Expiry: $expiryDate',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _getStatusColor(
+                                        status,
+                                      ).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: _getStatusColor(status),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      status.toUpperCase(),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: _getStatusColor(status),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Amount: ₱$amount',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Expiry: $expiryDate',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(status).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: _getStatusColor(status),
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          status.toUpperCase(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _getStatusColor(status),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
     );
   }

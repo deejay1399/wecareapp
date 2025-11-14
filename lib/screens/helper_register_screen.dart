@@ -7,7 +7,6 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import '../widgets/forms/custom_text_field.dart';
 import '../widgets/forms/birthday_picker_field.dart';
 import '../widgets/forms/phone_text_field.dart';
-import '../widgets/forms/skills_dropdown.dart';
 import '../widgets/forms/experience_dropdown.dart';
 import '../widgets/forms/barangay_dropdown.dart';
 import '../widgets/forms/file_upload_field.dart';
@@ -41,7 +40,7 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
   final _confirmPasswordController = TextEditingController();
 
   String? _selectedMunicipality;
-  String? _selectedSkill;
+  List<String> _selectedSkills = [];
   String? _selectedExperience;
   String? _selectedBarangay;
   String? _barangayClearanceFileName;
@@ -226,7 +225,6 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
         final verified = await _verifyBarangayClearanceAI(result.base64Data);
 
         if (!verified) {
-          // clear uploaded file if verification failed (you requested this behavior)
           setState(() {
             _barangayClearanceBase64 = null;
             _barangayClearanceFileName = null;
@@ -254,8 +252,8 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_selectedSkill == null) {
-      _showErrorMessage('Please select your primary skill');
+    if (_selectedSkills.isEmpty) {
+      _showErrorMessage('Please select at least one skill');
       return;
     }
 
@@ -305,6 +303,9 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
       }
 
       debugPrint('DEBUG: Calling HelperAuthService.registerHelper...');
+      debugPrint(
+        'DEBUG: profile picture base64 length: ${_profilePictureBase64?.length ?? 0}',
+      );
       final result = await HelperAuthService.registerHelper(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
@@ -313,7 +314,7 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
         birthdate: _birthdayController.text.trim(),
         age: int.parse(_ageController.text.trim()),
         password: _passwordController.text,
-        skill: _selectedSkill!,
+        skills: _selectedSkills,
         experience: _selectedExperience!,
         municipality: _selectedMunicipality!,
         barangay: _selectedBarangay!,
@@ -518,18 +519,97 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
                   validator: FormValidators.validateAge,
                 ),
 
-                // Skills & Experience Section
                 const SectionHeader(title: 'Skills & Experience'),
 
-                SkillsDropdown(
-                  selectedSkill: _selectedSkill,
-                  skillsList: HelperConstants.skills,
-                  onChanged: (String? value) {
-                    setState(() {
-                      _selectedSkill = value;
-                    });
+                GestureDetector(
+                  onTap: () async {
+                    final List<String> skills = HelperConstants.skills;
+                    final List<String>? selected =
+                        await showDialog<List<String>>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            final tempSelected = List<String>.from(
+                              _selectedSkills,
+                            );
+                            return AlertDialog(
+                              title: const Text('Select Your Skills'),
+                              content: StatefulBuilder(
+                                builder: (context, setState) {
+                                  return SingleChildScrollView(
+                                    child: Column(
+                                      children: skills.map((skill) {
+                                        final isSelected = tempSelected
+                                            .contains(skill);
+                                        return CheckboxListTile(
+                                          title: Text(skill),
+                                          value: isSelected,
+                                          onChanged: (bool? checked) {
+                                            setState(() {
+                                              if (checked == true) {
+                                                tempSelected.add(skill);
+                                              } else {
+                                                tempSelected.remove(skill);
+                                              }
+                                            });
+                                          },
+                                        );
+                                      }).toList(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFF8A50),
+                                  ),
+                                  onPressed: () =>
+                                      Navigator.pop(context, tempSelected),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                    if (selected != null) {
+                      setState(() => _selectedSkills = selected);
+                    }
                   },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _selectedSkills.isEmpty
+                                ? 'Select your skills'
+                                : _selectedSkills.join(', '),
+                            style: TextStyle(
+                              color: _selectedSkills.isEmpty
+                                  ? Colors.grey.shade600
+                                  : Colors.black,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                      ],
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 16),
 
                 ExperienceDropdown(
                   selectedExperience: _selectedExperience,
@@ -583,7 +663,6 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
                   isLoading: _isPickingFile,
                 ),
                 const SizedBox(height: 8),
-                // AI status / confidence meter
                 _buildAiStatusWidget(),
                 const SizedBox(height: 16),
 
