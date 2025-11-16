@@ -86,48 +86,37 @@ class HelperAuthService {
         };
       }
 
-      // Hash password
       final passwordHash = _createPasswordHash(password);
 
-      // If a profile picture base64 string was provided, attempt to upload it to storage.
-      // If upload succeeds we will store the public URL and NOT keep the base64 in DB.
-      // If upload fails we will keep the base64 in the DB so the image can be recovered later.
-      String? profilePictureValue; // public URL (if uploaded)
-      final String? originalProfilePictureBase64 = profilePictureBase64;
+      // Upload profile picture to storage (URL only)
+      String? profilePictureUrl;
       bool uploadSucceeded = false;
       String? uploadError;
 
-      // Try to sign up the user in Supabase Auth first so uploads during registration
-      // are performed with an authenticated session. If signUp fails we continue
-      // but uploads may be rejected by storage RLS.
       try {
-        final signUpRes = await SupabaseService.client.auth.signUp(
+        await SupabaseService.client.auth.signUp(
           email: email,
           password: password,
         );
       } catch (e) {
-        // signUp failed - continue without printing debug
+        // Ignore Supabase auth signup errors for now
       }
-      if (originalProfilePictureBase64 != null &&
-          originalProfilePictureBase64.isNotEmpty) {
+
+      if (profilePictureBase64 != null && profilePictureBase64.isNotEmpty) {
         try {
-          // Convert base64 to bytes and guess extension
-          String clean = originalProfilePictureBase64;
+          String clean = profilePictureBase64;
           if (clean.contains(',')) clean = clean.split(',').last;
           final bytes = base64Decode(clean);
 
-          final ext = 'png';
           final filename =
-              'profiles/helper_${DateTime.now().millisecondsSinceEpoch}.$ext';
+              'profiles/helper_${DateTime.now().millisecondsSinceEpoch}.png';
 
-          final publicUrl = await SupabaseService.uploadBytesToStorage(
+          profilePictureUrl = await SupabaseService.uploadBytesToStorage(
             bucket: 'profile-picture',
             path: filename,
             bytes: Uint8List.fromList(bytes),
           );
 
-          // Store public URL in profile_picture_url column and mark success
-          profilePictureValue = publicUrl;
           uploadSucceeded = true;
         } catch (e) {
           uploadSucceeded = false;
@@ -135,9 +124,7 @@ class HelperAuthService {
         }
       }
 
-      // Debug: print profile picture upload state before insert
-
-      // Insert new helper
+      // Insert new helper (URL only, no base64 saved)
       final response = await SupabaseService.client
           .from(_tableName)
           .insert({
@@ -150,16 +137,10 @@ class HelperAuthService {
             'password_hash': passwordHash,
             'skill': skills.join(', '),
             'experience': experience,
+            'municipality': municipality,
             'barangay': barangay,
             'barangay_clearance_base64': barangayClearanceBase64,
-            // If upload succeeded we store the public URL and clear the base64 to avoid large rows.
-            // If upload failed we keep the base64 so admin or a background job can retry.
-            // NOTE: do NOT insert large base64 payloads when upload failed.
-            // Storing the base64 on failure previously caused Postgres index
-            // size errors in some environments. We keep the base64 only in
-            // the client memory for retry after login.
-            'profile_picture_base64': uploadSucceeded ? null : null,
-            'profile_picture_url': uploadSucceeded ? profilePictureValue : null,
+            'profile_picture_url': uploadSucceeded ? profilePictureUrl : null,
           })
           .select()
           .single();
@@ -180,17 +161,14 @@ class HelperAuthService {
     }
   }
 
-  // Login helper
   static Future<Map<String, dynamic>> loginHelper({
     required String emailOrPhone,
     required String password,
   }) async {
     try {
-      // Determine if input is email or phone
       bool isEmail = emailOrPhone.contains('@');
       String column = isEmail ? 'email' : 'phone';
 
-      // Find helper by email or phone
       final response = await SupabaseService.client
           .from(_tableName)
           .select()
@@ -205,29 +183,12 @@ class HelperAuthService {
         };
       }
 
-      // Verify password
       final storedPasswordHash = response['password_hash'] as String;
       if (!_verifyPassword(password, storedPasswordHash)) {
         return {'success': false, 'message': 'Invalid password'};
       }
 
       final helper = Helper.fromMap(response);
-
-      // After login, if there is a preserved base64 image but no public URL, try to upload it now.
-      try {
-        final hasBase64 = response['profile_picture_base64'] != null;
-        final hasUrl = response['profile_picture_url'] != null;
-        if (hasBase64 && !hasUrl) {
-          final base64 = response['profile_picture_base64'] as String;
-
-          await HelperAuthService.updateProfilePicture(
-            id: helper.id,
-            profilePictureBase64: base64,
-          );
-        }
-      } catch (e) {
-        debugPrint('DEBUG: loginHelper post-login upload retry failed: $e');
-      }
 
       return {'success': true, 'message': 'Login successful', 'helper': helper};
     } catch (e) {
@@ -276,34 +237,27 @@ class HelperAuthService {
       if (barangayClearanceBase64 != null) {
         updateData['barangay_clearance_base64'] = barangayClearanceBase64;
       }
+
+      // Profile picture update (URL only)
       if (profilePictureBase64 != null) {
-        // If profilePictureBase64 looks like a large base64 payload, upload to storage
-        String? profilePictureValue = profilePictureBase64;
         try {
           String clean = profilePictureBase64;
           if (clean.contains(',')) clean = clean.split(',').last;
           final bytes = base64Decode(clean);
 
-          // Only try upload if size exceeds small threshold or if it's indeed base64
-          if (bytes.length > 2000) {
-            final filename =
-                'profiles/helper_${id}_${DateTime.now().millisecondsSinceEpoch}.png';
+          final filename =
+              'profiles/helper_${id}_${DateTime.now().millisecondsSinceEpoch}.png';
 
-            final publicUrl = await SupabaseService.uploadBytesToStorage(
-              bucket: 'profile-picture',
-              path: filename,
-              bytes: Uint8List.fromList(bytes),
-            );
+          final url = await SupabaseService.uploadBytesToStorage(
+            bucket: 'profile-picture',
+            path: filename,
+            bytes: Uint8List.fromList(bytes),
+          );
 
-            profilePictureValue = publicUrl;
-          }
+          updateData['profile_picture_url'] = url;
         } catch (e) {
-          // ignore and fallback to provided value
+          // ignore upload failure; don't update URL
         }
-
-        // store URL in profile_picture_url and clear base64 to avoid large DB rows
-        updateData['profile_picture_base64'] = null;
-        updateData['profile_picture_url'] = profilePictureValue;
       }
 
       if (updateData.isEmpty) {
@@ -329,39 +283,36 @@ class HelperAuthService {
     }
   }
 
-  // Update profile picture only
+  // Update profile picture only (URL only)
   static Future<Map<String, dynamic>> updateProfilePicture({
     required String id,
     String? profilePictureBase64,
   }) async {
     try {
-      String? profilePictureValue = profilePictureBase64;
+      String? pictureUrl;
+
       if (profilePictureBase64 != null) {
         try {
           String clean = profilePictureBase64;
           if (clean.contains(',')) clean = clean.split(',').last;
           final bytes = base64Decode(clean);
+
           final filename =
               'profiles/helper_${id}_${DateTime.now().millisecondsSinceEpoch}.png';
 
-          final publicUrl = await SupabaseService.uploadBytesToStorage(
+          pictureUrl = await SupabaseService.uploadBytesToStorage(
             bucket: 'profile-picture',
             path: filename,
             bytes: Uint8List.fromList(bytes),
           );
-
-          profilePictureValue = publicUrl;
         } catch (e) {
-          // if upload fails, allow clearing the picture or storing null
+          // failed upload, url stays null
         }
       }
 
       final response = await SupabaseService.client
           .from(_tableName)
-          .update({
-            'profile_picture_base64': null,
-            'profile_picture_url': profilePictureValue,
-          })
+          .update({'profile_picture_url': pictureUrl})
           .eq('id', id)
           .select()
           .single();

@@ -14,8 +14,8 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
   bool _isLoading = true;
   String? _error;
 
-  String _selectedCategory = 'All'; // <-- Filter by status
-  final Color mainRed = const Color(0xFFD32F2F); // Main red color
+  String _selectedCategory = 'All';
+  final Color mainRed = const Color(0xFFD32F2F);
 
   @override
   void initState() {
@@ -32,7 +32,7 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
       final results = await AdminService.getSubscriptions();
       setState(() {
         _subscriptions = results;
-        _applyFilter(); // Apply filter automatically
+        _applyFilter();
         _isLoading = false;
       });
     } catch (e) {
@@ -43,27 +43,46 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
     }
   }
 
+  String normalizePlanName(String? plan) {
+    if (plan == null) return 'N/A';
+    final lower = plan.toLowerCase();
+
+    if (lower.contains('plano sa pagsugod')) return 'Starter Plan';
+    if (lower.contains('kasagarang plano')) return 'Standard Plan';
+    if (lower.contains('premium nga plano')) return 'Premium Plan';
+
+    if (lower.contains('panimulang plano')) return 'Starter Plan';
+    if (lower.contains('karaniwang plano')) return 'Standard Plan';
+    if (lower.contains('premium na plano')) return 'Premium Plan';
+
+    if (lower.contains('starter')) return 'Starter Plan';
+    if (lower.contains('standard')) return 'Standard Plan';
+    if (lower.contains('premium')) return 'Premium Plan';
+
+    return plan;
+  }
+
+  Color _getPlanColor(String plan) {
+    switch (plan.toLowerCase()) {
+      case 'starter plan':
+        return Colors.green;
+      case 'standard plan':
+        return Colors.blue;
+      case 'premium plan':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
   void _applyFilter() {
     if (_selectedCategory == 'All') {
       _filteredSubscriptions = _subscriptions;
     } else {
       _filteredSubscriptions = _subscriptions.where((sub) {
-        final status = (sub['status'] ?? '').toString().toLowerCase();
-        return status == _selectedCategory.toLowerCase();
+        final plan = normalizePlanName(sub['plan_name']);
+        return plan.toLowerCase() == _selectedCategory.toLowerCase();
       }).toList();
-    }
-  }
-
-  Color _getStatusColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'paid':
-        return Colors.green;
-      case 'pending':
-        return Colors.orange;
-      case 'failed':
-        return Colors.red;
-      default:
-        return Colors.grey;
     }
   }
 
@@ -78,35 +97,47 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
   }
 
   Widget _buildFilterButtons() {
-    final categories = ['All', 'Paid', 'Pending', 'Failed'];
+    final categories = ['All', 'Starter Plan', 'Standard Plan', 'Premium Plan'];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: categories.map((cat) {
-          final isSelected = _selectedCategory == cat;
-          return ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isSelected ? mainRed : Colors.white,
-              foregroundColor: isSelected ? Colors.white : mainRed,
-              side: BorderSide(color: mainRed, width: 1.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: categories.map((cat) {
+            final isSelected = _selectedCategory == cat;
+
+            Color selectedColor = mainRed;
+
+            if (cat == 'Starter Plan') selectedColor = Colors.green;
+            if (cat == 'Standard Plan') selectedColor = Colors.blue;
+            if (cat == 'Premium Plan') selectedColor = Colors.purple;
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isSelected ? selectedColor : Colors.white,
+                  foregroundColor: isSelected ? Colors.white : selectedColor,
+                  side: BorderSide(color: selectedColor, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _selectedCategory = cat;
+                    _applyFilter();
+                  });
+                },
+                child: Text(
+                  cat,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            onPressed: () {
-              setState(() {
-                _selectedCategory = cat;
-                _applyFilter();
-              });
-            },
-            child: Text(
-              cat,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -121,7 +152,7 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
             Icon(Icons.inbox, size: 80, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
-              'No ${_selectedCategory == 'All' ? 'subscriptions' : _selectedCategory.toLowerCase()} items found.',
+              'No ${_selectedCategory == 'All' ? 'subscriptions' : _selectedCategory.toLowerCase()} found.',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -156,7 +187,6 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _fetchSubscriptions,
-            tooltip: 'Refresh',
           ),
         ],
       ),
@@ -195,13 +225,22 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
                             itemCount: _filteredSubscriptions.length,
                             itemBuilder: (context, index) {
                               final sub = _filteredSubscriptions[index];
+
+                              final planName = normalizePlanName(
+                                sub['plan_name'],
+                              );
+
+                              final planColor = _getPlanColor(planName);
+
                               final status =
                                   sub['status']?.toString() ?? 'Unknown';
-                              final planName = sub['plan_name'] ?? 'N/A';
+
                               final expiryDate = _formatDate(
                                 sub['expiry_date'],
                               );
+
                               final userId = sub['user_id'] ?? 'Unknown';
+
                               final amount =
                                   sub['amount']?.toString() ?? '0.00';
 
@@ -214,13 +253,8 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
                                 child: ListTile(
                                   contentPadding: const EdgeInsets.all(16),
                                   leading: CircleAvatar(
-                                    backgroundColor: _getStatusColor(
-                                      status,
-                                    ).withOpacity(0.2),
-                                    child: Icon(
-                                      Icons.person,
-                                      color: _getStatusColor(status),
-                                    ),
+                                    backgroundColor: planColor.withOpacity(0.2),
+                                    child: Icon(Icons.person, color: planColor),
                                   ),
                                   title: Text(
                                     planName,
@@ -256,20 +290,18 @@ class _AdminSubscriptionPageState extends State<AdminSubscriptionPage> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: _getStatusColor(
-                                        status,
-                                      ).withOpacity(0.1),
+                                      color: planColor.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                        color: _getStatusColor(status),
+                                        color: planColor,
                                         width: 1,
                                       ),
                                     ),
                                     child: Text(
-                                      status.toUpperCase(),
+                                      planName.toUpperCase(),
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: _getStatusColor(status),
+                                        color: planColor,
                                       ),
                                     ),
                                   ),
