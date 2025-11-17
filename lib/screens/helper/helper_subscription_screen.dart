@@ -54,7 +54,12 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
       // Create subscription
       final userId = await SessionService.getCurrentUserId();
       if (userId != null) {
-        await SubscriptionService.createSubscription(userId, 'Helper', plan);
+        await SubscriptionService.createOrUpdateSubscription(
+          userId,
+          'Helper',
+          plan,
+          true,
+        );
 
         // Reload status
         await _loadSubscriptionStatus();
@@ -172,7 +177,7 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                   const SizedBox(height: 8),
                   Text(
                     LocalizationManager.translate(
-                      'unlock_unlimited_job_opportunities_and_connect_with_employers_in_your_area'
+                      'unlock_unlimited_job_opportunities_and_connect_with_employers_in_your_area',
                     ),
                     style: TextStyle(
                       fontSize: 16,

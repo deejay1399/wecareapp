@@ -547,5 +547,6 @@
     "standard_plan_description": "Best value for regular users",
     "premium_plan": "Premium Plan",
     "premium_plan_description": "Maximum benefits for power users",
-    "application_already_completed": "Your application has already been completed."
+    "application_already_completed": "Your application has already been completed.",
+    "no_notifications": "No Notifications"
 }

@@ -89,6 +89,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       await ApplicationService.applyForJob(
         jobPostingId: widget.jobPosting.id,
         helperId: _currentHelper!.id,
+        helperName: '${_currentHelper!.firstName} ${_currentHelper!.lastName}',
         coverLetter: _coverLetterController.text.trim(),
       );
 

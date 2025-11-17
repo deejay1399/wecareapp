@@ -6,6 +6,8 @@ import '../../services/database_messaging_service.dart';
 import '../../services/job_posting_service.dart';
 import '../../services/helper_service_posting_service.dart';
 import '../../services/session_service.dart';
+import '../../services/notification_service.dart';
+import '../notifications/notifications_screen.dart';
 import '../../widgets/cards/job_posting_card.dart';
 import '../../widgets/cards/helper_service_posting_card.dart';
 import '../../widgets/buttons/post_job_button.dart';
@@ -31,6 +33,7 @@ class EmployerHomeScreen extends StatefulWidget {
 class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
   Map<String, dynamic>? _subscriptionStatus;
   int _unreadMessageCount = 0;
+  int _unreadNotificationCount = 0;
   List<JobPosting> _recentJobPostings = [];
   List<HelperServicePosting> _availableServices = [];
   bool _isLoadingJobs = true;
@@ -46,9 +49,23 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
     await Future.wait([
       _loadSubscriptionStatus(),
       _loadUnreadMessageCount(),
+      _loadUnreadNotificationCount(),
       _loadRecentJobPostings(),
       _loadAvailableServices(),
     ]);
+  }
+
+  Future<void> _loadUnreadNotificationCount() async {
+    try {
+      final count = await NotificationService.getUnreadCount();
+      if (mounted) {
+        setState(() {
+          _unreadNotificationCount = count;
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
   }
 
   Future<void> _loadSubscriptionStatus() async {
@@ -159,6 +176,21 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
     Future.delayed(const Duration(milliseconds: 400), _loadUnreadMessageCount);
   }
 
+  void _onNotificationsTap() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+    ).then((_) {
+      // refresh unread notification count when returning
+      _loadUnreadNotificationCount();
+    });
+
+    Future.delayed(
+      const Duration(milliseconds: 400),
+      _loadUnreadNotificationCount,
+    );
+  }
+
   void _onCompletedJobsTap() {
     Navigator.push(
       context,
@@ -267,28 +299,67 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
                           ),
                           Row(
                             children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF1565C0,
-                                  ).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: const Color(
-                                      0xFF1565C0,
-                                    ).withValues(alpha: 0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: IconButton(
-                                  onPressed: () {},
-                                  icon: const Icon(
-                                    Icons.notifications_outlined,
-                                    color: Color(0xFF1565C0),
-                                    size: 24,
-                                  ),
+                              GestureDetector(
+                                onTap: _onNotificationsTap,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFF1565C0,
+                                        ).withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: const Color(
+                                            0xFF1565C0,
+                                          ).withValues(alpha: 0.2),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.notifications_outlined,
+                                          color: Color(0xFF1565C0),
+                                          size: 24,
+                                        ),
+                                      ),
+                                    ),
+                                    if (_unreadNotificationCount > 0)
+                                      Positioned(
+                                        right: -4,
+                                        top: -4,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            _unreadNotificationCount > 99
+                                                ? '99+'
+                                                : _unreadNotificationCount
+                                                      .toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                               Container(
@@ -535,32 +606,7 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
     return 'evening';
   }
 
-  Widget _buildLanguageOption(BuildContext context, String name, String code) {
-    final isSelected = LanguageManager.selectedLanguage == code;
-    return ListTile(
-      leading: Icon(
-        Icons.language,
-        color: isSelected ? const Color(0xFF1565C0) : Colors.grey,
-      ),
-      title: Text(
-        name,
-        style: TextStyle(
-          color: isSelected ? const Color(0xFF1565C0) : Colors.black,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-      trailing: isSelected
-          ? const Icon(Icons.check, color: Color(0xFF1565C0))
-          : null,
-      onTap: () async {
-        await LanguageManager.setLanguage(code);
-        if (context.mounted) {
-          Navigator.pop(context);
-          setState(() {}); // rebuild this page (translations already loaded)
-        }
-      },
-    );
-  }
+  // language options are built inline in the popup menu, helper removed
 
   Widget _buildEmptyJobsState() {
     return Container(

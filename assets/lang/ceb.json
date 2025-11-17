@@ -540,5 +540,6 @@
     "standard_plan": "Kasagarang Plano",
     "standard_plan_description": "Pinakamaayong kantidad para sa mga regular nga tiggamit",
     "premium_plan": "Premium nga Plano",
-    "premium_plan_description": "Pinakadaghan nga benepisyo para sa mga aktibong tiggamit"
+    "premium_plan_description": "Pinakadaghan nga benepisyo para sa mga aktibong tiggamit",
+    "no_notifications": "Walay Mga Notipikasyon"
 }

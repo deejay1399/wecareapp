@@ -19,7 +19,9 @@ import '../helper/post_service_screen.dart';
 import '../helper/edit_service_screen.dart';
 import '../messaging/conversations_screen.dart';
 import '../shared/completed_jobs_screen.dart';
+import '../notifications/notifications_screen.dart';
 import '../../models/rating_statistics.dart';
+import '../../services/notification_service.dart';
 
 import '../../localization_manager.dart';
 import '../../language_manager.dart';
@@ -34,6 +36,7 @@ class HelperHomeScreen extends StatefulWidget {
 class _HelperHomeScreenState extends State<HelperHomeScreen> {
   Map<String, dynamic>? _subscriptionStatus;
   int _unreadMessageCount = 0;
+  int _unreadNotificationCount = 0;
   Helper? _currentHelper;
   List<JobPosting> _matchedJobs = [];
   List<HelperServicePosting> _myServices = [];
@@ -48,6 +51,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     _loadCurrentHelper();
     _loadSubscriptionStatus();
     _loadUnreadMessageCount();
+    _loadUnreadNotificationCount();
     _loadEmployerRatingStats();
     _loadMatchedJobs(); // Load all job opportunities
   }
@@ -165,6 +169,19 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     }
   }
 
+  Future<void> _loadUnreadNotificationCount() async {
+    try {
+      final count = await NotificationService.getUnreadCount();
+      if (mounted) {
+        setState(() {
+          _unreadNotificationCount = count;
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
   void _onSubscriptionTap() {
     Navigator.push(
       context,
@@ -186,6 +203,21 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
 
     // Also schedule a short delayed refresh to catch async updates
     Future.delayed(const Duration(milliseconds: 400), _loadUnreadMessageCount);
+  }
+
+  void _onNotificationsTap() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+    ).then((_) {
+      // refresh unread notification count when returning
+      _loadUnreadNotificationCount();
+    });
+
+    Future.delayed(
+      const Duration(milliseconds: 400),
+      _loadUnreadNotificationCount,
+    );
   }
 
   void _onCompletedJobsTap() {
@@ -403,28 +435,64 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                             ],
                           ),
                         ),
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFFFF8A50,
-                            ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: const Color(
-                                0xFFFF8A50,
-                              ).withValues(alpha: 0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: IconButton(
-                            onPressed: () {},
-                            icon: const Icon(
-                              Icons.notifications_outlined,
-                              color: Color(0xFFFF8A50),
-                              size: 24,
-                            ),
+                        GestureDetector(
+                          onTap: _onNotificationsTap,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFFFF8A50,
+                                  ).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFFFF8A50,
+                                    ).withValues(alpha: 0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.notifications_outlined,
+                                    color: Color(0xFFFF8A50),
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                              if (_unreadNotificationCount > 0)
+                                Positioned(
+                                  right: -4,
+                                  top: -4,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _unreadNotificationCount > 99
+                                          ? '99+'
+                                          : _unreadNotificationCount.toString(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                         Container(

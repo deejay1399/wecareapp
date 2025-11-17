@@ -30,9 +30,6 @@ class SubscriptionService {
     SubscriptionPlan plan,
   ) async {
     final userId = await SessionService.getCurrentUserId();
-    print(userId);
-    print(plan.name);
-    print(plan.price);
     if (userId == null) return;
     final expiryDate = DateTime.now().add(Duration(days: plan.durationInDays));
     await saveSubscriptionToSupabase(
@@ -204,12 +201,12 @@ class SubscriptionService {
   static Future<Subscription?> getUserSubscription(String userId) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keySubscription$userId';
-    final jsonString = prefs.getString(key);
+    final subscriptionId = prefs.getString('${key}_id');
 
-    if (jsonString != null) {
+    if (subscriptionId != null && subscriptionId.isNotEmpty) {
       try {
         final Map<String, dynamic> data = {
-          'id': prefs.getString('${key}_id') ?? '',
+          'id': subscriptionId,
           'user_id': userId,
           'user_type': prefs.getString('${key}_user_type') ?? '',
           'plan_type': prefs.getString('${key}_plan_type') ?? '',
@@ -228,23 +225,74 @@ class SubscriptionService {
     return null;
   }
 
-  // Create subscription
-  static Future<Subscription> createSubscription(
+  static Future<Subscription> createOrUpdateSubscription(
     String userId,
     String userType,
     SubscriptionPlan plan,
+    bool paymentSuccess, // <-- TRUE = paid, FALSE = failed
   ) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keySubscription$userId';
     final now = DateTime.now();
     final expiryDate = now.add(Duration(days: plan.durationInDays));
 
+    final newStatus = paymentSuccess ? 'paid' : 'failed';
+
+    try {
+      // STEP 1 — Wait a moment for the edge function to insert the subscription
+      // (edge function creates the row when payment link is generated)
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // STEP 2 — Find the latest subscription record for this user
+      // (created by edge function with expiry_date = null)
+      final existing = await SupabaseService.client
+          .from('subscriptions')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1);
+
+      if (existing.isNotEmpty) {
+        final recordId = existing[0]['id'];
+        print("✔ Found subscription record: $recordId");
+
+        // STEP 3 — Update the record with full data including expiry_date
+        await SupabaseService.client
+            .from('subscriptions')
+            .update({
+              'expiry_date': expiryDate.toIso8601String(),
+              'updated_at': now.toIso8601String(),
+              'status': newStatus,
+            })
+            .eq('id', recordId);
+
+        print("✔ Updated subscription $recordId with expiry_date: $expiryDate");
+      } else {
+        print("⚠️ No subscription found for user $userId, inserting new one");
+        // Fallback: If no record exists, INSERT new subscription
+        await SupabaseService.client.from('subscriptions').insert({
+          'user_id': userId,
+          'expiry_date': expiryDate.toIso8601String(),
+          'plan_name': plan.name,
+          'amount': plan.price,
+          'created_at': now.toIso8601String(),
+          'updated_at': now.toIso8601String(),
+          'status': newStatus,
+        });
+
+        print("✔ Inserted new subscription for user: $userId");
+      }
+    } catch (e) {
+      print("❌ Supabase subscription error: $e");
+    }
+
+    // STEP 4 — Update local storage
     final subscription = Subscription(
       id: '${userId}_${plan.id}_${now.millisecondsSinceEpoch}',
       userId: userId,
       userType: userType,
       planType: plan.id,
-      isActive: true,
+      isActive: paymentSuccess,
       expiryDate: expiryDate,
       createdAt: now,
       updatedAt: now,
@@ -266,7 +314,6 @@ class SubscriptionService {
     return subscription;
   }
 
-  // Check subscription status for current user
   static Future<Map<String, dynamic>> getCurrentUserSubscriptionStatus() async {
     final userId = await SessionService.getCurrentUserId();
     final userType = await SessionService.getCurrentUserType();

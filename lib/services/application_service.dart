@@ -1,5 +1,6 @@
 import '../models/application.dart';
 import '../services/supabase_service.dart';
+import '../services/notification_service.dart';
 import 'job_posting_service.dart';
 
 class ApplicationService {
@@ -9,6 +10,7 @@ class ApplicationService {
   static Future<Application> applyForJob({
     required String jobPostingId,
     required String helperId,
+    required String helperName,
     required String coverLetter,
   }) async {
     try {
@@ -23,6 +25,30 @@ class ApplicationService {
           .select()
           .single();
 
+      // Get job details to notify employer
+      try {
+        final jobResponse = await SupabaseService.client
+            .from('job_postings')
+            .select('employer_id, title')
+            .eq('id', jobPostingId)
+            .single();
+
+        final employerId = jobResponse['employer_id'] as String;
+        final jobTitle = jobResponse['title'] as String;
+
+        // Create notification for employer
+        await NotificationService.createNotification(
+          recipientId: employerId,
+          title: 'New Application',
+          body: '$helperName applied for "$jobTitle"',
+          type: 'job_application',
+          category: 'new',
+          targetId: jobPostingId,
+        );
+      } catch (e) {
+        print('Error creating application notification: $e');
+      }
+
       return _mapToApplication(response);
     } catch (e) {
       throw Exception('Failed to apply for job: $e');
@@ -30,7 +56,9 @@ class ApplicationService {
   }
 
   /// Get applications for a specific job posting (for employers)
-  static Future<List<Application>> getApplicationsForJob(String jobPostingId) async {
+  static Future<List<Application>> getApplicationsForJob(
+    String jobPostingId,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -61,7 +89,9 @@ class ApplicationService {
   }
 
   /// Get applications by helper (for helpers to see their applications)
-  static Future<List<Application>> getApplicationsByHelper(String helperId) async {
+  static Future<List<Application>> getApplicationsByHelper(
+    String helperId,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -88,7 +118,10 @@ class ApplicationService {
   }
 
   /// Update application status (for employers)
-  static Future<Application> updateApplicationStatus(String applicationId, String status) async {
+  static Future<Application> updateApplicationStatus(
+    String applicationId,
+    String status,
+  ) async {
     try {
       // First get the application details
       final appResponse = await SupabaseService.client
@@ -111,18 +144,31 @@ class ApplicationService {
           .eq('id', applicationId)
           .single();
 
+      final helperId = appResponse['helper_id'] as String;
+      final helperData = appResponse['helpers'] as Map<String, dynamic>;
+      final helperName =
+          '${helperData['first_name']} ${helperData['last_name']}';
+      final jobData = appResponse['job_postings'] as Map<String, dynamic>;
+      final jobTitle = jobData['title'] as String;
+
       // Update the application status
       await SupabaseService.client
           .from(_tableName)
           .update({'status': status})
           .eq('id', applicationId);
 
-      // If application is accepted, assign helper to job and reject other applications
+      // Create notification for helper
       if (status == 'accepted') {
+        await NotificationService.createNotification(
+          recipientId: helperId,
+          title: 'Application Accepted! 🎉',
+          body: 'Your application for "$jobTitle" has been accepted',
+          type: 'application_accepted',
+          category: 'new',
+          targetId: appResponse['job_posting_id'] as String,
+        );
+
         final jobId = appResponse['job_posting_id'] as String;
-        final helperId = appResponse['helper_id'] as String;
-        final helper = appResponse['helpers'] as Map<String, dynamic>;
-        final helperName = '${helper['first_name']} ${helper['last_name']}';
 
         // Assign helper to job (this moves job to 'in_progress' status)
         await JobPostingService.assignHelperToJob(
@@ -138,6 +184,39 @@ class ApplicationService {
             .eq('job_posting_id', jobId)
             .neq('id', applicationId)
             .eq('status', 'pending');
+
+        // Create rejection notifications for other helpers
+        final otherApps = await SupabaseService.client
+            .from(_tableName)
+            .select('helper_id')
+            .eq('job_posting_id', jobId)
+            .eq('status', 'rejected');
+
+        for (var app in otherApps as List) {
+          try {
+            await NotificationService.createNotification(
+              recipientId: app['helper_id'] as String,
+              title: 'Application Not Selected',
+              body: 'We chose another candidate for "$jobTitle"',
+              type: 'application_rejected',
+              category: 'previous',
+              targetId: jobId,
+            );
+          } catch (e) {
+            print('Error notifying rejected helper: $e');
+          }
+        }
+      } else if (status == 'rejected') {
+        // Direct rejection by employer
+        await NotificationService.createNotification(
+          recipientId: helperId,
+          title: 'Application Not Selected',
+          body:
+              'Unfortunately, your application for "$jobTitle" was not selected',
+          type: 'application_rejected',
+          category: 'previous',
+          targetId: appResponse['job_posting_id'] as String,
+        );
       }
 
       // Return the updated application
@@ -253,7 +332,7 @@ class ApplicationService {
   static Application _mapToApplicationWithDetails(Map<String, dynamic> data) {
     final helper = data['helpers'] as Map<String, dynamic>;
     final jobPosting = data['job_postings'] as Map<String, dynamic>;
-    
+
     return Application(
       id: data['id'] as String,
       jobId: data['job_posting_id'] as String,
@@ -271,9 +350,11 @@ class ApplicationService {
     );
   }
 
-  static Application _mapToApplicationWithJobDetails(Map<String, dynamic> data) {
+  static Application _mapToApplicationWithJobDetails(
+    Map<String, dynamic> data,
+  ) {
     final jobPosting = data['job_postings'] as Map<String, dynamic>;
-    
+
     return Application(
       id: data['id'] as String,
       jobId: data['job_posting_id'] as String,

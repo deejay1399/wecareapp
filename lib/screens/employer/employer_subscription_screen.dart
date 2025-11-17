@@ -56,7 +56,12 @@ class _EmployerSubscriptionScreenState
       final userId = await SessionService.getCurrentUserId();
       if (userId != null) {
         // Pass internal role key for subscription record
-        await SubscriptionService.createSubscription(userId, 'employer', plan);
+        await SubscriptionService.createOrUpdateSubscription(
+          userId,
+          'Employer',
+          plan,
+          true,
+        );
 
         // Reload status
         await _loadSubscriptionStatus();
