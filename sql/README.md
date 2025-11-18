@@ -72,6 +72,10 @@ This will create the employers table with the following structure:
 - Execute `sql/job_offers/create_job_offers_table.sql`
 - Execute `sql/job_offers/disable_rls_and_create_policies.sql`
 
+#### Notifications Setup
+- Execute `sql/notifications/create_notifications_table.sql`
+- Execute `sql/notifications/disable_rls_and_create_policies.sql`
+
 This will create the helpers table with the following structure:
 - `id` (UUID, Primary Key)
 - `first_name` (VARCHAR(50))
@@ -164,6 +168,21 @@ This will create the job_offers table with the following structure:
 - `status` (TEXT) - Offer status (pending, accepted, rejected, expired)
 - `rejection_reason` (TEXT) - Optional rejection reason
 - `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
+This will create the notifications table with the following structure:
+- `id` (UUID, Primary Key)
+- `recipient_id` (UUID) - ID of user who receives the notification (can be helper or employer)
+- `recipient_type` (VARCHAR(20)) - Type of recipient (helper, employer)
+- `title` (TEXT) - Notification title
+- `body` (TEXT) - Notification message body
+- `type` (VARCHAR(50)) - Notification type (job_application, application_accepted, application_rejected, etc.)
+- `category` (VARCHAR(50)) - Notification category (new, update, alert, message)
+- `target_id` (UUID) - Reference to related entity (e.g., job_posting_id)
+- `is_read` (BOOLEAN) - Whether notification has been read
+- `timestamp` (TIMESTAMP) - When notification was created
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
 - `responded_at` (TIMESTAMP) - When helper responded to offer
 

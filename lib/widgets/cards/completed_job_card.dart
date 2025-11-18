@@ -118,10 +118,23 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
   }
 
   Future<void> _openRatingDialog() async {
-    if (widget.userType == 'employer' && widget.job.assignedHelperId == null) {
+    String? ratedId;
+    if (widget.userType == 'helper') {
+      ratedId = widget.job.employerId;
+    } else {
+      ratedId =
+          (widget.job.assignedHelperId != null &&
+              widget.job.assignedHelperId!.isNotEmpty)
+          ? widget.job.assignedHelperId
+          : widget.job.assignedHelper?.id;
+    }
+
+    if (ratedId == null || ratedId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot rate: No helper assigned to this job'),
+        SnackBar(
+          content: Text(
+            'Cannot rate: No helper assigned to this job\nassignedHelperId=${widget.job.assignedHelperId ?? 'null'} helper.id=${widget.job.assignedHelper?.id ?? 'null'}',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -134,9 +147,7 @@ class _CompletedJobCardState extends State<CompletedJobCard> {
         builder: (context) => RatingDialogScreen(
           raterId: widget.userId,
           raterType: widget.userType,
-          ratedId: widget.userType == 'helper'
-              ? widget.job.employerId
-              : widget.job.assignedHelperId!,
+          ratedId: ratedId!,
           ratedType: widget.userType == 'helper' ? 'employer' : 'helper',
           ratedName: widget.userType == 'helper'
               ? _displayName ?? 'Employer'

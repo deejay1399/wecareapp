@@ -8,6 +8,7 @@ class NotificationService {
   /// Create a new notification
   static Future<void> createNotification({
     required String recipientId,
+    required String recipientType,
     required String title,
     required String body,
     required String type,
@@ -17,6 +18,7 @@ class NotificationService {
     try {
       await SupabaseService.client.from(_tableName).insert({
         'recipient_id': recipientId,
+        'recipient_type': recipientType,
         'title': title,
         'body': body,
         'type': type,

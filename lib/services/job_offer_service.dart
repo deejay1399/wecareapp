@@ -71,12 +71,10 @@ class JobOfferService {
           })
           .eq('id', jobOfferId);
 
-      // Convert payment frequency to match database constraints
       String dbPaymentFrequency = _convertPaymentFrequencyForDb(
         jobOffer.paymentFrequency,
       );
 
-      // Create a job posting from the accepted offer
       final jobPosting = await JobPostingService.createJobPosting(
         employerId: jobOffer.employerId,
         title: jobOffer.title,
@@ -88,7 +86,6 @@ class JobOfferService {
         requiredSkills: jobOffer.requiredSkills,
       );
 
-      // Get helper name from helper table
       final helperResponse = await SupabaseService.client
           .from('helpers')
           .select('first_name, last_name')
@@ -98,20 +95,17 @@ class JobOfferService {
       final helperName =
           '${helperResponse['first_name']} ${helperResponse['last_name']}';
 
-      // Immediately assign the helper to the job (since they accepted)
       await JobPostingService.assignHelperToJob(
         jobId: jobPosting.id,
         helperId: jobOffer.helperId,
         helperName: helperName,
       );
 
-      // Pause the helper's service posting since they're now hired
       await HelperServicePostingService.updateServicePostingStatus(
         jobOffer.servicePostingId,
         'paused',
       );
 
-      // Return the updated job offer
       return jobOffer.copyWith(
         status: JobOfferStatus.accepted,
         respondedAt: DateTime.now(),
@@ -121,7 +115,6 @@ class JobOfferService {
     }
   }
 
-  /// Helper method to convert payment frequency from UI format to database format
   static String _convertPaymentFrequencyForDb(String paymentFrequency) {
     switch (paymentFrequency.toLowerCase()) {
       case 'hourly':
@@ -133,13 +126,12 @@ class JobOfferService {
       case 'monthly':
         return 'Per Month';
       case 'one-time':
-        return 'Per Day'; // Default to per day for one-time jobs
+        return 'Per Day';
       default:
-        return 'Per Hour'; // Safe default
+        return 'Per Hour';
     }
   }
 
-  /// Reject a job offer
   static Future<JobOffer> rejectJobOffer(
     String jobOfferId,
     String rejectionReason,

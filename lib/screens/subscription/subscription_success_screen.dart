@@ -74,6 +74,11 @@ class _SubscriptionSuccessScreenState extends State<SubscriptionSuccessScreen> {
   Widget build(BuildContext context) {
     final plan = widget.plan;
 
+    // Calculate expiry date based on plan duration
+    final expiryDate = DateTime.now().add(Duration(days: plan.durationInDays));
+    final expiryDateString =
+        "${expiryDate.year}-${expiryDate.month.toString().padLeft(2, '0')}-${expiryDate.day.toString().padLeft(2, '0')}";
+
     final planColor = Color(
       SubscriptionConstants.planColors[plan.id] ?? 0xFF2196F3,
     );
@@ -146,6 +151,28 @@ class _SubscriptionSuccessScreenState extends State<SubscriptionSuccessScreen> {
                     color: Colors.black87,
                     fontWeight: FontWeight.w500,
                   ),
+                ),
+                const SizedBox(height: 24),
+
+                // Expiry Date Display
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.calendar_today,
+                      size: 20,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Expires on: $expiryDateString',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
 

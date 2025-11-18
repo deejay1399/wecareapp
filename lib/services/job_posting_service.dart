@@ -131,7 +131,9 @@ class JobPostingService {
       dynamic response;
 
       if (userType == 'helper') {
-        // 🔹 Get jobs where the helper's application is completed
+        // Get jobs where the helper's application is completed.
+        // Include assigned_helper_id and the nested assigned_helper relation
+        // so JobPosting.fromMap can build the helper object and id.
         response = await supabase
             .from('applications')
             .select('''
@@ -146,8 +148,11 @@ class JobPostingService {
               payment_frequency,
               required_skills,
               status,
+              assigned_helper_id,
               assigned_helper_name,
-              created_at
+              assigned_helper:helpers(id, first_name, last_name, profile_picture_base64, created_at, updated_at),
+              created_at,
+              updated_at
             )
           ''')
             .eq('helper_id', userId)
@@ -168,8 +173,11 @@ class JobPostingService {
               payment_frequency,
               required_skills,
               status,
+              assigned_helper_id,
               assigned_helper_name,
-              created_at
+              assigned_helper:helpers(id, first_name, last_name, profile_picture_base64, created_at, updated_at),
+              created_at,
+              updated_at
             )
           ''')
             .eq('status', 'completed')

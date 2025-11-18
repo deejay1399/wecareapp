@@ -48,10 +48,8 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
     });
 
     try {
-      // Simulate payment processing
       await Future.delayed(const Duration(seconds: 2));
 
-      // Create subscription
       final userId = await SessionService.getCurrentUserId();
       if (userId != null) {
         await SubscriptionService.createOrUpdateSubscription(
@@ -61,7 +59,6 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
           true,
         );
 
-        // Reload status
         await _loadSubscriptionStatus();
 
         if (mounted) {

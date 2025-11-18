@@ -45,7 +45,6 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
   String? _selectedBarangay;
   String? _barangayClearanceFileName;
   String? _barangayClearanceBase64;
-  String? _profilePictureBase64;
   bool _agreeToTerms = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -279,19 +278,12 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
       return;
     }
 
-    // Check if Supabase is initialized
     if (!SupabaseService.isInitialized) {
       _showErrorMessage(
         'Database connection not available. Please check your configuration.',
       );
       return;
     }
-
-    debugPrint('DEBUG: Starting registration process...');
-    debugPrint(
-      'DEBUG: Base64 data length: ${_barangayClearanceBase64?.length ?? 0}',
-    );
-    debugPrint('DEBUG: File name: $_barangayClearanceFileName');
 
     setState(() => _isLoading = true);
 
@@ -302,10 +294,6 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
         phoneNumber = '+63$phoneNumber';
       }
 
-      debugPrint('DEBUG: Calling HelperAuthService.registerHelper...');
-      debugPrint(
-        'DEBUG: profile picture base64 length: ${_profilePictureBase64?.length ?? 0}',
-      );
       final result = await HelperAuthService.registerHelper(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
@@ -319,16 +307,11 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
         municipality: _selectedMunicipality!,
         barangay: _selectedBarangay!,
         barangayClearanceBase64: _barangayClearanceBase64,
-        profilePictureBase64: _profilePictureBase64,
       );
-
-      debugPrint('DEBUG: Registration result: ${result['success']}');
-      debugPrint('DEBUG: Registration message: ${result['message']}');
 
       if (!mounted) return;
 
       if (result['success']) {
-        // Registration successful
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${result['message']} Please log in to continue.'),
@@ -337,7 +320,6 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
           ),
         );
 
-        // Navigate to login screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -365,10 +347,9 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
     );
   }
 
-  // Helper widget for showing AI status (confidence meter)
   Widget _buildAiStatusWidget() {
     if (_isPickingFile) {
-      return const SizedBox(); // while file picking -> no status
+      return const SizedBox();
     }
 
     if (_aiVerifying) {
@@ -443,20 +424,20 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Picture Section (Optional)
-                const SectionHeader(title: 'Profile Picture (Optional)'),
+                // // Profile Picture Section (Optional)
+                // const SectionHeader(title: 'Profile Picture (Optional)'),
 
-                ProfilePictureUploadField(
-                  currentProfilePictureBase64: _profilePictureBase64,
-                  fullName:
-                      '${_firstNameController.text} ${_lastNameController.text}',
-                  onProfilePictureChanged: (String? newProfilePicture) {
-                    setState(() {
-                      _profilePictureBase64 = newProfilePicture;
-                    });
-                  },
-                  label: 'Profile Picture (Optional)',
-                ),
+                // ProfilePictureUploadField(
+                //   currentProfilePictureBase64: _profilePictureBase64,
+                //   fullName:
+                //       '${_firstNameController.text} ${_lastNameController.text}',
+                //   onProfilePictureChanged: (String? newProfilePicture) {
+                //     setState(() {
+                //       _profilePictureBase64 = newProfilePicture;
+                //     });
+                //   },
+                //   label: 'Profile Picture (Optional)',
+                // ),
 
                 // Personal Information Section
                 const SectionHeader(title: 'Personal Information'),

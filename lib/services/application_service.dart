@@ -33,12 +33,13 @@ class ApplicationService {
             .eq('id', jobPostingId)
             .single();
 
-        final employerId = jobResponse['employer_id'] as String;
+        final employerId = jobResponse['employer_id'];
         final jobTitle = jobResponse['title'] as String;
 
         // Create notification for employer
         await NotificationService.createNotification(
           recipientId: employerId,
+          recipientType: 'employer',
           title: 'New Application',
           body: '$helperName applied for "$jobTitle"',
           type: 'job_application',
@@ -161,6 +162,7 @@ class ApplicationService {
       if (status == 'accepted') {
         await NotificationService.createNotification(
           recipientId: helperId,
+          recipientType: 'helper',
           title: 'Application Accepted! 🎉',
           body: 'Your application for "$jobTitle" has been accepted',
           type: 'application_accepted',
@@ -196,6 +198,7 @@ class ApplicationService {
           try {
             await NotificationService.createNotification(
               recipientId: app['helper_id'] as String,
+              recipientType: 'helper',
               title: 'Application Not Selected',
               body: 'We chose another candidate for "$jobTitle"',
               type: 'application_rejected',
@@ -210,6 +213,7 @@ class ApplicationService {
         // Direct rejection by employer
         await NotificationService.createNotification(
           recipientId: helperId,
+          recipientType: 'helper',
           title: 'Application Not Selected',
           body:
               'Unfortunately, your application for "$jobTitle" was not selected',

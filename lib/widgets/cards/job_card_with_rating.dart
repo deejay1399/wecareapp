@@ -170,7 +170,6 @@ class _JobCardWithRatingState extends State<JobCardWithRating> {
                 ),
                 const SizedBox(height: 8),
 
-                // Payment frequency and location
                 Row(
                   children: [
                     Text(

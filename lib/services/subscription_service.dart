@@ -229,7 +229,7 @@ class SubscriptionService {
     String userId,
     String userType,
     SubscriptionPlan plan,
-    bool paymentSuccess, // <-- TRUE = paid, FALSE = failed
+    bool paymentSuccess,
   ) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keySubscription$userId';
@@ -239,12 +239,8 @@ class SubscriptionService {
     final newStatus = paymentSuccess ? 'paid' : 'failed';
 
     try {
-      // STEP 1 — Wait a moment for the edge function to insert the subscription
-      // (edge function creates the row when payment link is generated)
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // STEP 2 — Find the latest subscription record for this user
-      // (created by edge function with expiry_date = null)
       final existing = await SupabaseService.client
           .from('subscriptions')
           .select()
@@ -256,28 +252,35 @@ class SubscriptionService {
         final recordId = existing[0]['id'];
         print("✔ Found subscription record: $recordId");
 
-        // STEP 3 — Update the record with full data including expiry_date
         await SupabaseService.client
             .from('subscriptions')
             .update({
               'expiry_date': expiryDate.toIso8601String(),
+              'plan_name': plan.name,
+              'amount': plan.price,
               'updated_at': now.toIso8601String(),
               'status': newStatus,
+              'user_type': userType,
+              'plan_type': plan.id,
+              'is_active': paymentSuccess,
             })
             .eq('id', recordId);
 
         print("✔ Updated subscription $recordId with expiry_date: $expiryDate");
       } else {
         print("⚠️ No subscription found for user $userId, inserting new one");
-        // Fallback: If no record exists, INSERT new subscription
+
         await SupabaseService.client.from('subscriptions').insert({
           'user_id': userId,
-          'expiry_date': expiryDate.toIso8601String(),
+          'user_type': userType,
+          'plan_type': plan.id,
           'plan_name': plan.name,
           'amount': plan.price,
+          'expiry_date': expiryDate.toIso8601String(),
           'created_at': now.toIso8601String(),
           'updated_at': now.toIso8601String(),
           'status': newStatus,
+          'is_active': paymentSuccess,
         });
 
         print("✔ Inserted new subscription for user: $userId");
@@ -286,7 +289,6 @@ class SubscriptionService {
       print("❌ Supabase subscription error: $e");
     }
 
-    // STEP 4 — Update local storage
     final subscription = Subscription(
       id: '${userId}_${plan.id}_${now.millisecondsSinceEpoch}',
       userId: userId,
@@ -339,7 +341,6 @@ class SubscriptionService {
       };
     }
 
-    // Check trial status
     final canUse = await canUserUseApp(userId, userType);
     final usage =
         await getUserUsageTracking(userId, userType) ??
@@ -354,14 +355,12 @@ class SubscriptionService {
     };
   }
 
-  // Record app usage for current user
   static Future<void> recordAppUsage() async {
     final userId = await SessionService.getCurrentUserId();
     final userType = await SessionService.getCurrentUserType();
 
     if (userId == null || userType == null) return;
 
-    // Check if user has active subscription
     final subscription = await getUserSubscription(userId);
     if (subscription?.isValidSubscription == true) {
       return; // Don't track usage for subscribed users
