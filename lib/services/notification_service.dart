@@ -8,31 +8,41 @@ class NotificationService {
   /// Create a new notification
   static Future<void> createNotification({
     required String recipientId,
-    required String recipientType,
-    required String title,
-    required String body,
-    required String type,
+    String title = 'Notification',
+    String body = '',
+    String type = 'update',
     String category = 'update',
     String? targetId,
   }) async {
     try {
-      await SupabaseService.client.from(_tableName).insert({
+      final data = {
         'recipient_id': recipientId,
-        'recipient_type': recipientType,
         'title': title,
         'body': body,
         'type': type,
         'category': category,
         'target_id': targetId,
         'is_read': false,
-        'timestamp': DateTime.now().toIso8601String(),
-      });
+      };
+
+      print(
+        'DEBUG NotificationService: Creating notification with data: $data',
+      );
+
+      await SupabaseService.client
+          .from(_tableName)
+          .insert(data)
+          .select()
+          .single();
+
+      print('DEBUG NotificationService: Notification inserted successfully');
     } catch (e) {
-      print('Error creating notification: $e');
+      print('ERROR NotificationService: Failed to create notification: $e');
+      rethrow;
     }
   }
 
-  /// Fetch all notifications for current user ordered by timestamp desc
+  /// Fetch notifications for current user
   static Future<List<NotificationItem>> getNotifications() async {
     final userId = await SessionService.getCurrentUserId();
     if (userId == null) return [];
@@ -42,18 +52,18 @@ class NotificationService {
           .from(_tableName)
           .select()
           .eq('recipient_id', userId)
-          .order('timestamp', ascending: false);
+          .order('created_at', ascending: false);
 
       return (response as List)
           .map((item) => NotificationItem.fromMap(item))
           .toList();
     } catch (e) {
-      print('Error fetching notifications: $e');
+      print('ERROR fetching notifications: $e');
       return [];
     }
   }
 
-  /// Get count of unread notifications for current user
+  /// Get unread count
   static Future<int> getUnreadCount() async {
     final userId = await SessionService.getCurrentUserId();
     if (userId == null) return 0;
@@ -67,12 +77,12 @@ class NotificationService {
 
       return (response as List).length;
     } catch (e) {
-      print('Error fetching unread count: $e');
+      print('ERROR fetching unread count: $e');
       return 0;
     }
   }
 
-  /// Mark a notification as read
+  /// Mark single notification as read
   static Future<void> markAsRead(String notificationId) async {
     try {
       await SupabaseService.client
@@ -80,11 +90,11 @@ class NotificationService {
           .update({'is_read': true})
           .eq('id', notificationId);
     } catch (e) {
-      print('Error marking notification as read: $e');
+      print('ERROR marking as read: $e');
     }
   }
 
-  /// Mark all notifications as read for current user
+  /// Mark all notifications as read
   static Future<void> markAllAsRead() async {
     final userId = await SessionService.getCurrentUserId();
     if (userId == null) return;
@@ -96,7 +106,7 @@ class NotificationService {
           .eq('recipient_id', userId)
           .eq('is_read', false);
     } catch (e) {
-      print('Error marking all as read: $e');
+      print('ERROR marking all as read: $e');
     }
   }
 
@@ -108,7 +118,24 @@ class NotificationService {
           .delete()
           .eq('id', notificationId);
     } catch (e) {
-      print('Error deleting notification: $e');
+      print('ERROR deleting notification: $e');
+    }
+  }
+
+  /// Get real-time stream of notifications for current user
+  static Stream<List<Map<String, dynamic>>> getRealtimeNotifications() async* {
+    final userId = await SessionService.getCurrentUserId();
+    if (userId == null) return;
+
+    try {
+      yield* SupabaseService.client
+          .from(_tableName)
+          .stream(primaryKey: ['id'])
+          .eq('recipient_id', userId)
+          .order('created_at', ascending: false)
+          .map((List<dynamic> data) => List<Map<String, dynamic>>.from(data));
+    } catch (e) {
+      print('ERROR in real-time listener: $e');
     }
   }
 }

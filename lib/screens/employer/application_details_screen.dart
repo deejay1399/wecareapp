@@ -791,7 +791,7 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                 onPressed: _isUpdatingStatus ? null : _markAsComplete,
                 icon: const Icon(Icons.check_circle_outline, size: 20),
                 label: Text(
-                  LocalizationManager.translate('mark_as_complete'),
+                  LocalizationManager.translate('mark_as_completed'),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

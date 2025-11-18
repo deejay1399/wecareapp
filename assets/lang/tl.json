@@ -538,5 +538,9 @@
     "standard_plan_description": "Pinakamahusay na halaga para sa mga regular na gumagamit",
     "premium_plan": "Premium na Plano",
     "premium_plan_description": "Pinakamataas na benepisyo para sa mga aktibong gumagamit",
-    "no_notifications": "Walang Mga Abiso"
+    "no_notifications": "Walang Mga Abiso",
+    "you_have_no_notifications_yet": "Wala ka pang mga abiso. Kapag may nangyari sa iyong account, makakatanggap ka ng mga abiso dito.",
+    "mark_all_as_read": "Markahan Lahat bilang Nabasa",
+    "application_rejected_info": "Ang iyong aplikasyon para sa \"{jobTitle}\" ay tinanggihan ng employer.",
+    "application_accepted_info": "Ang iyong aplikasyon para sa \"{jobTitle}\" ay tinanggap ng employer."
 }

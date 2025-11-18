@@ -10,7 +10,6 @@ import '../widgets/forms/phone_text_field.dart';
 import '../widgets/forms/experience_dropdown.dart';
 import '../widgets/forms/barangay_dropdown.dart';
 import '../widgets/forms/file_upload_field.dart';
-import '../widgets/forms/profile_picture_upload_field.dart';
 import '../widgets/forms/terms_agreement_checkbox.dart';
 import '../widgets/common/section_header.dart';
 import '../utils/constants/helper_constants.dart';

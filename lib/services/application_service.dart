@@ -14,6 +14,9 @@ class ApplicationService {
     required String coverLetter,
   }) async {
     try {
+      print(
+        'DEBUG: Attempting to apply for job - jobPostingId: $jobPostingId, helperId: $helperId',
+      );
       final response = await SupabaseService.client
           .from(_tableName)
           .insert({
@@ -25,7 +28,12 @@ class ApplicationService {
           .select()
           .single();
 
+      print(
+        'DEBUG: Application successfully inserted with ID: ${response['id']}',
+      );
+
       // Get job details to notify employer
+      String jobTitle = '';
       try {
         final jobResponse = await SupabaseService.client
             .from('job_postings')
@@ -33,21 +41,44 @@ class ApplicationService {
             .eq('id', jobPostingId)
             .single();
 
-        final employerId = jobResponse['employer_id'];
-        final jobTitle = jobResponse['title'] as String;
+        final employerId = jobResponse['employer_id'] as String;
+        jobTitle = jobResponse['title'] as String;
 
-        // Create notification for employer
+        print('DEBUG: Creating notification for employer: $employerId');
+        print('DEBUG: Job title: $jobTitle');
+
         await NotificationService.createNotification(
           recipientId: employerId,
-          recipientType: 'employer',
           title: 'New Application',
           body: '$helperName applied for "$jobTitle"',
           type: 'job_application',
           category: 'new',
           targetId: jobPostingId,
         );
+        print(
+          'DEBUG: Notification created successfully for employer: $employerId',
+        );
       } catch (e) {
-        print('Error creating application notification: $e');
+        print('ERROR creating application notification: $e');
+        print('Error stack trace: ${StackTrace.current}');
+      }
+
+      // Notify the helper that their application was submitted successfully
+      try {
+        print(
+          'DEBUG: Creating confirmation notification for helper: $helperId',
+        );
+        await NotificationService.createNotification(
+          recipientId: helperId,
+          title: 'Application Submitted',
+          body: 'Your application for "${jobTitle}" has been submitted',
+          type: 'application_submitted',
+          category: 'new',
+          targetId: jobPostingId,
+        );
+        print('DEBUG: Helper confirmation notification created');
+      } catch (e) {
+        print('Error creating helper confirmation notification: $e');
       }
 
       return _mapToApplication(response);
@@ -153,22 +184,25 @@ class ApplicationService {
       final jobTitle = jobData['title'] as String;
 
       // Update the application status
+      print('DEBUG: Updating application $applicationId status to $status');
       await SupabaseService.client
           .from(_tableName)
           .update({'status': status})
           .eq('id', applicationId);
+      print('DEBUG: Application status updated successfully');
 
       // Create notification for helper
       if (status == 'accepted') {
+        print('DEBUG: Creating acceptance notification for helper: $helperId');
         await NotificationService.createNotification(
           recipientId: helperId,
-          recipientType: 'helper',
           title: 'Application Accepted! 🎉',
           body: 'Your application for "$jobTitle" has been accepted',
           type: 'application_accepted',
           category: 'new',
           targetId: appResponse['job_posting_id'] as String,
         );
+        print('DEBUG: Acceptance notification created');
 
         final jobId = appResponse['job_posting_id'] as String;
 
@@ -196,14 +230,19 @@ class ApplicationService {
 
         for (var app in otherApps as List) {
           try {
+            print(
+              'DEBUG: Creating rejection notification for helper: ${app['helper_id']}',
+            );
             await NotificationService.createNotification(
               recipientId: app['helper_id'] as String,
-              recipientType: 'helper',
               title: 'Application Not Selected',
               body: 'We chose another candidate for "$jobTitle"',
               type: 'application_rejected',
               category: 'previous',
               targetId: jobId,
+            );
+            print(
+              'DEBUG: Rejection notification created for ${app['helper_id']}',
             );
           } catch (e) {
             print('Error notifying rejected helper: $e');
@@ -211,9 +250,9 @@ class ApplicationService {
         }
       } else if (status == 'rejected') {
         // Direct rejection by employer
+        print('DEBUG: Creating rejection notification for helper: $helperId');
         await NotificationService.createNotification(
           recipientId: helperId,
-          recipientType: 'helper',
           title: 'Application Not Selected',
           body:
               'Unfortunately, your application for "$jobTitle" was not selected',
@@ -221,6 +260,7 @@ class ApplicationService {
           category: 'previous',
           targetId: appResponse['job_posting_id'] as String,
         );
+        print('DEBUG: Rejection notification created');
       }
 
       // Return the updated application

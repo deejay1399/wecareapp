@@ -31,8 +31,8 @@ class NotificationItem {
       type: data['type'] as String? ?? 'generic',
       category: data['category'] as String? ?? 'update',
       targetId: data['target_id'] as String?,
-      timestamp: data['timestamp'] != null
-          ? DateTime.parse(data['timestamp'] as String)
+      timestamp: data['created_at'] != null
+          ? DateTime.parse(data['created_at'] as String)
           : DateTime.now(),
       isRead: data['is_read'] as bool? ?? false,
     );
