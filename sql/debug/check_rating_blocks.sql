@@ -19,7 +19,7 @@ SELECT
     END as rating_status
 FROM job_postings jp
 LEFT JOIN applications a ON jp.id = a.job_posting_id AND a.status IN ('accepted', 'completed')
-WHERE jp.status IN ('in_progress', 'completed')
+WHERE jp.status IN ('in progress', 'completed')
 ORDER BY jp.updated_at DESC;
 
 -- 2. Find jobs that are completed but applications are still 'accepted'

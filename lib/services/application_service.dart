@@ -63,7 +63,6 @@ class ApplicationService {
         print('Error stack trace: ${StackTrace.current}');
       }
 
-      // Notify the helper that their application was submitted successfully
       try {
         print(
           'DEBUG: Creating confirmation notification for helper: $helperId',
@@ -71,7 +70,7 @@ class ApplicationService {
         await NotificationService.createNotification(
           recipientId: helperId,
           title: 'Application Submitted',
-          body: 'Your application for "${jobTitle}" has been submitted',
+          body: 'Your application for "$jobTitle" has been submitted',
           type: 'application_submitted',
           category: 'new',
           targetId: jobPostingId,
@@ -206,14 +205,12 @@ class ApplicationService {
 
         final jobId = appResponse['job_posting_id'] as String;
 
-        // Assign helper to job (this moves job to 'in_progress' status)
         await JobPostingService.assignHelperToJob(
           jobId: jobId,
           helperId: helperId,
           helperName: helperName,
         );
 
-        // Reject all other pending applications for this job
         await SupabaseService.client
             .from(_tableName)
             .update({'status': 'rejected'})

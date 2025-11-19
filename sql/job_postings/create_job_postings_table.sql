@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS job_postings (
     payment_frequency VARCHAR(50) NOT NULL CHECK (payment_frequency IN ('Per Hour', 'Per Day', 'Per Week', 'bi weekly', 'Per Month')),
     barangay VARCHAR(100) NOT NULL,
     required_skills TEXT[] NOT NULL DEFAULT '{}',
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'closed', 'filled', 'in_progress', 'completed')),
+    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'closed', 'filled', 'in progress', 'completed')),
     applications_count INTEGER DEFAULT 0,
     assigned_helper_id UUID REFERENCES helpers(id) ON DELETE SET NULL,
     assigned_helper_name VARCHAR(200),

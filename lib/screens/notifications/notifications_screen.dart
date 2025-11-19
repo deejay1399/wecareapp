@@ -7,6 +7,7 @@ import '../../services/helper_service_posting_service.dart';
 import '../employer/job_details_screen.dart';
 import '../employer/service_details_screen.dart';
 import '../../localization_manager.dart';
+import '../../services/session_service.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -214,42 +215,78 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   }
 
   void _openTarget(NotificationItem item) async {
-    // mark read
     await NotificationService.markAsRead(item.id);
 
     if (!context.mounted) return;
 
     try {
-      // Handle job-related notifications
+      final userType = await SessionService.getCurrentUserType();
+      final isEmployer = userType == 'Employer';
+      final isHelper = userType == 'Helper';
+
       if ((item.type == 'message' ||
               item.type == 'job' ||
               item.type == 'job_application' ||
               item.type == 'application_accepted' ||
               item.type == 'application_rejected') &&
           item.targetId != null) {
-        final job = await JobPostingService.getJobPostingById(item.targetId!);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (c) => JobDetailsScreen(jobPosting: job)),
-        );
-        return;
+        if (isHelper) {
+          final job = await JobPostingService.getJobPostingById(item.targetId!);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (c) => JobDetailsScreen(jobPosting: job),
+            ),
+          );
+          return;
+        }
+
+        if (isEmployer) {
+          final service =
+              await HelperServicePostingService.getServicePostingById(
+                item.targetId!,
+              );
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (c) => ServiceDetailsScreen(servicePosting: service),
+            ),
+          );
+          return;
+        }
       }
 
       if (item.type == 'service' && item.targetId != null) {
-        final service = await HelperServicePostingService.getServicePostingById(
-          item.targetId!,
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (c) => ServiceDetailsScreen(servicePosting: service),
-          ),
-        );
-        return;
+        if (isEmployer) {
+          final service =
+              await HelperServicePostingService.getServicePostingById(
+                item.targetId!,
+              );
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (c) => ServiceDetailsScreen(servicePosting: service),
+            ),
+          );
+          return;
+        }
+
+        if (isHelper) {
+          final job = await JobPostingService.getJobPostingById(item.targetId!);
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (c) => JobDetailsScreen(jobPosting: job),
+            ),
+          );
+          return;
+        }
       }
 
       if (item.type == 'subscription') {
-        // open subscription screen if needed
         Navigator.pop(context);
         return;
       }

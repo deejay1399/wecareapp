@@ -1,11 +1,11 @@
--- Migration script to fix jobs that should be in_progress
+-- Migration script to fix jobs that should be in progress
 -- This will update any jobs that have accepted applications but are still in 'active' status
 
--- Update jobs to in_progress where applications were accepted
+-- Update jobs to in progress where applications were accepted
 -- but the job status wasn't updated properly
 UPDATE job_postings jp
 SET 
-    status = 'in_progress',
+    status = 'in progress',
     assigned_helper_id = a.helper_id,
     assigned_helper_name = (
         SELECT h.first_name || ' ' || h.last_name 
@@ -29,6 +29,6 @@ SELECT
     a.status as application_status
 FROM job_postings jp
 LEFT JOIN applications a ON jp.id = a.job_posting_id AND a.status = 'accepted'
-WHERE jp.status = 'in_progress'
+WHERE jp.status = 'in progress'
 ORDER BY jp.updated_at DESC;
 

@@ -1,7 +1,7 @@
 -- Debug script to check if user IDs match between sessions and jobs
--- This will help identify why in_progress jobs aren't showing in the app
+-- This will help identify why in progress jobs aren't showing in the app
 
--- 1. Check in_progress jobs with their employer and helper IDs
+-- 1. Check in progress jobs with their employer and helper IDs
 SELECT 
     jp.id as job_id,
     jp.title,
@@ -13,10 +13,10 @@ SELECT
     e.email as employer_email
 FROM job_postings jp
 LEFT JOIN employers e ON jp.employer_id = e.id
-WHERE jp.status = 'in_progress'
+WHERE jp.status = 'in progress'
 ORDER BY jp.updated_at DESC;
 
--- 2. Check helpers associated with in_progress jobs
+-- 2. Check helpers associated with in progress jobs
 SELECT 
     jp.id as job_id,
     jp.title,
@@ -26,7 +26,7 @@ SELECT
     h.email as helper_email
 FROM job_postings jp
 LEFT JOIN helpers h ON jp.assigned_helper_id = h.id
-WHERE jp.status = 'in_progress';
+WHERE jp.status = 'in progress';
 
 -- 3. Check all employers in the system
 SELECT 

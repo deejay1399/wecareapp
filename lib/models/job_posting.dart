@@ -13,8 +13,7 @@ class JobPosting {
   final double salary;
   final String paymentFrequency;
   final List<String> requiredSkills;
-  final String
-  status; // 'active', 'paused', 'filled', 'in_progress', 'completed', 'closed'
+  final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
   final int applicationsCount;
@@ -45,12 +44,12 @@ class JobPosting {
   bool get isActive => status == 'active';
   bool get isPaused => status == 'paused';
   bool get isFilled => status == 'filled';
-  bool get isInProgress => status == 'in_progress';
+  bool get isInProgress => status == 'in progress';
   bool get isCompleted => status == 'completed';
   bool get isClosed => status == 'closed';
   bool get isAvailableForApplications => status == 'active';
-  bool get isActivelyWorked => status == 'in_progress';
-  bool get canBeCompleted => status == 'in_progress';
+  bool get isActivelyWorked => status == 'in progress';
+  bool get canBeCompleted => status == 'in progress';
 
   String get statusDisplayText {
     switch (status) {
@@ -60,7 +59,7 @@ class JobPosting {
         return 'Paused';
       case 'filled':
         return 'Position Filled';
-      case 'in_progress':
+      case 'in progress':
         return 'Work in Progress';
       case 'completed':
         return 'Completed';

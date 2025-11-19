@@ -27,7 +27,7 @@ $$;
 -- Drop the old status constraint and add new one with additional statuses
 ALTER TABLE job_postings DROP CONSTRAINT IF EXISTS job_postings_status_check;
 ALTER TABLE job_postings ADD CONSTRAINT job_postings_status_check 
-    CHECK (status IN ('active', 'paused', 'closed', 'filled', 'in_progress', 'completed'));
+    CHECK (status IN ('active', 'paused', 'closed', 'filled', 'in progress', 'completed'));
 
 -- Add index for assigned_helper_id if it doesn't exist
 CREATE INDEX IF NOT EXISTS idx_job_postings_assigned_helper_id ON job_postings(assigned_helper_id);

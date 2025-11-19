@@ -32,7 +32,7 @@ SELECT
         ELSE '✓ Has active jobs'
     END as active_jobs_status,
     COUNT(*) FILTER (WHERE status = 'active') as active_count,
-    COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_count,
+    COUNT(*) FILTER (WHERE status = 'in progress') as in progress_count,
     COUNT(*) FILTER (WHERE status = 'completed') as completed_count,
     COUNT(*) as total_jobs
 FROM job_postings;

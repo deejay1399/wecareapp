@@ -53,7 +53,7 @@ SELECT
     'In Progress Jobs',
     COUNT(*)
 FROM job_postings
-WHERE status = 'in_progress'
+WHERE status = 'in progress'
 UNION ALL
 SELECT 
     'Completed Jobs',

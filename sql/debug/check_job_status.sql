@@ -36,7 +36,7 @@ SELECT
 FROM job_postings
 GROUP BY status;
 
--- 4. Check for accepted applications without in_progress jobs
+-- 4. Check for accepted applications without in progress jobs
 SELECT 
     a.id as application_id,
     a.status as app_status,
@@ -48,9 +48,9 @@ FROM applications a
 JOIN job_postings jp ON a.job_posting_id = jp.id
 JOIN helpers h ON a.helper_id = h.id
 WHERE a.status = 'accepted' 
-  AND jp.status != 'in_progress';
+  AND jp.status != 'in progress';
 
--- 5. Find in_progress jobs
+-- 5. Find in progress jobs
 SELECT 
     jp.id,
     jp.title,
@@ -61,5 +61,5 @@ SELECT
     e.first_name || ' ' || e.last_name as employer_name
 FROM job_postings jp
 JOIN employers e ON jp.employer_id = e.id
-WHERE jp.status = 'in_progress';
+WHERE jp.status = 'in progress';
 

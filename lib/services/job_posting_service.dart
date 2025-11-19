@@ -50,7 +50,7 @@ class JobPostingService {
       final response = await SupabaseService.client
           .from(_tableName)
           .update({
-            'status': 'in_progress',
+            'status': 'in progress',
             'assigned_helper_id': helperId,
             'assigned_helper_name': helperName,
             'updated_at': DateTime.now().toIso8601String(),
@@ -91,7 +91,7 @@ class JobPostingService {
           .from(_tableName)
           .select()
           .eq('assigned_helper_id', helperId)
-          .eq('status', 'in_progress')
+          .eq('status', 'in progress')
           .order('updated_at', ascending: false);
 
       return (response as List)
@@ -110,7 +110,7 @@ class JobPostingService {
           .from(_tableName)
           .select()
           .eq('employer_id', employerId)
-          .eq('status', 'in_progress')
+          .eq('status', 'in progress')
           .order('updated_at', ascending: false);
 
       return (response as List)
