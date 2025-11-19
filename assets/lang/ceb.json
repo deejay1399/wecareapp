@@ -543,5 +543,6 @@
     "premium_plan_description": "Pinakadaghan nga benepisyo para sa mga aktibong tiggamit",
     "no_notifications": "Walay Mga Notipikasyon",
     "application_rejected_info": "Ang imong aplikasyon para sa \"{jobTitle}\" gi-reject. Ayaw kabalaka, padayon sa pag-apply sa ubang mga oportunidad!",
-    "application_accepted_info": "Congratulations! Ang imong aplikasyon para sa \"{jobTitle}\" gidawat. Palihog tan-awa ang chat alang sa dugang nga mga detalye gikan sa employer."
+    "application_accepted_info": "Congratulations! Ang imong aplikasyon para sa \"{jobTitle}\" gidawat. Palihog tan-awa ang chat alang sa dugang nga mga detalye gikan sa employer.",
+    "application_not_found": "Ang aplikasyon ay hindi nahanap. Maaaring naganap na ito."
 }

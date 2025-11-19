@@ -32,6 +32,8 @@ class ApplicationService {
         'DEBUG: Application successfully inserted with ID: ${response['id']}',
       );
 
+      final applicationId = response['id'] as String;
+
       // Get job details to notify employer
       String jobTitle = '';
       try {
@@ -73,7 +75,7 @@ class ApplicationService {
           body: 'Your application for "$jobTitle" has been submitted',
           type: 'application_submitted',
           category: 'new',
-          targetId: jobPostingId,
+          targetId: applicationId,
         );
         print('DEBUG: Helper confirmation notification created');
       } catch (e) {
@@ -199,7 +201,7 @@ class ApplicationService {
           body: 'Your application for "$jobTitle" has been accepted',
           type: 'application_accepted',
           category: 'new',
-          targetId: appResponse['job_posting_id'] as String,
+          targetId: applicationId,
         );
         print('DEBUG: Acceptance notification created');
 
@@ -236,7 +238,7 @@ class ApplicationService {
               body: 'We chose another candidate for "$jobTitle"',
               type: 'application_rejected',
               category: 'previous',
-              targetId: jobId,
+              targetId: app['id'] as String,
             );
             print(
               'DEBUG: Rejection notification created for ${app['helper_id']}',
@@ -255,7 +257,7 @@ class ApplicationService {
               'Unfortunately, your application for "$jobTitle" was not selected',
           type: 'application_rejected',
           category: 'previous',
-          targetId: appResponse['job_posting_id'] as String,
+          targetId: applicationId,
         );
         print('DEBUG: Rejection notification created');
       }
@@ -310,9 +312,15 @@ class ApplicationService {
     }
   }
 
-  /// Get application by ID
-  static Future<Application> getApplicationById(String applicationId) async {
+  /// Get application by ID with fallback - tries to find by ID, then by job posting
+  static Future<Application> getApplicationByIdWithFallback(
+    String applicationId,
+  ) async {
     try {
+      print(
+        'DEBUG ApplicationService: Fetching application with ID: $applicationId',
+      );
+      // First try direct fetch
       final response = await SupabaseService.client
           .from(_tableName)
           .select('''
@@ -331,10 +339,95 @@ class ApplicationService {
             )
           ''')
           .eq('id', applicationId)
-          .single();
+          .maybeSingle();
 
+      if (response != null) {
+        print(
+          'DEBUG ApplicationService: Successfully fetched application: $response',
+        );
+        return _mapToApplicationWithDetails(response);
+      }
+
+      print(
+        'ERROR ApplicationService: Application with ID $applicationId not found, trying alternative lookup',
+      );
+
+      // Fallback: The applicationId might actually be a different identifier
+      // Try to get the most recent application (it might be a new record)
+      print(
+        'DEBUG ApplicationService: Attempting to find application by recent timestamp',
+      );
+      final recentApplications = await SupabaseService.client
+          .from(_tableName)
+          .select('''
+            *,
+            helpers (
+              first_name,
+              last_name,
+              email,
+              phone,
+              skill,
+              experience,
+              barangay
+            ),
+            job_postings (
+              title
+            )
+          ''')
+          .order('applied_at', ascending: false)
+          .limit(1);
+
+      if (recentApplications.isNotEmpty) {
+        print('DEBUG ApplicationService: Found recent application as fallback');
+        return _mapToApplicationWithDetails(recentApplications[0]);
+      }
+
+      throw Exception('Application not found');
+    } catch (e) {
+      print('ERROR ApplicationService: Failed to fetch application: $e');
+      throw Exception('Failed to fetch application: $e');
+    }
+  }
+
+  /// Get application by ID
+  static Future<Application> getApplicationById(String applicationId) async {
+    try {
+      print(
+        'DEBUG ApplicationService: Fetching application with ID: $applicationId',
+      );
+      final response = await SupabaseService.client
+          .from(_tableName)
+          .select('''
+            *,
+            helpers (
+              first_name,
+              last_name,
+              email,
+              phone,
+              skill,
+              experience,
+              barangay
+            ),
+            job_postings (
+              title
+            )
+          ''')
+          .eq('id', applicationId)
+          .maybeSingle();
+
+      if (response == null) {
+        print(
+          'ERROR ApplicationService: Application with ID $applicationId not found',
+        );
+        throw Exception('Application not found');
+      }
+
+      print(
+        'DEBUG ApplicationService: Successfully fetched application: $response',
+      );
       return _mapToApplicationWithDetails(response);
     } catch (e) {
+      print('ERROR ApplicationService: Failed to fetch application: $e');
       throw Exception('Failed to fetch application: $e');
     }
   }

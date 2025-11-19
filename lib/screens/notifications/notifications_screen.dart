@@ -6,6 +6,8 @@ import '../../services/job_posting_service.dart';
 import '../../services/helper_service_posting_service.dart';
 import '../employer/job_details_screen.dart';
 import '../employer/service_details_screen.dart';
+import '../helper/helper_application_details_screen.dart';
+import '../../services/application_service.dart';
 import '../../localization_manager.dart';
 import '../../services/session_service.dart';
 
@@ -217,80 +219,105 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   void _openTarget(NotificationItem item) async {
     await NotificationService.markAsRead(item.id);
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     try {
       final userType = await SessionService.getCurrentUserType();
       final isEmployer = userType == 'Employer';
       final isHelper = userType == 'Helper';
 
-      if ((item.type == 'message' ||
-              item.type == 'job' ||
-              item.type == 'job_application' ||
-              item.type == 'application_accepted' ||
-              item.type == 'application_rejected') &&
-          item.targetId != null) {
-        if (isHelper) {
-          final job = await JobPostingService.getJobPostingById(item.targetId!);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (c) => JobDetailsScreen(jobPosting: job),
-            ),
-          );
-          return;
+      print(
+        "DEBUG: Notification tapped: ${item.type}, target ${item.targetId}, userType=$userType",
+      );
+
+      // ----------------------------------------------------------------------
+      // --------------------------- HELPER LOGIC -----------------------------
+      // --------------------------- (PRESENT) --------------------------------
+      // ----------------------------------------------------------------------
+      if (isHelper) {
+        // Helper opens ONLY application-related screens
+        if (item.type == 'job_application' ||
+            item.type == 'application_accepted' ||
+            item.type == 'application_rejected' ||
+            item.type == 'application_submitted') {
+          if (item.targetId == null) return;
+
+          try {
+            final application =
+                await ApplicationService.getApplicationByIdWithFallback(
+                  item.targetId!,
+                );
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (c) =>
+                    HelperApplicationDetailsScreen(application: application),
+              ),
+            );
+            return;
+          } catch (e) {
+            print("ERROR fetching application: $e");
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  LocalizationManager.translate('application_not_found'),
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
         }
 
-        if (isEmployer) {
-          final service =
-              await HelperServicePostingService.getServicePostingById(
-                item.targetId!,
-              );
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (c) => ServiceDetailsScreen(servicePosting: service),
-            ),
-          );
-          return;
-        }
-      }
-
-      if (item.type == 'service' && item.targetId != null) {
-        if (isEmployer) {
-          final service =
-              await HelperServicePostingService.getServicePostingById(
-                item.targetId!,
-              );
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (c) => ServiceDetailsScreen(servicePosting: service),
-            ),
-          );
-          return;
-        }
-
-        if (isHelper) {
-          final job = await JobPostingService.getJobPostingById(item.targetId!);
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (c) => JobDetailsScreen(jobPosting: job),
-            ),
-          );
-          return;
-        }
-      }
-
-      if (item.type == 'subscription') {
-        Navigator.pop(context);
+        // Helper should NOT open job or service notifications
         return;
       }
+
+      // ----------------------------------------------------------------------
+      // ------------------------- EMPLOYER LOGIC -----------------------------
+      // -------------------------- (PAST LOGIC) ------------------------------
+      // ----------------------------------------------------------------------
+      if (isEmployer) {
+        // Old BEHAVIOR: Employer opens job details for any job/application
+        if ((item.type == 'message' ||
+                item.type == 'job' ||
+                item.type == 'job_application' ||
+                item.type == 'application_accepted' ||
+                item.type == 'application_rejected') &&
+            item.targetId != null) {
+          final job = await JobPostingService.getJobPostingById(item.targetId!);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (c) => JobDetailsScreen(jobPosting: job),
+            ),
+          );
+          return;
+        }
+
+        // Old BEHAVIOR: Employer opens service details
+        if (item.type == 'service' && item.targetId != null) {
+          final service =
+              await HelperServicePostingService.getServicePostingById(
+                item.targetId!,
+              );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (c) => ServiceDetailsScreen(servicePosting: service),
+            ),
+          );
+          return;
+        }
+
+        if (item.type == 'subscription') {
+          Navigator.pop(context);
+          return;
+        }
+      }
     } catch (e) {
+      print("ERROR in _openTarget: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -434,7 +461,6 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
   Widget _buildNotificationCard(NotificationItem item) {
     final color = _getColorForType(item.type);
-    final categoryColor = _getColorForCategory(item.category);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),

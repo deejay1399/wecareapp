@@ -542,5 +542,7 @@
     "you_have_no_notifications_yet": "Wala ka pang mga abiso. Kapag may nangyari sa iyong account, makakatanggap ka ng mga abiso dito.",
     "mark_all_as_read": "Markahan Lahat bilang Nabasa",
     "application_rejected_info": "Ang iyong aplikasyon para sa \"{jobTitle}\" ay tinanggihan ng employer.",
-    "application_accepted_info": "Ang iyong aplikasyon para sa \"{jobTitle}\" ay tinanggap ng employer."
+    "application_accepted_info": "Ang iyong aplikasyon para sa \"{jobTitle}\" ay tinanggap ng employer.",
+    "application_not_found": "Ang aplikasyon ay hindi nahanap. Maaaring napabura na ito."
+}
 }
