@@ -230,10 +230,6 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         "DEBUG: Notification tapped: ${item.type}, target ${item.targetId}, userType=$userType",
       );
 
-      // ----------------------------------------------------------------------
-      // --------------------------- HELPER LOGIC -----------------------------
-      // --------------------------- (PRESENT) --------------------------------
-      // ----------------------------------------------------------------------
       if (isHelper) {
         // Helper opens ONLY application-related screens
         if (item.type == 'job_application' ||
@@ -258,12 +254,22 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             return;
           } catch (e) {
             print("ERROR fetching application: $e");
+            print("ERROR Details: $e");
+            print("Application ID being fetched: ${item.targetId}");
+
+            // Show more specific error message
+            String errorMsg = 'application_not_found';
+            if (e.toString().contains('auth')) {
+              errorMsg = 'Session expired, please login again';
+            } else if (e.toString().contains('network')) {
+              errorMsg = 'Network error, please check your connection';
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  LocalizationManager.translate('application_not_found'),
-                ),
+                content: Text(LocalizationManager.translate(errorMsg)),
                 backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
               ),
             );
             return;
@@ -274,10 +280,6 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         return;
       }
 
-      // ----------------------------------------------------------------------
-      // ------------------------- EMPLOYER LOGIC -----------------------------
-      // -------------------------- (PAST LOGIC) ------------------------------
-      // ----------------------------------------------------------------------
       if (isEmployer) {
         // Old BEHAVIOR: Employer opens job details for any job/application
         if ((item.type == 'message' ||
@@ -296,7 +298,6 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           return;
         }
 
-        // Old BEHAVIOR: Employer opens service details
         if (item.type == 'service' && item.targetId != null) {
           final service =
               await HelperServicePostingService.getServicePostingById(

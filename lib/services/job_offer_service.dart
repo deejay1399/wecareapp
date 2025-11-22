@@ -16,7 +16,6 @@ class JobOfferService {
     required String description,
     required double salary,
     required String paymentFrequency,
-    required String municipality,
     required String location,
     required List<String> requiredSkills,
   }) async {
@@ -31,7 +30,6 @@ class JobOfferService {
         description: description,
         salary: salary,
         paymentFrequency: paymentFrequency,
-        municipality: municipality,
         location: location,
         requiredSkills: requiredSkills,
         status: JobOfferStatus.pending,
@@ -81,7 +79,7 @@ class JobOfferService {
         description: jobOffer.description,
         salary: jobOffer.salary,
         paymentFrequency: dbPaymentFrequency,
-        municipality: jobOffer.municipality,
+        municipality: jobOffer.location,
         barangay: jobOffer.location,
         requiredSkills: jobOffer.requiredSkills,
       );

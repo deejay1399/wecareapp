@@ -42,9 +42,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
   List<HelperServicePosting> _myServices = [];
   bool _isLoadingJobs = true;
   bool _isLoadingServices = true;
-  bool showEmployerRating = false;
   final _ratingService = RatingService();
-  RatingStatistics? _employerRatingStats;
   @override
   void initState() {
     super.initState();
@@ -52,25 +50,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     _loadSubscriptionStatus();
     _loadUnreadMessageCount();
     _loadUnreadNotificationCount();
-    _loadEmployerRatingStats();
     _loadMatchedJobs(); // Load all job opportunities
-  }
-
-  Future<void> _loadEmployerRatingStats() async {
-    try {
-      final stats = await _ratingService.getUserRatingStatistics(
-        _matchedJobs[0].employerId,
-        'employer',
-      );
-
-      if (mounted) {
-        setState(() {
-          _employerRatingStats = stats;
-        });
-      }
-    } catch (e) {
-      // Handle error silently
-    }
   }
 
   Future<void> _loadCurrentHelper() async {
@@ -736,234 +716,10 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
   }
 
   Widget _buildJobCard(JobPosting job) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Material(
-        elevation: 2,
-        borderRadius: BorderRadius.circular(16),
-        shadowColor: const Color(0xFFFF8A50).withValues(alpha: 0.1),
-        child: InkWell(
-          onTap: () => _onJobTap(context, job),
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white,
-              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title and salary
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        (job.employer?.fullName != null &&
-                                job.employer!.fullName.trim().isNotEmpty)
-                            ? job.employer!.fullName
-                            : 'Unknown',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '₱${job.salary.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF10B981),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-                Text(
-                  "${LocalizationManager.translate('age')}: ${job.employer?.age ?? 'N/A'}",
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 8),
-
-                // Payment frequency and location
-                Row(
-                  children: [
-                    Text(
-                      job.paymentFrequency,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 14,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      job.barangay,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  "${LocalizationManager.translate('job_title')}: ${job.title}",
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 12),
-
-                // Description
-                Text(
-                  "${LocalizationManager.translate('job_description')}: ${job.description}",
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 12),
-                if (showEmployerRating) ...[
-                  if (_employerRatingStats != null &&
-                      _employerRatingStats!.hasRatings) ...[
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.business,
-                          size: 16,
-                          color: Color(0xFF1565C0),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${LocalizationManager.translate('employer_rating')}:',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF374151),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        StarRatingDisplay(
-                          rating: _employerRatingStats!.averageRating,
-                          totalRatings: _employerRatingStats!.totalRatings,
-                          size: 14,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                  ] else if (_employerRatingStats != null) ...[
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.business,
-                          size: 16,
-                          color: Color(0xFF1565C0),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${LocalizationManager.translate('employer_rating')}:',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF374151),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          LocalizationManager.translate('no_ratings_yet'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ],
-                const SizedBox(height: 12),
-                // Required skills
-                if (job.requiredSkills.isNotEmpty) ...[
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: job.requiredSkills.take(3).map((skill) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          skill,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFFFF8A50),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // Apply button
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    onPressed: () => _onJobTap(context, job),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF8A50),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(
-                      LocalizationManager.translate('apply'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return _HomeJobCard(
+      job: job,
+      onTap: () => _onJobTap(context, job),
+      ratingService: _ratingService,
     );
   }
 
@@ -1073,5 +829,311 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     if (hour < 12) return LocalizationManager.translate('morning');
     if (hour < 17) return LocalizationManager.translate('afternoon');
     return LocalizationManager.translate('evening');
+  }
+}
+
+// Helper widget for job cards with independent rating loading
+class _HomeJobCard extends StatefulWidget {
+  final JobPosting job;
+  final VoidCallback onTap;
+  final RatingService ratingService;
+
+  const _HomeJobCard({
+    required this.job,
+    required this.onTap,
+    required this.ratingService,
+  });
+
+  @override
+  State<_HomeJobCard> createState() => _HomeJobCardState();
+}
+
+class _HomeJobCardState extends State<_HomeJobCard> {
+  RatingStatistics? _employerRatingStats;
+  bool _isLoadingRating = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmployerRatingStats();
+  }
+
+  Future<void> _loadEmployerRatingStats() async {
+    try {
+      final stats = await widget.ratingService.getUserRatingStatistics(
+        widget.job.employerId,
+        'employer',
+      );
+
+      if (mounted) {
+        setState(() {
+          _employerRatingStats = stats;
+          _isLoadingRating = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingRating = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        elevation: 2,
+        borderRadius: BorderRadius.circular(16),
+        shadowColor: const Color(0xFFFF8A50).withValues(alpha: 0.1),
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title and salary
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        (widget.job.employer?.fullName != null &&
+                                widget.job.employer!.fullName.trim().isNotEmpty)
+                            ? widget.job.employer!.fullName
+                            : 'Unknown',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '₱${widget.job.salary.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF10B981),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+                Text(
+                  "${LocalizationManager.translate('age')}: ${widget.job.employer?.age ?? 'N/A'}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 8),
+
+                // Payment frequency and location
+                Row(
+                  children: [
+                    Text(
+                      widget.job.paymentFrequency,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 14,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      widget.job.barangay,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "${LocalizationManager.translate('job_title')}: ${widget.job.title}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Description
+                Text(
+                  "${LocalizationManager.translate('job_description')}: ${widget.job.description}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Employer Rating
+                if (!_isLoadingRating) ...[
+                  if (_employerRatingStats != null &&
+                      _employerRatingStats!.hasRatings) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF8A50).withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFFF8A50).withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.business,
+                            size: 16,
+                            color: Color(0xFFFF8A50),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  LocalizationManager.translate(
+                                    'employer_rating',
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF374151),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                StarRatingDisplay(
+                                  rating: _employerRatingStats!.averageRating,
+                                  totalRatings:
+                                      _employerRatingStats!.totalRatings,
+                                  size: 14,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ] else if (_employerRatingStats != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!, width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.business,
+                            size: 16,
+                            color: Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              LocalizationManager.translate('no_ratings_yet'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+
+                // Required skills
+                if (widget.job.requiredSkills.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: widget.job.requiredSkills.take(3).map((skill) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          skill,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFFF8A50),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Apply button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: widget.onTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF8A50),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      LocalizationManager.translate('apply'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

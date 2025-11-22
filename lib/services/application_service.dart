@@ -1,6 +1,7 @@
 import '../models/application.dart';
 import '../services/supabase_service.dart';
 import '../services/notification_service.dart';
+import '../services/session_service.dart';
 import 'job_posting_service.dart';
 
 class ApplicationService {
@@ -207,11 +208,29 @@ class ApplicationService {
 
         final jobId = appResponse['job_posting_id'] as String;
 
-        await JobPostingService.assignHelperToJob(
-          jobId: jobId,
-          helperId: helperId,
-          helperName: helperName,
-        );
+        try {
+          print('DEBUG: Attempting to assign helper $helperId to job $jobId');
+          await JobPostingService.assignHelperToJob(
+            jobId: jobId,
+            helperId: helperId,
+            helperName: helperName,
+          );
+          print('DEBUG: Successfully assigned helper to job');
+        } catch (e) {
+          print('ERROR: Failed to assign helper to job: $e');
+          print('DEBUG: Attempting to retrieve current job posting state');
+          try {
+            final jobCheck = await SupabaseService.client
+                .from('job_postings')
+                .select('id, status, assigned_helper_id, assigned_helper_name')
+                .eq('id', jobId)
+                .single();
+            print('DEBUG: Current job posting state: $jobCheck');
+          } catch (jobCheckError) {
+            print('ERROR: Could not fetch job posting state: $jobCheckError');
+          }
+          rethrow;
+        }
 
         await SupabaseService.client
             .from(_tableName)
@@ -349,14 +368,18 @@ class ApplicationService {
       }
 
       print(
-        'ERROR ApplicationService: Application with ID $applicationId not found, trying alternative lookup',
+        'ERROR ApplicationService: Application with ID $applicationId not found',
+      );
+      print(
+        'DEBUG ApplicationService: Attempting to find application by recent timestamp for current user',
       );
 
-      // Fallback: The applicationId might actually be a different identifier
-      // Try to get the most recent application (it might be a new record)
-      print(
-        'DEBUG ApplicationService: Attempting to find application by recent timestamp',
-      );
+      // Fallback: Get the most recent application for the current user
+      final currentUserId = await SessionService.getCurrentUserId();
+      if (currentUserId == null) {
+        throw Exception('User session expired - please login again');
+      }
+
       final recentApplications = await SupabaseService.client
           .from(_tableName)
           .select('''
@@ -374,6 +397,7 @@ class ApplicationService {
               title
             )
           ''')
+          .eq('helper_id', currentUserId)
           .order('applied_at', ascending: false)
           .limit(1);
 

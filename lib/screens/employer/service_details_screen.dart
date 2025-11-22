@@ -89,8 +89,10 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       text: _messageController.text.trim(),
     );
     final salaryController = TextEditingController();
-    final locationController = TextEditingController();
     String paymentFrequency = LocalizationManager.translate('hourly');
+    String selectedLocation = widget.servicePosting.serviceAreas.isNotEmpty
+        ? widget.servicePosting.serviceAreas.first
+        : '';
     List<String> requiredSkills = [...widget.servicePosting.skills];
 
     final result = await showDialog<bool>(
@@ -156,25 +158,25 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                             DropdownMenuItem(
                               value: 'hourly',
                               child: Text(
-                                LocalizationManager.translate('per_hour'),
+                                LocalizationManager.translate('hourly'),
                               ),
                             ),
                             DropdownMenuItem(
                               value: 'daily',
                               child: Text(
-                                LocalizationManager.translate('per_day'),
+                                LocalizationManager.translate('daily'),
                               ),
                             ),
                             DropdownMenuItem(
                               value: 'weekly',
                               child: Text(
-                                LocalizationManager.translate('per_week'),
+                                LocalizationManager.translate('weekly'),
                               ),
                             ),
                             DropdownMenuItem(
                               value: 'monthly',
                               child: Text(
-                                LocalizationManager.translate('per_month'),
+                                LocalizationManager.translate('monthly'),
                               ),
                             ),
                             DropdownMenuItem(
@@ -191,12 +193,19 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: locationController,
+                  DropdownButtonFormField<String>(
+                    value: selectedLocation.isNotEmpty
+                        ? selectedLocation
+                        : null,
                     decoration: InputDecoration(
                       labelText: LocalizationManager.translate('job_location'),
                       border: const OutlineInputBorder(),
                     ),
+                    items: widget.servicePosting.serviceAreas.map((area) {
+                      return DropdownMenuItem(value: area, child: Text(area));
+                    }).toList(),
+                    onChanged: (value) =>
+                        setState(() => selectedLocation = value!),
                   ),
                 ],
               ),
@@ -212,7 +221,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                 if (titleController.text.trim().isEmpty ||
                     descriptionController.text.trim().isEmpty ||
                     salaryController.text.trim().isEmpty ||
-                    locationController.text.trim().isEmpty) {
+                    selectedLocation.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -244,8 +253,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
         description: descriptionController.text.trim(),
         salary: double.tryParse(salaryController.text.trim()) ?? 0,
         paymentFrequency: paymentFrequency,
-        municipality: "testhello",
-        location: locationController.text.trim(),
+        location: selectedLocation,
         requiredSkills: requiredSkills,
       );
     }
@@ -253,7 +261,6 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     titleController.dispose();
     descriptionController.dispose();
     salaryController.dispose();
-    locationController.dispose();
   }
 
   Future<void> _createAndSendJobOffer({
@@ -261,7 +268,6 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     required String description,
     required double salary,
     required String paymentFrequency,
-    required String municipality,
     required String location,
     required List<String> requiredSkills,
   }) async {
@@ -300,7 +306,6 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
         description: description,
         salary: salary,
         paymentFrequency: paymentFrequency,
-        municipality: municipality,
         location: location,
         requiredSkills: requiredSkills,
       );

@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import '../../models/application.dart';
 import '../../models/job_posting.dart';
 import '../../models/employer.dart';
+import '../../models/rating_statistics.dart';
 import '../../services/job_posting_service.dart';
 import '../../services/employer_auth_service.dart';
 import '../../services/application_service.dart';
 import '../../services/database_messaging_service.dart';
 import '../../services/session_service.dart';
+import '../../services/rating_service.dart';
 import '../messaging/chat_screen.dart';
+import '../../widgets/rating/star_rating_display.dart';
 import '../../localization_manager.dart';
 
 class HelperApplicationDetailsScreen extends StatefulWidget {
@@ -25,8 +28,10 @@ class _HelperApplicationDetailsScreenState
   late Application _application;
   JobPosting? _jobPosting;
   Employer? _employer;
+  RatingStatistics? _employerRatingStats;
   bool _isLoading = true;
   bool _isWithdrawing = false;
+  final _ratingService = RatingService();
 
   @override
   void initState() {
@@ -51,10 +56,17 @@ class _HelperApplicationDetailsScreenState
         jobPosting.employerId,
       );
 
+      // Load employer rating statistics
+      final employerRatingStats = await _ratingService.getUserRatingStatistics(
+        jobPosting.employerId,
+        'employer',
+      );
+
       if (mounted) {
         setState(() {
           _jobPosting = jobPosting;
           _employer = employer;
+          _employerRatingStats = employerRatingStats;
           _isLoading = false;
         });
       }
@@ -371,6 +383,30 @@ class _HelperApplicationDetailsScreenState
                         color: Color(0xFF6B7280),
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    if (_employerRatingStats != null &&
+                        _employerRatingStats!.hasRatings) ...[
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            size: 14,
+                            color: Color(0xFFFFC107),
+                          ),
+                          const SizedBox(width: 4),
+                          StarRatingDisplay(
+                            rating: _employerRatingStats!.averageRating,
+                            totalRatings: _employerRatingStats!.totalRatings,
+                            size: 14,
+                          ),
+                        ],
+                      ),
+                    ] else if (_employerRatingStats != null) ...[
+                      Text(
+                        LocalizationManager.translate('no_ratings_yet'),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
                   ],
                 ),
               ),

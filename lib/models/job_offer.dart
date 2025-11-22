@@ -8,7 +8,6 @@ class JobOffer {
   final String description;
   final double salary;
   final String paymentFrequency;
-  final String municipality;
   final String location;
   final List<String> requiredSkills;
   final JobOfferStatus status;
@@ -26,7 +25,6 @@ class JobOffer {
     required this.description,
     required this.salary,
     required this.paymentFrequency,
-    required this.municipality,
     required this.location,
     required this.requiredSkills,
     required this.status,
@@ -46,7 +44,6 @@ class JobOffer {
       description: map['description'] as String,
       salary: (map['salary'] as num).toDouble(),
       paymentFrequency: map['payment_frequency'] as String,
-      municipality: map['municipality'] as String,
       location: map['location'] as String,
       requiredSkills: List<String>.from(map['required_skills'] as List),
       status: JobOfferStatus.values.firstWhere(
@@ -72,7 +69,6 @@ class JobOffer {
       'description': description,
       'salary': salary,
       'payment_frequency': paymentFrequency,
-      'municipality': municipality,
       'location': location,
       'required_skills': requiredSkills,
       'status': status.name,
@@ -92,7 +88,6 @@ class JobOffer {
       'description': description,
       'salary': salary,
       'payment_frequency': paymentFrequency,
-      'municipality': municipality,
       'location': location,
       'required_skills': requiredSkills,
       'status': status.name,
@@ -110,7 +105,6 @@ class JobOffer {
     String? description,
     double? salary,
     String? paymentFrequency,
-    String? municipality,
     String? location,
     List<String>? requiredSkills,
     JobOfferStatus? status,
@@ -128,7 +122,6 @@ class JobOffer {
       description: description ?? this.description,
       salary: salary ?? this.salary,
       paymentFrequency: paymentFrequency ?? this.paymentFrequency,
-      municipality: municipality ?? this.municipality,
       location: location ?? this.location,
       requiredSkills: requiredSkills ?? this.requiredSkills,
       status: status ?? this.status,

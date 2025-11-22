@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../models/application.dart';
+import '../../models/rating_statistics.dart';
 import '../../services/helper_auth_service.dart';
 import '../../services/application_service.dart';
 import '../../services/database_messaging_service.dart';
 import '../../services/session_service.dart';
+import '../../services/rating_service.dart';
 import '../messaging/chat_screen.dart';
+import '../../widgets/rating/star_rating_display.dart';
 import '../../localization_manager.dart';
 
 class ApplicationDetailsScreen extends StatefulWidget {
@@ -19,9 +22,11 @@ class ApplicationDetailsScreen extends StatefulWidget {
 
 class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
   late Application _application;
+  RatingStatistics? _helperRatingStats;
   bool _isLoading = true;
   bool _isUpdatingStatus = false;
   final TextEditingController _messageController = TextEditingController();
+  final _ratingService = RatingService();
 
   @override
   void initState() {
@@ -51,8 +56,15 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
     try {
       await HelperAuthService.getHelperById(_application.helperId);
 
+      // Load helper rating statistics
+      final helperRatingStats = await _ratingService.getUserRatingStatistics(
+        _application.helperId,
+        'helper',
+      );
+
       if (mounted) {
         setState(() {
+          _helperRatingStats = helperRatingStats;
           _isLoading = false;
         });
       }
@@ -430,6 +442,30 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
                         color: Color(0xFF6B7280),
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    if (_helperRatingStats != null &&
+                        _helperRatingStats!.hasRatings) ...[
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            size: 14,
+                            color: Color(0xFFFFC107),
+                          ),
+                          const SizedBox(width: 4),
+                          StarRatingDisplay(
+                            rating: _helperRatingStats!.averageRating,
+                            totalRatings: _helperRatingStats!.totalRatings,
+                            size: 14,
+                          ),
+                        ],
+                      ),
+                    ] else if (_helperRatingStats != null) ...[
+                      Text(
+                        LocalizationManager.translate('no_ratings_yet'),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Text(
                       LocalizationManager.translate('available_for_hire'),

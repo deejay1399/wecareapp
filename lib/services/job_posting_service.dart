@@ -47,10 +47,30 @@ class JobPostingService {
     required String helperName,
   }) async {
     try {
+      print(
+        'DEBUG JobPostingService: Fetching job posting before update - jobId: $jobId',
+      );
+
+      // First, get the current job posting to verify it exists and has valid data
+      final currentJob = await SupabaseService.client
+          .from(_tableName)
+          .select()
+          .eq('id', jobId)
+          .single();
+
+      print(
+        'DEBUG JobPostingService: Current job posting status: ${currentJob['status']}',
+      );
+      print('DEBUG JobPostingService: Current job posting data: $currentJob');
+
+      print(
+        'DEBUG JobPostingService: Updating job posting status to "in_progress"',
+      );
+
       final response = await SupabaseService.client
           .from(_tableName)
           .update({
-            'status': 'in progress',
+            'status': 'in_progress',
             'assigned_helper_id': helperId,
             'assigned_helper_name': helperName,
             'updated_at': DateTime.now().toIso8601String(),
@@ -59,8 +79,10 @@ class JobPostingService {
           .select()
           .single();
 
+      print('DEBUG JobPostingService: Successfully assigned helper to job');
       return JobPosting.fromMap(response);
     } catch (e) {
+      print('ERROR JobPostingService: Failed to assign helper to job: $e');
       throw Exception('Failed to assign helper to job: $e');
     }
   }
@@ -110,7 +132,7 @@ class JobPostingService {
           .from(_tableName)
           .select()
           .eq('employer_id', employerId)
-          .eq('status', 'in progress')
+          .eq('status', 'in_progress')
           .order('updated_at', ascending: false);
 
       return (response as List)

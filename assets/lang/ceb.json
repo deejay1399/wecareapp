@@ -544,5 +544,9 @@
     "no_notifications": "Walay Mga Notipikasyon",
     "application_rejected_info": "Ang imong aplikasyon para sa \"{jobTitle}\" gi-reject. Ayaw kabalaka, padayon sa pag-apply sa ubang mga oportunidad!",
     "application_accepted_info": "Congratulations! Ang imong aplikasyon para sa \"{jobTitle}\" gidawat. Palihog tan-awa ang chat alang sa dugang nga mga detalye gikan sa employer.",
-    "application_not_found": "Ang aplikasyon ay hindi nahanap. Maaaring naganap na ito."
+    "application_not_found": "Ang aplikasyon ay hindi nahanap. Maaaring naganap na ito.",
+    "you_have_already_applied_for_this_job": "Nagsagawa ka nang aplikasyon para sa trabahong ito.",
+    "daily": "kada adlaw",
+    "weekly": "kada semana",
+    "monthly": "kada bulan"
 }

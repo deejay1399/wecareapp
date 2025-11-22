@@ -86,6 +86,32 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
     });
 
     try {
+      // // Check if helper has already applied for this job
+      // final hasAlreadyApplied = await ApplicationService.hasApplied(
+      //   widget.jobPosting.id,
+      //   _currentHelper!.id,
+      // );
+
+      // if (hasAlreadyApplied) {
+      //   if (mounted) {
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       SnackBar(
+      //         content: Text(
+      //           LocalizationManager.translate(
+      //             'you_have_already_applied_for_this_job',
+      //           ),
+      //         ),
+      //         backgroundColor: Colors.orange,
+      //         duration: const Duration(seconds: 4),
+      //       ),
+      //     );
+      //   }
+      //   setState(() {
+      //     _isLoading = false;
+      //   });
+      //   return;
+      // }
+
       await ApplicationService.applyForJob(
         jobPostingId: widget.jobPosting.id,
         helperId: _currentHelper!.id,

@@ -1,15 +1,55 @@
 import 'package:flutter/material.dart';
 import '../../models/job_posting.dart';
+import '../../models/rating_statistics.dart';
+import '../../services/rating_service.dart';
 import '../../localization_manager.dart';
+import '../rating/star_rating_display.dart';
 
-class JobPostingCard extends StatelessWidget {
+class JobPostingCard extends StatefulWidget {
   final JobPosting jobPosting;
   final VoidCallback? onTap;
 
   const JobPostingCard({super.key, required this.jobPosting, this.onTap});
 
+  @override
+  State<JobPostingCard> createState() => _JobPostingCardState();
+}
+
+class _JobPostingCardState extends State<JobPostingCard> {
+  final _ratingService = RatingService();
+  RatingStatistics? _employerRatingStats;
+  bool _isLoadingRating = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmployerRatingStats();
+  }
+
+  Future<void> _loadEmployerRatingStats() async {
+    try {
+      final stats = await _ratingService.getUserRatingStatistics(
+        widget.jobPosting.employerId,
+        'employer',
+      );
+
+      if (mounted) {
+        setState(() {
+          _employerRatingStats = stats;
+          _isLoadingRating = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingRating = false;
+        });
+      }
+    }
+  }
+
   Color _getStatusColor() {
-    switch (jobPosting.status) {
+    switch (widget.jobPosting.status) {
       case 'active':
         return const Color(0xFF4CAF50);
       case 'paused':
@@ -31,7 +71,7 @@ class JobPostingCard extends StatelessWidget {
   }
 
   String _formatSalary() {
-    return '₱${jobPosting.salary.toStringAsFixed(0)}/${jobPosting.salaryPeriod}';
+    return '₱${widget.jobPosting.salary.toStringAsFixed(0)}/${widget.jobPosting.salaryPeriod}';
   }
 
   @override
@@ -43,7 +83,7 @@ class JobPostingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         shadowColor: const Color(0xFF1565C0).withValues(alpha: 0.1),
         child: InkWell(
-          onTap: onTap,
+          onTap: widget.onTap,
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -60,7 +100,7 @@ class JobPostingCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        jobPosting.title,
+                        widget.jobPosting.title,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -82,7 +122,7 @@ class JobPostingCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        jobPosting.status.toUpperCase(),
+                        widget.jobPosting.status.toUpperCase(),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -97,7 +137,7 @@ class JobPostingCard extends StatelessWidget {
 
                 // Description
                 Text(
-                  jobPosting.description,
+                  widget.jobPosting.description,
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -120,7 +160,7 @@ class JobPostingCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        jobPosting.location,
+                        widget.jobPosting.location,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -149,6 +189,90 @@ class JobPostingCard extends StatelessWidget {
                   ],
                 ),
 
+                const SizedBox(height: 12),
+
+                // Employer Rating
+                if (!_isLoadingRating) ...[
+                  if (_employerRatingStats != null &&
+                      _employerRatingStats!.hasRatings) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF8A50).withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFFF8A50).withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.business,
+                            size: 16,
+                            color: Color(0xFFFF8A50),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  LocalizationManager.translate(
+                                    'employer_rating',
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF374151),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                StarRatingDisplay(
+                                  rating: _employerRatingStats!.averageRating,
+                                  totalRatings:
+                                      _employerRatingStats!.totalRatings,
+                                  size: 14,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!, width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.business,
+                            size: 16,
+                            color: Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              LocalizationManager.translate('no_ratings_yet'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+
                 const SizedBox(height: 16),
 
                 // Bottom row with applications and date
@@ -164,7 +288,7 @@ class JobPostingCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${jobPosting.applicationsCount} ${LocalizationManager.translate('applications')}',
+                          '${widget.jobPosting.applicationsCount} ${LocalizationManager.translate('applications')}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -174,7 +298,7 @@ class JobPostingCard extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      _formatDate(jobPosting.postedDate),
+                      _formatDate(widget.jobPosting.postedDate),
                       style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                     ),
                   ],

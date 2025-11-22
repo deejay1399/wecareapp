@@ -44,12 +44,12 @@ class JobPosting {
   bool get isActive => status == 'active';
   bool get isPaused => status == 'paused';
   bool get isFilled => status == 'filled';
-  bool get isInProgress => status == 'in progress';
+  bool get isInProgress => status == 'in_progress';
   bool get isCompleted => status == 'completed';
   bool get isClosed => status == 'closed';
   bool get isAvailableForApplications => status == 'active';
-  bool get isActivelyWorked => status == 'in progress';
-  bool get canBeCompleted => status == 'in progress';
+  bool get isActivelyWorked => status == 'in_progress';
+  bool get canBeCompleted => status == 'in_progress';
 
   String get statusDisplayText {
     switch (status) {
@@ -59,7 +59,7 @@ class JobPosting {
         return 'Paused';
       case 'filled':
         return 'Position Filled';
-      case 'in progress':
+      case 'in_progress':
         return 'Work in Progress';
       case 'completed':
         return 'Completed';

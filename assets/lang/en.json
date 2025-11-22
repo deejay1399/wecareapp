@@ -551,5 +551,9 @@
     "no_notifications": "No Notifications",
     "application_rejected_info": "Your application for \"{jobTitle}\" has been rejected. Don't be discouraged; keep applying to other opportunities!",
     "application_accepted_info": "Congratulations! Your application for \"{jobTitle}\" has been accepted. Please check your messages for further details from the employer.",
-    "application_not_found": "Application not found. It may have been deleted."
+    "application_not_found": "Application not found. It may have been deleted.",
+    "you_have_already_applied_for_this_job": "You have already applied for this job.",
+    "daily": "daily",
+    "weekly": "weekly",
+    "monthly": "monthly"
 }
