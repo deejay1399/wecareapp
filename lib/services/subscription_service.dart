@@ -5,6 +5,7 @@ import '../models/usage_tracking.dart';
 import '../utils/constants/subscription_constants.dart';
 import 'session_service.dart';
 import 'supabase_service.dart';
+import 'notification_service.dart';
 
 class SubscriptionService {
   // Save subscription to Supabase
@@ -156,7 +157,7 @@ class SubscriptionService {
   static Future<int> incrementCompletedJobsAndMaybeAddFreeUses(
     String userId,
     String userType, {
-    int threshold = 5,
+    int threshold = 3,
     int bonusUses = 3,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -174,6 +175,21 @@ class SubscriptionService {
           SubscriptionConstants.getTrialLimitForUserType(userType);
       final newLimit = currentLimit + bonusUses;
       await prefs.setInt('${usageKey}_limit', newLimit);
+
+      // Create notification for the user
+      try {
+        await NotificationService.createNotification(
+          recipientId: userId,
+          title: 'Free Uses Awarded! 🎉',
+          body:
+              'Congratulations! You have earned $bonusUses free uses after completing $newCount jobs.',
+          type: 'reward',
+          category: 'subscription',
+        );
+      } catch (e) {
+        print('ERROR: Failed to create free uses notification: $e');
+      }
+
       return bonusUses;
     }
 
