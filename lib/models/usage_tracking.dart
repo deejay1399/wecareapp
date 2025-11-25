@@ -26,9 +26,15 @@ class UsageTracking {
       userType: map['user_type'] ?? '',
       usageCount: map['usage_count'] ?? 0,
       trialLimit: map['trial_limit'] ?? 0,
-      lastUsedAt: DateTime.parse(map['last_used_at'] ?? DateTime.now().toIso8601String()),
-      createdAt: DateTime.parse(map['created_at'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(map['updated_at'] ?? DateTime.now().toIso8601String()),
+      lastUsedAt: DateTime.parse(
+        map['last_used_at'] ?? DateTime.now().toIso8601String(),
+      ),
+      createdAt: DateTime.parse(
+        map['created_at'] ?? DateTime.now().toIso8601String(),
+      ),
+      updatedAt: DateTime.parse(
+        map['updated_at'] ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
@@ -46,17 +52,20 @@ class UsageTracking {
   }
 
   bool get hasExceededTrial {
-    return usageCount >= trialLimit;
+    return trialLimit <= 0;
   }
 
   int get remainingTrialUses {
-    final remaining = trialLimit - usageCount;
-    return remaining > 0 ? remaining : 0;
+    // trialLimit now represents remaining uses directly from database
+    return trialLimit > 0 ? trialLimit : 0;
   }
 
   double get trialUsagePercentage {
-    if (trialLimit == 0) return 1.0;
-    return (usageCount / trialLimit).clamp(0.0, 1.0);
+    // For database-driven system, we show 0% if no uses left, 100% if we have uses
+    if (trialLimit <= 0) return 1.0;
+    // Since we don't track usage_count anymore, assume a reasonable starting limit
+    // This is just for the progress indicator visual
+    return 0.5; // Show 50% filled as a neutral state
   }
 
   UsageTracking copyWith({

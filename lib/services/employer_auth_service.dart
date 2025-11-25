@@ -178,6 +178,8 @@ class EmployerAuthService {
             // DB index size issues. The client should retry upload after login.
             'profile_picture_base64': uploadSucceeded ? null : null,
             'profile_picture_url': uploadSucceeded ? profilePictureValue : null,
+            'is_allowed': true,
+            'trial_limit': 5,
           })
           .select()
           .single();
@@ -227,6 +229,16 @@ class EmployerAuthService {
       final storedPasswordHash = response['password_hash'] as String;
       if (!_verifyPassword(password, storedPasswordHash)) {
         return {'success': false, 'message': 'Invalid password'};
+      }
+
+      // Check if employer is allowed (not blocked)
+      final isAllowed = response['is_allowed'] as bool?;
+      if (isAllowed == false) {
+        return {
+          'success': false,
+          'message': 'Your account has been blocked. Please contact support.',
+          'isBlocked': true,
+        };
       }
 
       final employer = Employer.fromMap(response);

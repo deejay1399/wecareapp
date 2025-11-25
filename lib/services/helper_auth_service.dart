@@ -141,6 +141,8 @@ class HelperAuthService {
             'barangay': barangay,
             'barangay_clearance_base64': barangayClearanceBase64,
             'profile_picture_url': uploadSucceeded ? profilePictureUrl : null,
+            'is_allowed': true,
+            'trial_limit': 8,
           })
           .select()
           .single();
@@ -186,6 +188,16 @@ class HelperAuthService {
       final storedPasswordHash = response['password_hash'] as String;
       if (!_verifyPassword(password, storedPasswordHash)) {
         return {'success': false, 'message': 'Invalid password'};
+      }
+
+      // Check if helper is allowed (not blocked)
+      final isAllowed = response['is_allowed'] as bool?;
+      if (isAllowed == false) {
+        return {
+          'success': false,
+          'message': 'Your account has been blocked. Please contact support.',
+          'isBlocked': true,
+        };
       }
 
       final helper = Helper.fromMap(response);

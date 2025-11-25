@@ -2,6 +2,7 @@ import '../models/application.dart';
 import '../services/supabase_service.dart';
 import '../services/notification_service.dart';
 import '../services/session_service.dart';
+import '../services/subscription_service.dart';
 import 'job_posting_service.dart';
 
 class ApplicationService {
@@ -18,6 +19,28 @@ class ApplicationService {
       print(
         'DEBUG: Attempting to apply for job - jobPostingId: $jobPostingId, helperId: $helperId',
       );
+
+      // Check if helper has active subscription
+      final subscription = await SubscriptionService.getUserSubscription(
+        helperId,
+      );
+      final hasValidSubscription = subscription?.isValidSubscription ?? false;
+
+      // Only deduct trial limit if not subscribed
+      if (!hasValidSubscription) {
+        final deducted = await SubscriptionService.deductTrialLimit(
+          helperId,
+          'Helper',
+          'helpers',
+        );
+
+        if (!deducted) {
+          throw Exception(
+            'Insufficient trial uses. Please subscribe to apply for jobs.',
+          );
+        }
+      }
+
       final response = await SupabaseService.client
           .from(_tableName)
           .insert({

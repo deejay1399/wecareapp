@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wecareapp/screens/admin/admin_subscription_page.dart';
 import 'package:wecareapp/screens/admin/admin_documents_page.dart';
+import 'package:wecareapp/screens/admin/admin_block_users_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -236,6 +237,30 @@ class AdminHomePage extends StatelessWidget {
               },
               icon: const Icon(Icons.subscriptions),
               label: const Text('Subscriptions'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdminBlockUsersPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.block),
+              label: const Text('Block Users'),
             ),
           ],
         ),

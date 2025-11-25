@@ -332,6 +332,25 @@ class SubscriptionService {
     return subscription;
   }
 
+  static Future<int> getTrialLimitFromDatabase(
+    String userId,
+    String userType,
+  ) async {
+    try {
+      final table = userType == 'Employer' ? 'employers' : 'helpers';
+      final response = await SupabaseService.client
+          .from(table)
+          .select('trial_limit')
+          .eq('id', userId)
+          .single();
+
+      return (response['trial_limit'] as num?)?.toInt() ?? 0;
+    } catch (e) {
+      print('ERROR: Failed to get trial limit from database: $e');
+      return 0;
+    }
+  }
+
   static Future<Map<String, dynamic>> getCurrentUserSubscriptionStatus() async {
     final userId = await SessionService.getCurrentUserId();
     final userType = await SessionService.getCurrentUserType();
@@ -343,6 +362,29 @@ class SubscriptionService {
         'isTrialUser': false,
         'error': 'User not found',
       };
+    }
+
+    try {
+      final dbSubscription = await SupabaseService.client
+          .from('subscriptions')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .single();
+
+      final subscription = Subscription.fromMap(dbSubscription);
+
+      if (subscription.isValidSubscription) {
+        return {
+          'canUse': true,
+          'hasSubscription': true,
+          'isTrialUser': false,
+          'subscription': subscription,
+        };
+      }
+    } catch (e) {
+      print('DEBUG: No subscription found in database: $e');
     }
 
     final subscription = await getUserSubscription(userId);
@@ -357,17 +399,27 @@ class SubscriptionService {
       };
     }
 
-    final canUse = await canUserUseApp(userId, userType);
-    final usage =
-        await getUserUsageTracking(userId, userType) ??
-        await initializeUsageTracking(userId, userType);
+    final trialLimitFromDb = await getTrialLimitFromDatabase(userId, userType);
+    final hasExceededTrial = trialLimitFromDb <= 0;
+    final canUse = !hasExceededTrial;
+
+    final usage = UsageTracking(
+      id: userId,
+      userId: userId,
+      userType: userType,
+      usageCount: 0,
+      trialLimit: trialLimitFromDb,
+      lastUsedAt: DateTime.now(),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
 
     return {
       'canUse': canUse,
       'hasSubscription': false,
       'isTrialUser': true,
       'usage': usage,
-      'needsSubscription': usage.hasExceededTrial,
+      'needsSubscription': hasExceededTrial,
     };
   }
 
@@ -404,5 +456,104 @@ class SubscriptionService {
     await prefs.remove('${usageKey}_count');
     await prefs.remove('${usageKey}_last_used');
     await prefs.remove('${usageKey}_created');
+  }
+
+  // Deduct trial limit from user (1 use per job post, service post, or job application)
+  static Future<bool> deductTrialLimit(
+    String userId,
+    String userType,
+    String table,
+  ) async {
+    try {
+      // Get current trial limit
+      final response = await SupabaseService.client
+          .from(table)
+          .select('trial_limit')
+          .eq('id', userId)
+          .single();
+
+      final currentLimit = (response['trial_limit'] as num?)?.toInt() ?? 0;
+
+      if (currentLimit <= 0) {
+        print('WARNING: User $userId has no trial uses left');
+        return false;
+      }
+
+      // Deduct 1 from trial limit
+      await SupabaseService.client
+          .from(table)
+          .update({'trial_limit': currentLimit - 1})
+          .eq('id', userId);
+
+      print(
+        '✓ Deducted trial limit for user $userId. New limit: ${currentLimit - 1}',
+      );
+      return true;
+    } catch (e) {
+      print('ERROR: Failed to deduct trial limit for user $userId: $e');
+      return false;
+    }
+  }
+
+  // Add bonus free uses when user completes 3 jobs (3 free uses added)
+  static Future<void> addBonusTrialUses(
+    String userId,
+    String userType,
+    String table,
+  ) async {
+    try {
+      // Get current completed jobs count
+      final response = await SupabaseService.client
+          .from(table)
+          .select('trial_limit, completed_jobs_count')
+          .eq('id', userId)
+          .single();
+
+      final currentLimit = (response['trial_limit'] as num?)?.toInt() ?? 0;
+      final completedJobs =
+          (response['completed_jobs_count'] as num?)?.toInt() ?? 0;
+      final newCompletedCount = completedJobs + 1;
+
+      // Update completed jobs count
+      await SupabaseService.client
+          .from(table)
+          .update({'completed_jobs_count': newCompletedCount})
+          .eq('id', userId);
+
+      // Check if user reached 3 completed jobs milestone
+      if (newCompletedCount > 0 && newCompletedCount % 3 == 0) {
+        final newLimit = currentLimit + 3;
+
+        // Add 3 bonus uses
+        await SupabaseService.client
+            .from(table)
+            .update({'trial_limit': newLimit})
+            .eq('id', userId);
+
+        print(
+          '✓ Added 3 bonus trial uses for user $userId after completing $newCompletedCount jobs. New limit: $newLimit',
+        );
+
+        // Create notification
+        try {
+          await NotificationService.createNotification(
+            recipientId: userId,
+            title: 'Free Uses Awarded! 🎉',
+            body:
+                'Congratulations! You have earned 3 free uses after completing $newCompletedCount jobs.',
+            type: 'reward',
+            category: 'subscription',
+          );
+        } catch (e) {
+          print('ERROR: Failed to create bonus notification: $e');
+        }
+      } else {
+        print(
+          '✓ Incremented completed jobs count for user $userId to $newCompletedCount',
+        );
+      }
+    } catch (e) {
+      print('ERROR: Failed to add bonus trial uses for user $userId: $e');
+    }
   }
 }

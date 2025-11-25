@@ -1,5 +1,6 @@
 import '../models/helper_service_posting.dart';
 import '../services/supabase_service.dart';
+import '../services/subscription_service.dart';
 
 class HelperServicePostingService {
   static const String _tableName = 'helper_service_postings';
@@ -16,6 +17,27 @@ class HelperServicePostingService {
     required List<String> serviceAreas,
   }) async {
     try {
+      // Check if helper has active subscription
+      final subscription = await SubscriptionService.getUserSubscription(
+        helperId,
+      );
+      final hasValidSubscription = subscription?.isValidSubscription ?? false;
+
+      // Only deduct trial limit if not subscribed
+      if (!hasValidSubscription) {
+        final deducted = await SubscriptionService.deductTrialLimit(
+          helperId,
+          'Helper',
+          'helpers',
+        );
+
+        if (!deducted) {
+          throw Exception(
+            'Insufficient trial uses. Please subscribe to post services.',
+          );
+        }
+      }
+
       final servicePosting = {
         'helper_id': helperId,
         'title': title,
@@ -43,7 +65,9 @@ class HelperServicePostingService {
   }
 
   /// Get all service postings for a specific helper
-  static Future<List<HelperServicePosting>> getServicePostingsByHelper(String helperId) async {
+  static Future<List<HelperServicePosting>> getServicePostingsByHelper(
+    String helperId,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -77,7 +101,9 @@ class HelperServicePostingService {
   }
 
   /// Get service postings by skill
-  static Future<List<HelperServicePosting>> getServicePostingsBySkill(String skill) async {
+  static Future<List<HelperServicePosting>> getServicePostingsBySkill(
+    String skill,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -95,7 +121,9 @@ class HelperServicePostingService {
   }
 
   /// Get service postings by service area
-  static Future<List<HelperServicePosting>> getServicePostingsByArea(String area) async {
+  static Future<List<HelperServicePosting>> getServicePostingsByArea(
+    String area,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -125,11 +153,12 @@ class HelperServicePostingService {
   }) async {
     try {
       final updateData = <String, dynamic>{};
-      
+
       if (title != null) updateData['title'] = title;
       if (description != null) updateData['description'] = description;
       if (skills != null) updateData['skills'] = skills;
-      if (experienceLevel != null) updateData['experience_level'] = experienceLevel;
+      if (experienceLevel != null)
+        updateData['experience_level'] = experienceLevel;
       if (hourlyRate != null) updateData['hourly_rate'] = hourlyRate;
       if (availability != null) updateData['availability'] = availability;
       if (serviceAreas != null) updateData['service_areas'] = serviceAreas;
@@ -152,7 +181,10 @@ class HelperServicePostingService {
   }
 
   /// Update service posting status
-  static Future<HelperServicePosting> updateServicePostingStatus(String id, String status) async {
+  static Future<HelperServicePosting> updateServicePostingStatus(
+    String id,
+    String status,
+  ) async {
     try {
       final response = await SupabaseService.client
           .from(_tableName)
@@ -168,14 +200,21 @@ class HelperServicePostingService {
   }
 
   /// Increment views count
-  static Future<bool> incrementViewsCount(String id, String viewerId, String viewerType) async {
+  static Future<bool> incrementViewsCount(
+    String id,
+    String viewerId,
+    String viewerType,
+  ) async {
     try {
-      final response = await SupabaseService.client.rpc('increment_service_views', params: {
-        'service_id': id,
-        'viewer_id': viewerId,
-        'viewer_type': viewerType,
-      });
-      
+      final response = await SupabaseService.client.rpc(
+        'increment_service_views',
+        params: {
+          'service_id': id,
+          'viewer_id': viewerId,
+          'viewer_type': viewerType,
+        },
+      );
+
       // Return whether the view was actually recorded (not a duplicate)
       return response == true;
     } catch (e) {
@@ -187,9 +226,10 @@ class HelperServicePostingService {
   /// Increment contacts count
   static Future<void> incrementContactsCount(String id) async {
     try {
-      await SupabaseService.client.rpc('increment_service_contacts', params: {
-        'service_id': id,
-      });
+      await SupabaseService.client.rpc(
+        'increment_service_contacts',
+        params: {'service_id': id},
+      );
     } catch (e) {
       // Silently handle this error as it's not critical
     }
@@ -198,10 +238,7 @@ class HelperServicePostingService {
   /// Delete service posting
   static Future<void> deleteServicePosting(String id) async {
     try {
-      await SupabaseService.client
-          .from(_tableName)
-          .delete()
-          .eq('id', id);
+      await SupabaseService.client.from(_tableName).delete().eq('id', id);
     } catch (e) {
       throw Exception('Failed to delete service posting: $e');
     }
@@ -223,14 +260,16 @@ class HelperServicePostingService {
   }
 
   /// Private helper method to map database response to HelperServicePosting model
-  static HelperServicePosting _mapToHelperServicePosting(Map<String, dynamic> data) {
+  static HelperServicePosting _mapToHelperServicePosting(
+    Map<String, dynamic> data,
+  ) {
     // Extract helper name from joined helpers table
     String helperName = 'Unknown Helper';
     if (data['helpers'] != null) {
       final helpers = data['helpers'] as Map<String, dynamic>;
       final firstName = helpers['first_name'] as String?;
       final lastName = helpers['last_name'] as String?;
-      
+
       if (firstName != null && lastName != null) {
         helperName = '$firstName $lastName';
       } else if (firstName != null) {

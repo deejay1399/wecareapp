@@ -1,5 +1,6 @@
 import '../models/job_posting.dart';
 import '../services/supabase_service.dart';
+import '../services/subscription_service.dart';
 
 class JobPostingService {
   static const String _tableName = 'job_postings';
@@ -15,6 +16,27 @@ class JobPostingService {
     required List<String> requiredSkills,
   }) async {
     try {
+      // Check if employer has active subscription
+      final subscription = await SubscriptionService.getUserSubscription(
+        employerId,
+      );
+      final hasValidSubscription = subscription?.isValidSubscription ?? false;
+
+      // Only deduct trial limit if not subscribed
+      if (!hasValidSubscription) {
+        final deducted = await SubscriptionService.deductTrialLimit(
+          employerId,
+          'Employer',
+          'employers',
+        );
+
+        if (!deducted) {
+          throw Exception(
+            'Insufficient trial uses. Please subscribe to post jobs.',
+          );
+        }
+      }
+
       final jobPosting = JobPosting(
         id: '',
         employerId: employerId,
@@ -89,6 +111,16 @@ class JobPostingService {
 
   static Future<JobPosting> markJobAsCompleted(String jobId) async {
     try {
+      // Get job details before marking as completed
+      final jobDetails = await SupabaseService.client
+          .from(_tableName)
+          .select()
+          .eq('id', jobId)
+          .single();
+
+      final employerId = jobDetails['employer_id'] as String;
+      final helperId = jobDetails['assigned_helper_id'] as String?;
+
       final response = await SupabaseService.client
           .from(_tableName)
           .update({
@@ -98,6 +130,24 @@ class JobPostingService {
           .eq('id', jobId)
           .select()
           .single();
+
+      // Check if employer has completed 3 jobs and add bonus
+      if (employerId.isNotEmpty) {
+        await SubscriptionService.addBonusTrialUses(
+          employerId,
+          'Employer',
+          'employers',
+        );
+      }
+
+      // Check if helper has completed 3 jobs and add bonus
+      if (helperId != null && helperId.isNotEmpty) {
+        await SubscriptionService.addBonusTrialUses(
+          helperId,
+          'Helper',
+          'helpers',
+        );
+      }
 
       return JobPosting.fromMap(response);
     } catch (e) {
