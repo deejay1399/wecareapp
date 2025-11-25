@@ -179,6 +179,7 @@ class EmployerAuthService {
             'profile_picture_base64': uploadSucceeded ? null : null,
             'profile_picture_url': uploadSucceeded ? profilePictureValue : null,
             'is_allowed': true,
+            'is_verified': true,
             'trial_limit': 5,
           })
           .select()

@@ -142,6 +142,7 @@ class HelperAuthService {
             'barangay_clearance_base64': barangayClearanceBase64,
             'profile_picture_url': uploadSucceeded ? profilePictureUrl : null,
             'is_allowed': true,
+            'is_verified': true,
             'trial_limit': 8,
           })
           .select()
