@@ -157,8 +157,9 @@ class HelperServicePostingService {
       if (title != null) updateData['title'] = title;
       if (description != null) updateData['description'] = description;
       if (skills != null) updateData['skills'] = skills;
-      if (experienceLevel != null)
+      if (experienceLevel != null) {
         updateData['experience_level'] = experienceLevel;
+      }
       if (hourlyRate != null) updateData['hourly_rate'] = hourlyRate;
       if (availability != null) updateData['availability'] = availability;
       if (serviceAreas != null) updateData['service_areas'] = serviceAreas;

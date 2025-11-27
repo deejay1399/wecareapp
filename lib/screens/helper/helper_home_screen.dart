@@ -9,10 +9,12 @@ import '../../services/database_messaging_service.dart';
 import '../../services/job_posting_service.dart';
 import '../../services/helper_service_posting_service.dart';
 import '../../services/session_service.dart';
+import '../../services/report_service.dart';
 import '../../widgets/cards/helper_service_posting_card.dart';
 import '../../widgets/buttons/post_service_button.dart';
 import '../../widgets/common/section_header.dart';
 import '../../widgets/subscription/subscription_status_banner.dart';
+import '../../widgets/dialogs/report_dialog.dart';
 import '../helper/helper_subscription_screen.dart';
 import '../helper/apply_job_screen.dart';
 import '../helper/post_service_screen.dart';
@@ -246,15 +248,30 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
     }
   }
 
-  void _onServiceTap(BuildContext context, HelperServicePosting service) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${LocalizationManager.translate('viewing_service')}: ${service.title}',
-        ),
-        backgroundColor: const Color(0xFFFF8A50),
+  void _onServiceTap(BuildContext context, HelperServicePosting service) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditServiceScreen(servicePosting: service),
       ),
     );
+
+    // Always refresh the services list when returning from edit screen
+    // This handles updates, deletions, and status changes
+    _loadMyServices();
+
+    if (result == 'deleted') {
+      if (mounted) {
+        ScaffoldMessenger.of(this.context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('service_deleted_successfully'),
+            ),
+            backgroundColor: const Color(0xFF10B981),
+          ),
+        );
+      }
+    }
   }
 
   void _onEditService(
@@ -609,20 +626,6 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                   subtitle: LocalizationManager.translate(
                     'explore_all_available_job_postings',
                   ),
-                  onSeeAll: _matchedJobs.isNotEmpty
-                      ? () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                LocalizationManager.translate(
-                                  'view_all_jobs_coming_soon',
-                                ),
-                              ),
-                              backgroundColor: const Color(0xFFFF8A50),
-                            ),
-                          );
-                        }
-                      : null,
                 ),
               ),
 
@@ -663,20 +666,6 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
                   subtitle: LocalizationManager.translate(
                     'manage_your_service_offerings',
                   ),
-                  onSeeAll: _myServices.length > 2
-                      ? () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                LocalizationManager.translate(
-                                  'view_all_services_coming_soon',
-                                ),
-                              ),
-                              backgroundColor: Color(0xFFFF8A50),
-                            ),
-                          );
-                        }
-                      : null,
                 ),
               ),
 
@@ -880,6 +869,100 @@ class _HomeJobCardState extends State<_HomeJobCard> {
     }
   }
 
+  void _showReportDialog(BuildContext context) async {
+    try {
+      final currentHelper = await SessionService.getCurrentHelper();
+
+      if (currentHelper == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('please_login_to_report'),
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Prevent users from reporting themselves
+      if (currentHelper.id == widget.job.employerId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('cannot_report_yourself'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (!context.mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => ReportDialog(
+          type: 'job_posting',
+          onSubmit: (reason, description) async {
+            try {
+              // Get employer name from job if available
+              final reportedUserName = widget.job.employer != null
+                  ? '${widget.job.employer!.firstName} ${widget.job.employer!.lastName}'
+                  : '';
+
+              await ReportService.submitReport(
+                reportedBy: currentHelper.id,
+                reportedUser: widget.job.employerId,
+                reason: reason,
+                type: 'job_posting',
+                referenceId: widget.job.id,
+                description: description,
+                reporterName:
+                    '${currentHelper.firstName} ${currentHelper.lastName}',
+                reportedUserName: reportedUserName,
+              );
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      LocalizationManager.translate(
+                        'report_submitted_successfully',
+                      ),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.pop(context);
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      LocalizationManager.translate('failed_to_submit_report'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('failed_to_submit_report'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -901,7 +984,7 @@ class _HomeJobCardState extends State<_HomeJobCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title and salary
+                // Title and salary with report button
                 Row(
                   children: [
                     Expanded(
@@ -924,6 +1007,29 @@ class _HomeJobCardState extends State<_HomeJobCard> {
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF10B981),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    PopupMenuButton(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        color: Color(0xFF6B7280),
+                      ),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.flag_outlined,
+                                size: 18,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(LocalizationManager.translate('report')),
+                            ],
+                          ),
+                          onTap: () => _showReportDialog(context),
+                        ),
+                      ],
                     ),
                   ],
                 ),

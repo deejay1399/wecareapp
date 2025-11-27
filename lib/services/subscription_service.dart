@@ -226,7 +226,7 @@ class SubscriptionService {
           'user_id': userId,
           'user_type': prefs.getString('${key}_user_type') ?? '',
           'plan_type': prefs.getString('${key}_plan_type') ?? '',
-          'is_active': prefs.getBool('${key}_active') ?? false,
+          'status': prefs.getString('${key}_status') ?? 'pending',
           'expiry_date': prefs.getString('${key}_expiry'),
           'created_at':
               prefs.getString('${key}_created') ??
@@ -249,10 +249,18 @@ class SubscriptionService {
   ) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keySubscription$userId';
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final expiryDate = now.add(Duration(days: plan.durationInDays));
 
     final newStatus = paymentSuccess ? 'paid' : 'failed';
+
+    print(
+      "🔵 SUBSCRIPTION DEBUG: Creating/updating subscription for user: $userId",
+    );
+    print("   - Plan: ${plan.name} (${plan.id})");
+    print("   - Duration: ${plan.durationInDays} days");
+    print("   - Payment Success: $paymentSuccess");
+    print("   - Expiry Date: $expiryDate");
 
     try {
       await Future.delayed(const Duration(milliseconds: 500));
@@ -278,11 +286,13 @@ class SubscriptionService {
               'status': newStatus,
               'user_type': userType,
               'plan_type': plan.id,
-              'is_active': paymentSuccess,
             })
             .eq('id', recordId);
 
-        print("✔ Updated subscription $recordId with expiry_date: $expiryDate");
+        print("✔ Updated subscription $recordId");
+        print("   - status: $newStatus");
+        print("   - expiry_date: $expiryDate");
+        print("   - plan: ${plan.name}");
       } else {
         print("⚠️ No subscription found for user $userId, inserting new one");
 
@@ -296,10 +306,12 @@ class SubscriptionService {
           'created_at': now.toIso8601String(),
           'updated_at': now.toIso8601String(),
           'status': newStatus,
-          'is_active': paymentSuccess,
         });
 
         print("✔ Inserted new subscription for user: $userId");
+        print("   - status: $newStatus");
+        print("   - expiry_date: $expiryDate");
+        print("   - plan: ${plan.name}");
       }
     } catch (e) {
       print("❌ Supabase subscription error: $e");
@@ -310,7 +322,7 @@ class SubscriptionService {
       userId: userId,
       userType: userType,
       planType: plan.id,
-      isActive: paymentSuccess,
+      status: paymentSuccess ? 'paid' : 'pending',
       expiryDate: expiryDate,
       createdAt: now,
       updatedAt: now,
@@ -319,7 +331,7 @@ class SubscriptionService {
     await prefs.setString('${key}_id', subscription.id);
     await prefs.setString('${key}_user_type', subscription.userType);
     await prefs.setString('${key}_plan_type', subscription.planType);
-    await prefs.setBool('${key}_active', subscription.isActive);
+    await prefs.setString('${key}_status', subscription.status);
     await prefs.setString(
       '${key}_expiry',
       subscription.expiryDate!.toIso8601String(),
@@ -328,6 +340,11 @@ class SubscriptionService {
       '${key}_created',
       subscription.createdAt.toIso8601String(),
     );
+
+    print("✔ Cached subscription locally");
+    print("   - id: ${subscription.id}");
+    print("   - status: ${subscription.status}");
+    print("   - expiry_date: ${subscription.expiryDate}");
 
     return subscription;
   }
@@ -364,44 +381,71 @@ class SubscriptionService {
       };
     }
 
+    print('🔍 CHECKING SUBSCRIPTION STATUS for user: $userId');
+
+    // CRITICAL: Always check database first to ensure fresh data after logout/login
     try {
-      final dbSubscription = await SupabaseService.client
+      // Get ALL subscriptions for this user (in case they subscribed multiple times)
+      final dbSubscriptions = await SupabaseService.client
           .from('subscriptions')
           .select()
           .eq('user_id', userId)
-          .order('created_at', ascending: false)
-          .limit(1)
-          .single();
+          .order('created_at', ascending: false);
 
-      final subscription = Subscription.fromMap(dbSubscription);
+      print('   Found ${dbSubscriptions.length} subscription records');
 
-      if (subscription.isValidSubscription) {
-        return {
-          'canUse': true,
-          'hasSubscription': true,
-          'isTrialUser': false,
-          'subscription': subscription,
-        };
+      // Find the most recent VALID subscription (not expired, status=paid)
+      for (final subData in dbSubscriptions) {
+        final subscription = Subscription.fromMap(subData);
+
+        print('   Checking subscription:');
+        print('     - id: ${subscription.id}');
+        print('     - status: ${subscription.status}');
+        print('     - expiry_date: ${subscription.expiryDate}');
+        print('     - is_valid: ${subscription.isValidSubscription}');
+
+        if (subscription.isValidSubscription) {
+          print('✅ VALID SUBSCRIPTION FOUND - Updating cache');
+          // Update local cache with fresh data
+          await _updateLocalSubscriptionCache(userId, subscription);
+          return {
+            'canUse': true,
+            'hasSubscription': true,
+            'isTrialUser': false,
+            'subscription': subscription,
+          };
+        }
       }
+
+      // No valid subscription found in any records
+      print('⚠️ No valid subscriptions found (all expired or inactive)');
     } catch (e) {
-      print('DEBUG: No subscription found in database: $e');
+      print('ℹ️ Error querying subscriptions: $e');
     }
 
-    final subscription = await getUserSubscription(userId);
-    final hasValidSubscription = subscription?.isValidSubscription ?? false;
-
-    if (hasValidSubscription) {
+    // Fall back to local cache if database check failed
+    final localSubscription = await getUserSubscription(userId);
+    if (localSubscription != null && localSubscription.isValidSubscription) {
+      print('✅ Found valid subscription in local cache');
       return {
         'canUse': true,
         'hasSubscription': true,
         'isTrialUser': false,
-        'subscription': subscription,
+        'subscription': localSubscription,
       };
     }
 
+    print('ℹ️ No valid subscription found, checking trial status...');
+
+    // Fall back to trial mode
     final trialLimitFromDb = await getTrialLimitFromDatabase(userId, userType);
     final hasExceededTrial = trialLimitFromDb <= 0;
     final canUse = !hasExceededTrial;
+
+    print('📊 Trial Status:');
+    print('  - trial_limit: $trialLimitFromDb');
+    print('  - has_exceeded: $hasExceededTrial');
+    print('  - can_use: $canUse');
 
     final usage = UsageTracking(
       id: userId,
@@ -421,6 +465,30 @@ class SubscriptionService {
       'usage': usage,
       'needsSubscription': hasExceededTrial,
     };
+  }
+
+  // Helper to update local subscription cache
+  static Future<void> _updateLocalSubscriptionCache(
+    String userId,
+    Subscription subscription,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = '$_keySubscription$userId';
+
+    await prefs.setString('${key}_id', subscription.id);
+    await prefs.setString('${key}_user_type', subscription.userType);
+    await prefs.setString('${key}_plan_type', subscription.planType);
+    await prefs.setString('${key}_status', subscription.status);
+    if (subscription.expiryDate != null) {
+      await prefs.setString(
+        '${key}_expiry',
+        subscription.expiryDate!.toIso8601String(),
+      );
+    }
+    await prefs.setString(
+      '${key}_created',
+      subscription.createdAt.toIso8601String(),
+    );
   }
 
   static Future<void> recordAppUsage() async {
@@ -448,7 +516,7 @@ class SubscriptionService {
     await prefs.remove('${subscriptionKey}_id');
     await prefs.remove('${subscriptionKey}_user_type');
     await prefs.remove('${subscriptionKey}_plan_type');
-    await prefs.remove('${subscriptionKey}_active');
+    await prefs.remove('${subscriptionKey}_status');
     await prefs.remove('${subscriptionKey}_expiry');
     await prefs.remove('${subscriptionKey}_created');
 

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import '../../models/job_posting.dart';
 import '../../models/rating_statistics.dart';
 import '../../services/rating_service.dart';
+import '../../services/report_service.dart';
+import '../../services/session_service.dart';
 import '../../localization_manager.dart';
 import '../rating/star_rating_display.dart';
+import '../dialogs/report_dialog.dart';
 
 class JobPostingCard extends StatefulWidget {
   final JobPosting jobPosting;
@@ -74,6 +77,100 @@ class _JobPostingCardState extends State<JobPostingCard> {
     return '₱${widget.jobPosting.salary.toStringAsFixed(0)}/${widget.jobPosting.salaryPeriod}';
   }
 
+  void _showReportDialog(BuildContext context) async {
+    try {
+      final currentHelper = await SessionService.getCurrentHelper();
+      final currentEmployer = await SessionService.getCurrentEmployer();
+
+      if (currentHelper == null && currentEmployer == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('please_login_to_report'),
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Prevent users from reporting themselves
+      final currentUserId = currentHelper?.id ?? currentEmployer?.id ?? '';
+      if (currentUserId == widget.jobPosting.employerId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('cannot_report_yourself'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final reportedBy = currentUserId;
+      final reporterName = currentHelper != null
+          ? '${currentHelper.firstName} ${currentHelper.lastName}'
+          : '${currentEmployer!.firstName} ${currentEmployer.lastName}';
+
+      // Get the employer name from the job posting
+      final reportedUserName = widget.jobPosting.employer != null
+          ? '${widget.jobPosting.employer!.firstName} ${widget.jobPosting.employer!.lastName}'
+          : '';
+
+      if (!context.mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => ReportDialog(
+          type: 'job_posting',
+          onSubmit: (reason, description) async {
+            try {
+              await ReportService.submitReport(
+                reportedBy: reportedBy,
+                reportedUser: widget.jobPosting.employerId,
+                reason: reason,
+                type: 'job_posting',
+                referenceId: widget.jobPosting.id,
+                description: description,
+                reporterName: reporterName,
+                reportedUserName: reportedUserName,
+              );
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      LocalizationManager.translate(
+                        'report_submitted_successfully',
+                      ),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      LocalizationManager.translate('failed_to_submit_report'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -129,6 +226,28 @@ class _JobPostingCardState extends State<JobPostingCard> {
                           color: _getStatusColor(),
                         ),
                       ),
+                    ),
+                    PopupMenuButton(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        color: Color(0xFF6B7280),
+                      ),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.flag_outlined,
+                                size: 18,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(LocalizationManager.translate('report')),
+                            ],
+                          ),
+                          onTap: () => _showReportDialog(context),
+                        ),
+                      ],
                     ),
                   ],
                 ),

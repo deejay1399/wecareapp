@@ -6,8 +6,10 @@ import '../../services/application_service.dart';
 import '../../services/database_messaging_service.dart';
 import '../../services/session_service.dart';
 import '../../services/rating_service.dart';
+import '../../services/report_service.dart';
 import '../messaging/chat_screen.dart';
 import '../../widgets/rating/star_rating_display.dart';
+import '../../widgets/dialogs/report_dialog.dart';
 import '../../localization_manager.dart';
 
 class ApplicationDetailsScreen extends StatefulWidget {
@@ -886,6 +888,88 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
     );
   }
 
+  void _showReportDialog(BuildContext context) async {
+    try {
+      final currentEmployer = await SessionService.getCurrentEmployer();
+
+      if (currentEmployer == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('please_login_to_report'),
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Prevent users from reporting themselves
+      if (currentEmployer.id == _application.helperId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocalizationManager.translate('cannot_report_yourself'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (!context.mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => ReportDialog(
+          type: 'job_application',
+          onSubmit: (reason, description) async {
+            try {
+              await ReportService.submitReport(
+                reportedBy: currentEmployer.id,
+                reportedUser: _application.helperId,
+                reason: reason,
+                type: 'job_application',
+                referenceId: _application.id,
+                description: description,
+                reporterName: currentEmployer.fullName,
+                reportedUserName: _application.helperName,
+              );
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      LocalizationManager.translate(
+                        'report_submitted_successfully',
+                      ),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      LocalizationManager.translate('failed_to_submit_report'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -906,6 +990,26 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          PopupMenuButton(
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.flag_outlined,
+                      size: 18,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(LocalizationManager.translate('report')),
+                  ],
+                ),
+                onTap: () => _showReportDialog(context),
+              ),
+            ],
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

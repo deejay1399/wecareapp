@@ -194,7 +194,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: selectedLocation.isNotEmpty
+                    initialValue: selectedLocation.isNotEmpty
                         ? selectedLocation
                         : null,
                     decoration: InputDecoration(

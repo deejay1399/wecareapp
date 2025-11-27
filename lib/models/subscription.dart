@@ -3,7 +3,7 @@ class Subscription {
   final String userId;
   final String userType; // 'Employer' or 'Helper'
   final String planType; // 'starter', 'standard', 'premium'
-  final bool isActive;
+  final String status; // 'paid', 'failed', 'pending'
   final DateTime? expiryDate;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -13,7 +13,7 @@ class Subscription {
     required this.userId,
     required this.userType,
     required this.planType,
-    required this.isActive,
+    required this.status,
     this.expiryDate,
     required this.createdAt,
     required this.updatedAt,
@@ -25,12 +25,16 @@ class Subscription {
       userId: map['user_id'] ?? '',
       userType: map['user_type'] ?? '',
       planType: map['plan_type'] ?? '',
-      isActive: map['is_active'] ?? false,
-      expiryDate: map['expiry_date'] != null 
-          ? DateTime.parse(map['expiry_date']) 
+      status: map['status'] ?? 'pending',
+      expiryDate: map['expiry_date'] != null
+          ? DateTime.parse(map['expiry_date'])
           : null,
-      createdAt: DateTime.parse(map['created_at'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(map['updated_at'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+        map['created_at'] ?? DateTime.now().toIso8601String(),
+      ),
+      updatedAt: DateTime.parse(
+        map['updated_at'] ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
@@ -40,11 +44,16 @@ class Subscription {
       'user_id': userId,
       'user_type': userType,
       'plan_type': planType,
-      'is_active': isActive,
+      'status': status,
       'expiry_date': expiryDate?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+  }
+
+  // Check if subscription is active based on status
+  bool get isActive {
+    return status == 'paid';
   }
 
   bool get isExpired {
@@ -61,7 +70,7 @@ class Subscription {
     String? userId,
     String? userType,
     String? planType,
-    bool? isActive,
+    String? status,
     DateTime? expiryDate,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -71,7 +80,7 @@ class Subscription {
       userId: userId ?? this.userId,
       userType: userType ?? this.userType,
       planType: planType ?? this.planType,
-      isActive: isActive ?? this.isActive,
+      status: status ?? this.status,
       expiryDate: expiryDate ?? this.expiryDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

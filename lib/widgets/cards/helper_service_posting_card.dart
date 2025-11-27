@@ -20,7 +20,8 @@ class HelperServicePostingCard extends StatefulWidget {
   });
 
   @override
-  State<HelperServicePostingCard> createState() => _HelperServicePostingCardState();
+  State<HelperServicePostingCard> createState() =>
+      _HelperServicePostingCardState();
 }
 
 class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
@@ -41,7 +42,7 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
         widget.servicePosting.helperId,
         'helper',
       );
-      
+
       if (mounted) {
         setState(() {
           _ratingStats = stats;
@@ -60,7 +61,7 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
+            color: const Color(0xFFFF8A50).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -92,10 +93,7 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               color: Colors.white,
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,12 +112,19 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: widget.servicePosting.statusColor.withValues(alpha: 0.1),
+                        color: widget.servicePosting.statusColor.withValues(
+                          alpha: 0.1,
+                        ),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: widget.servicePosting.statusColor.withValues(alpha: 0.3),
+                          color: widget.servicePosting.statusColor.withValues(
+                            alpha: 0.3,
+                          ),
                           width: 1,
                         ),
                       ),
@@ -244,9 +249,14 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFFFF8A50,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -277,14 +287,14 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
                     Expanded(
                       child: Text(
                         widget.servicePosting.serviceAreasText,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),

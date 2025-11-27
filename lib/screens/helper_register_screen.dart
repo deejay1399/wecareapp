@@ -109,10 +109,20 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
       final text = recognizedText.text.toLowerCase();
       debugPrint('DEBUG: OCR extracted text: $text');
 
-      // Basic checks for keywords
+      // STRICT: Document MUST contain BOTH "barangay" AND "clearance" keywords
+      // - Only "clearance" -> could be other clearance documents (reject)
+      // - Only "barangay" -> not specific enough (reject)
+      // - Both "barangay" AND "clearance" -> Barangay Clearance (accept)
       final hasBarangay = text.contains('barangay');
       final hasClearance = text.contains('clearance');
       final hasKeywords = hasBarangay && hasClearance;
+
+      if (!hasKeywords) {
+        _showErrorMessage(
+          'AI check failed: document does not look like a Barangay Clearance. Only Barangay Clearance documents are accepted.',
+        );
+        return false;
+      }
 
       // Name matching (loose)
       final first = _firstNameController.text.trim().toLowerCase();
@@ -140,7 +150,7 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
       if (!_aiVerified) {
         if (!hasKeywords) {
           _showErrorMessage(
-            'AI check failed: document does not look like a Barangay Clearance.',
+            'AI check failed: document does not look like a Barangay Clearance. Only Barangay Clearance documents are accepted.',
           );
         } else if (!nameMatch) {
           _showErrorMessage(
@@ -445,16 +455,22 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
                   controller: _firstNameController,
                   label: 'First Name',
                   hint: 'Enter your first name',
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                  ],
                   validator: (value) =>
-                      FormValidators.validateRequired(value, 'first name'),
+                      FormValidators.validateWordsOnly(value, 'first name'),
                 ),
 
                 CustomTextField(
                   controller: _lastNameController,
                   label: 'Last Name',
                   hint: 'Enter your last name',
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                  ],
                   validator: (value) =>
-                      FormValidators.validateRequired(value, 'last name'),
+                      FormValidators.validateWordsOnly(value, 'last name'),
                 ),
 
                 CustomTextField(
@@ -496,7 +512,9 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
                   label: 'Age',
                   hint: 'Enter your age (18+)',
                   keyboardType: TextInputType.number,
-                  validator: FormValidators.validateAge,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (value) =>
+                      FormValidators.validateNumbersOnly(value, 'age'),
                 ),
 
                 const SectionHeader(title: 'Skills & Experience'),

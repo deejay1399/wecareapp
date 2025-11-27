@@ -52,6 +52,8 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
 
       final userId = await SessionService.getCurrentUserId();
       if (userId != null) {
+        print("🔵 DEBUG: Subscribing user $userId to ${plan.name}");
+
         await SubscriptionService.createOrUpdateSubscription(
           userId,
           'Helper',
@@ -59,8 +61,7 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
           true,
         );
 
-        await _loadSubscriptionStatus();
-
+        // CRITICAL: Show immediate feedback
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -68,11 +69,33 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                 '${LocalizationManager.translate('successfully_subscribed_to')} ${plan.name}!',
               ),
               backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
             ),
           );
+
+          // CRITICAL: Update UI immediately
+          setState(() {
+            _subscriptionStatus = {
+              'canUse': true,
+              'hasSubscription': true,
+              'isTrialUser': false,
+            };
+            _isLoading = false;
+          });
+
+          print("✔ UI updated immediately - showing active subscription");
         }
+
+        // Wait for database to sync
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        // Reload to sync with database
+        await _loadSubscriptionStatus();
+
+        print("✔ Subscription status reloaded after DB sync");
       }
     } catch (e) {
+      print("❌ Subscription error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -195,11 +218,15 @@ class _HelperSubscriptionScreenState extends State<HelperSubscriptionScreen> {
                       final plan = SubscriptionConstants.availablePlans[index];
                       final isSelected = _selectedPlanId == plan.id;
                       final isPopular = plan.id == 'standard';
+                      final hasSubscription =
+                          _subscriptionStatus?['hasSubscription'] == true;
+                      final currentPlanId = _subscriptionStatus?['planId'];
 
                       return SubscriptionPlanCard(
                         plan: plan,
                         isPopular: isPopular,
                         isLoading: isSelected,
+                        isDisabled: hasSubscription && currentPlanId != plan.id,
                         onSubscribe: () => _subscribeToPlan(plan),
                       );
                     },

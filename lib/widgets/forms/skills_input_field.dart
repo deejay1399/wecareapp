@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class SkillsInputField extends StatefulWidget {
   final List<String> skills;
@@ -69,7 +70,7 @@ class _SkillsInputFieldState extends State<SkillsInputField> {
             ),
           ),
         const SizedBox(height: 8),
-        
+
         // Skills input field
         Row(
           children: [
@@ -78,17 +79,23 @@ class _SkillsInputFieldState extends State<SkillsInputField> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: widget.errorText != null 
-                      ? Colors.red.shade400 
-                      : const Color(0xFFD1D5DB),
+                    color: widget.errorText != null
+                        ? Colors.red.shade400
+                        : const Color(0xFFD1D5DB),
                     width: 1,
                   ),
                   color: Colors.white,
                 ),
                 child: TextField(
                   controller: _skillController,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s,.-]')),
+                  ],
                   decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                     border: InputBorder.none,
                     hintText: widget.hintText ?? 'Type a skill...',
                     hintStyle: const TextStyle(
@@ -109,23 +116,19 @@ class _SkillsInputFieldState extends State<SkillsInputField> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: _skills.length >= 5 
-                  ? const Color(0xFFD1D5DB)
-                  : const Color(0xFF1565C0),
+                color: _skills.length >= 5
+                    ? const Color(0xFFD1D5DB)
+                    : const Color(0xFF1565C0),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: IconButton(
                 onPressed: _skills.length >= 5 ? null : _addSkill,
-                icon: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                icon: const Icon(Icons.add, color: Colors.white, size: 24),
               ),
             ),
           ],
         ),
-        
+
         // Skills list
         if (_skills.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -135,9 +138,12 @@ class _SkillsInputFieldState extends State<SkillsInputField> {
             children: _skills.asMap().entries.map((entry) {
               final index = entry.key;
               final skill = entry.value;
-              
+
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1565C0).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -180,29 +186,26 @@ class _SkillsInputFieldState extends State<SkillsInputField> {
             }).toList(),
           ),
         ],
-        
+
         // Skill count indicator
         const SizedBox(height: 8),
         Text(
           '${_skills.length}/5 skills added',
           style: TextStyle(
-            color: _skills.length >= 5 
-              ? Colors.orange.shade600 
-              : const Color(0xFF6B7280),
+            color: _skills.length >= 5
+                ? Colors.orange.shade600
+                : const Color(0xFF6B7280),
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
-        
+
         // Error text
         if (widget.errorText != null) ...[
           const SizedBox(height: 8),
           Text(
             widget.errorText!,
-            style: TextStyle(
-              color: Colors.red.shade600,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.red.shade600, fontSize: 14),
           ),
         ],
       ],
