@@ -54,7 +54,8 @@ class HelperAuthService {
     required String experience,
     required String municipality,
     required String barangay,
-    String? barangayClearanceBase64,
+    String? policeClearanceBase64,
+    String? policeClearanceExpiryDate,
     String? profilePictureBase64,
   }) async {
     try {
@@ -139,11 +140,13 @@ class HelperAuthService {
             'experience': experience,
             'municipality': municipality,
             'barangay': barangay,
-            'barangay_clearance_base64': barangayClearanceBase64,
+            'police_clearance_base64': policeClearanceBase64,
+            'police_clearance_expiry_date': policeClearanceExpiryDate,
             'profile_picture_url': uploadSucceeded ? profilePictureUrl : null,
             'is_allowed': true,
             'is_verified': true,
             'trial_limit': 8,
+            'completed_jobs_count': 0,
           })
           .select()
           .single();
@@ -235,7 +238,8 @@ class HelperAuthService {
     String? experience,
     String? municipality,
     String? barangay,
-    String? barangayClearanceBase64,
+    String? policeClearanceBase64,
+    String? policeClearanceExpiryDate,
     String? profilePictureBase64,
   }) async {
     try {
@@ -247,8 +251,11 @@ class HelperAuthService {
       if (experience != null) updateData['experience'] = experience;
       if (municipality != null) updateData['municipality'] = municipality;
       if (barangay != null) updateData['barangay'] = barangay;
-      if (barangayClearanceBase64 != null) {
-        updateData['barangay_clearance_base64'] = barangayClearanceBase64;
+      if (policeClearanceBase64 != null) {
+        updateData['police_clearance_base64'] = policeClearanceBase64;
+      }
+      if (policeClearanceExpiryDate != null) {
+        updateData['police_clearance_expiry_date'] = policeClearanceExpiryDate;
       }
 
       // Profile picture update (URL only)

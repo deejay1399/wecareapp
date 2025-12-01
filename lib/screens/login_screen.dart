@@ -6,6 +6,7 @@ import '../services/employer_auth_service.dart';
 import '../services/helper_auth_service.dart';
 import '../services/supabase_service.dart';
 import '../services/session_service.dart';
+import '../services/subscription_service.dart';
 import 'employer_register_screen.dart';
 import 'helper_register_screen.dart';
 import 'employer_dashboard_screen.dart';
@@ -14,10 +15,7 @@ import 'helper_dashboard_screen.dart';
 class LoginScreen extends StatefulWidget {
   final String userType; // 'Employer' or 'Helper'
 
-  const LoginScreen({
-    super.key,
-    required this.userType,
-  });
+  const LoginScreen({super.key, required this.userType});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -27,13 +25,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
   bool _isLoading = false;
 
-  Color get _themeColor => widget.userType == 'Employer' 
-      ? const Color(0xFF1565C0) 
+  Color get _themeColor => widget.userType == 'Employer'
+      ? const Color(0xFF1565C0)
       : const Color(0xFFFF8A50);
 
   @override
@@ -51,8 +49,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loadRememberedData() async {
     final isRememberMeEnabled = await SessionService.isRememberMeEnabled();
-    final rememberedEmailOrPhone = await SessionService.getRememberedEmailOrPhone();
-    
+    final rememberedEmailOrPhone =
+        await SessionService.getRememberedEmailOrPhone();
+
     if (isRememberMeEnabled && rememberedEmailOrPhone != null) {
       setState(() {
         _rememberMe = true;
@@ -66,7 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // Check if Supabase is initialized
     if (!SupabaseService.isInitialized) {
-      _showErrorMessage('Database connection not available. Please check your configuration.');
+      _showErrorMessage(
+        'Database connection not available. Please check your configuration.',
+      );
       return;
     }
 
@@ -74,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       Map<String, dynamic> result;
-      
+
       if (widget.userType == 'Employer') {
         result = await EmployerAuthService.loginEmployer(
           emailOrPhone: _emailPhoneController.text.trim(),
@@ -91,16 +92,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (result['success']) {
         // Save login session
-        final userData = widget.userType == 'Employer' 
-            ? result['employer'].toMap() 
+        final userData = widget.userType == 'Employer'
+            ? result['employer'].toMap()
             : result['helper'].toMap();
-        
+
         await SessionService.saveLoginSession(
           userType: widget.userType,
           userId: userData['id'],
           userData: userData,
           rememberMe: _rememberMe,
           emailOrPhone: _rememberMe ? _emailPhoneController.text.trim() : null,
+        );
+
+        // CRITICAL: Force refresh subscription status after login
+        // This ensures stale subscription cache won't show "Trial Ended" banner
+        // after logout/login cycle
+        await SubscriptionService.forceRefreshSubscriptionStatus(
+          userData['id'],
         );
 
         if (!mounted) return;
@@ -144,10 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -164,16 +169,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (widget.userType == 'Employer') {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const EmployerRegisterScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const EmployerRegisterScreen()),
       );
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const HelperRegisterScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const HelperRegisterScreen()),
       );
     }
   }
@@ -332,7 +333,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextButton(
                           onPressed: _forgotPassword,
                           style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                           ),
                           child: Text(
                             'Forgot Password?',
@@ -369,7 +373,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : const Text(

@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:wecareapp/widgets/forms/birthday_picker_field.dart';
 import '../widgets/forms/custom_text_field.dart';
 import '../widgets/forms/phone_text_field.dart';
 import '../widgets/forms/barangay_dropdown.dart';
 import '../widgets/forms/file_upload_field.dart';
-import '../widgets/forms/profile_picture_upload_field.dart';
 import '../widgets/forms/terms_agreement_checkbox.dart';
 import '../widgets/common/section_header.dart';
 import '../utils/constants/barangay_constants.dart';
@@ -40,9 +40,9 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
 
   String? _selectedMunicipality;
   String? _selectedBarangay;
-  String? _barangayClearanceFileName;
-  String? _barangayClearanceBase64;
-  String? _profilePictureBase64;
+  String? _policeClearanceFileName;
+  String? _policeClearanceBase64;
+  String? _policeClearanceExpiryDate;
   bool _agreeToTerms = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -65,25 +65,96 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
     super.dispose();
   }
 
-  /// Helper: compute a heuristic confidence based on text found
+  /// Extract expiration date from OCR text (looks for common date patterns)
+  /// Returns the expiration date string if found, or null
+  String? _extractExpirationDate(String ocrText) {
+    // Common patterns: DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, DD-MM-YYYY, etc.
+    final datePatterns = [
+      RegExp(r'\d{1,2}[/-]\d{1,2}[/-]\d{4}'),
+      RegExp(r'\d{4}[/-]\d{1,2}[/-]\d{1,2}'),
+      RegExp(
+        r'(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}',
+        caseSensitive: false,
+      ),
+    ];
+
+    for (var pattern in datePatterns) {
+      final match = pattern.firstMatch(ocrText);
+      if (match != null) {
+        return match.group(0);
+      }
+    }
+
+    return null;
+  }
+
+  /// Check if the provided expiration date string is still valid
+  bool _isExpirationDateValid(String? expiryDateStr) {
+    if (expiryDateStr == null || expiryDateStr.isEmpty) {
+      return false;
+    }
+
+    try {
+      // Try to parse different date formats
+      DateTime? expiryDate;
+
+      // Format: DD/MM/YYYY or DD-MM-YYYY
+      final slashDashMatch = RegExp(
+        r'(\d{1,2})[/-](\d{1,2})[/-](\d{4})',
+      ).firstMatch(expiryDateStr);
+      if (slashDashMatch != null) {
+        final day = int.parse(slashDashMatch.group(1)!);
+        final month = int.parse(slashDashMatch.group(2)!);
+        final year = int.parse(slashDashMatch.group(3)!);
+        expiryDate = DateTime(year, month, day);
+      }
+
+      // Format: YYYY-MM-DD
+      final isoMatch = RegExp(
+        r'(\d{4})[/-](\d{1,2})[/-](\d{1,2})',
+      ).firstMatch(expiryDateStr);
+      if (isoMatch != null && expiryDate == null) {
+        final year = int.parse(isoMatch.group(1)!);
+        final month = int.parse(isoMatch.group(2)!);
+        final day = int.parse(isoMatch.group(3)!);
+        expiryDate = DateTime(year, month, day);
+      }
+
+      if (expiryDate != null) {
+        // Add one day to expiry date (to allow usage until end of day)
+        expiryDate = expiryDate.add(const Duration(days: 1));
+        final now = DateTime.now();
+        return expiryDate.isAfter(now);
+      }
+    } catch (e) {
+      debugPrint('Error parsing expiration date: $e');
+    }
+
+    return false;
+  }
+
   double _computeConfidence({
     required String ocrText,
     required bool hasKeywords,
     required bool nameMatch,
+    required bool isNotExpired,
   }) {
-    // Basic heuristic:
-    // base 10 -> +30 if keywords present -> +40 if name match -> scale by text length factor
     double score = 10.0;
-    if (hasKeywords) score += 30.0; // found barangay + clearance
-    if (nameMatch) score += 40.0; // name found
-    // text length factor: longer readable text increases confidence (cap)
-    final lengthFactor = (ocrText.length.clamp(0, 200) / 200.0) * 20.0;
+
+    if (hasKeywords) score += 30.0;
+    if (nameMatch) score += 30.0;
+    if (isNotExpired) score += 30.0;
+
+    // Text length helps — if too short, OCR probably weak
+    final lengthFactor = (ocrText.length.clamp(0, 200) / 200.0) * 10.0;
     score += lengthFactor;
+
     if (score > 100.0) score = 100.0;
     return double.parse(score.toStringAsFixed(1));
   }
 
-  Future<bool> _verifyBarangayClearanceAI(String base64Image) async {
+  /// 🔹 Enhanced AI Police Clearance Verification (Offline + Visual Detection + Expiry Check)
+  Future<bool> _verifyPoliceClearanceAI(String base64Image) async {
     setState(() {
       _aiVerifying = true;
       _aiVerified = false;
@@ -91,76 +162,92 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
     });
 
     try {
-      // Convert Base64 image to File
+      // Convert base64 → File
       final bytes = base64Decode(base64Image);
       final tempDir = await getTemporaryDirectory();
-      final filePath = '${tempDir.path}/temp_barangay_clearance.png';
+      final filePath = '${tempDir.path}/temp_police_clearance.png';
       final file = File(filePath);
       await file.writeAsBytes(bytes);
 
-      // Initialize text recognizer
+      final inputImage = InputImage.fromFile(file);
+
+      // ---------- STEP 1: OCR (Text Recognition) ----------
       final textRecognizer = TextRecognizer(
         script: TextRecognitionScript.latin,
       );
-      final inputImage = InputImage.fromFile(file);
       final recognizedText = await textRecognizer.processImage(inputImage);
       await textRecognizer.close();
 
       final text = recognizedText.text.toLowerCase();
       debugPrint('DEBUG: OCR extracted text: $text');
 
-      // STRICT: Document MUST contain BOTH "barangay" AND "clearance" keywords
-      // - Only "clearance" -> could be other clearance documents (reject)
-      // - Only "barangay" -> not specific enough (reject)
-      // - Both "barangay" AND "clearance" -> Barangay Clearance (accept)
-      final hasBarangay = text.contains('barangay');
+      // ---------- STEP 2: BASIC CHECKS ----------
+      final hasPolice = text.contains('police') || text.contains('nbi');
       final hasClearance = text.contains('clearance');
-      final hasKeywords = hasBarangay && hasClearance;
+      final hasKeywords = hasPolice && hasClearance;
 
-      if (!hasKeywords) {
-        _showErrorMessage(
-          'AI check failed: document does not look like a Barangay Clearance. Only Barangay Clearance documents are accepted.',
-        );
-        return false;
-      }
-
-      // Name matching (loose)
-      final first = _firstNameController.text.trim().toLowerCase();
-      final last = _lastNameController.text.trim().toLowerCase();
+      // Improved name matching: remove periods and extra spaces
+      final first = _firstNameController.text.trim().toLowerCase().replaceAll(
+        RegExp(r'[.\s]+'),
+        '',
+      );
+      final last = _lastNameController.text.trim().toLowerCase().replaceAll(
+        RegExp(r'[.\s]+'),
+        '',
+      );
+      final ocrTextClean = text.replaceAll(RegExp(r'[.\s]+'), '');
       final nameMatch =
           first.isNotEmpty &&
           last.isNotEmpty &&
-          text.contains(first) &&
-          text.contains(last);
+          ocrTextClean.contains(first) &&
+          ocrTextClean.contains(last);
 
-      // Compute confidence
+      // ---------- STEP 3: EXPIRATION DATE CHECK ----------
+      final expiryDateStr = _extractExpirationDate(text);
+      final isNotExpired = _isExpirationDateValid(expiryDateStr);
+
+      if (expiryDateStr != null) {
+        setState(() {
+          _policeClearanceExpiryDate = expiryDateStr;
+        });
+        debugPrint('DEBUG: Extracted expiration date: $expiryDateStr');
+      }
+
+      // ---------- STEP 4: CONFIDENCE CALCULATION ----------
       final confidence = _computeConfidence(
         ocrText: text,
         hasKeywords: hasKeywords,
         nameMatch: nameMatch,
+        isNotExpired: isNotExpired,
       );
 
       setState(() {
         _aiConfidence = confidence;
-        // decide verified if confidence >= 70 (heuristic)
-        _aiVerified = confidence >= 70.0;
+        _aiVerified = confidence >= 70.0 && isNotExpired;
       });
 
-      // Provide clear messages for user
+      // ---------- STEP 5: USER FEEDBACK ----------
       if (!_aiVerified) {
+        String reason =
+            'AI check failed: document did not meet verification criteria.';
+
         if (!hasKeywords) {
-          _showErrorMessage(
-            'AI check failed: document does not look like a Barangay Clearance. Only Barangay Clearance documents are accepted.',
-          );
+          reason =
+              'AI check failed: document does not look like a Police Clearance.';
         } else if (!nameMatch) {
-          _showErrorMessage(
-            'AI check failed: name on document does not match the form.',
-          );
-        } else {
-          _showErrorMessage(
-            'AI check failed: document quality too low. Try a clearer photo.',
-          );
+          reason = 'AI check failed: name on document does not match the form.';
+        } else if (!isNotExpired) {
+          reason =
+              'AI check failed: Police Clearance has expired. Please provide a valid, non-expired clearance.';
         }
+
+        _showErrorMessage(reason);
+      } else {
+        debugPrint(
+          '✅ AI Verification PASSED | Confidence: $confidence% | '
+          'Keywords: $hasKeywords | Name: $nameMatch | Not Expired: $isNotExpired | '
+          'Expiry: $expiryDateStr',
+        );
       }
 
       return _aiVerified;
@@ -183,7 +270,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
     }
   }
 
-  Future<void> _pickBarangayClearance() async {
+  Future<void> _pickPoliceClearance() async {
     // Prevent multiple concurrent file picks
     if (_isPickingFile) {
       _showErrorMessage(
@@ -215,35 +302,37 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
           'DEBUG: File selected - Name: ${result.fileName}, Base64 length: ${result.base64Data.length}',
         );
         setState(() {
-          _barangayClearanceFileName = result.fileName;
-          _barangayClearanceBase64 = result.base64Data;
+          _policeClearanceFileName = result.fileName;
+          _policeClearanceBase64 = result.base64Data;
           // reset previous AI state on new upload
           _aiVerified = false;
           _aiConfidence = 0.0;
+          _policeClearanceExpiryDate = null;
         });
 
         // Show verifying indicator
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Verifying Barangay Clearance with AI...'),
+            content: Text('Verifying Police Clearance with AI...'),
             backgroundColor: Colors.blue,
           ),
         );
 
-        final verified = await _verifyBarangayClearanceAI(result.base64Data);
+        final verified = await _verifyPoliceClearanceAI(result.base64Data);
 
         if (!verified) {
           // clear uploaded file if verification failed (you requested this behavior)
           setState(() {
-            _barangayClearanceBase64 = null;
-            _barangayClearanceFileName = null;
+            _policeClearanceBase64 = null;
+            _policeClearanceFileName = null;
+            _policeClearanceExpiryDate = null;
           });
           return;
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Barangay Clearance verified successfully!'),
+            content: Text('Police Clearance verified successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -267,9 +356,9 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
     }
 
     // Prevent registration if AI verification hasn't passed
-    if (!_aiVerified || _barangayClearanceBase64 == null) {
+    if (!_aiVerified || _policeClearanceBase64 == null) {
       _showErrorMessage(
-        'Barangay Clearance must be uploaded and AI-verified before proceeding.',
+        'Police Clearance must be uploaded and AI-verified (and not expired) before proceeding.',
       );
       return;
     }
@@ -296,9 +385,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
         phoneNumber = '+63$phoneNumber';
       }
 
-      debugPrint(
-        'DEBUG: profile picture base64 length: ${_profilePictureBase64?.length ?? 0}',
-      );
+      debugPrint('DEBUG: Registering employer');
       final result = await EmployerAuthService.registerEmployer(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
@@ -309,8 +396,8 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
         password: _passwordController.text,
         municipality: _selectedMunicipality!,
         barangay: _selectedBarangay!,
-        barangayClearanceBase64: _barangayClearanceBase64,
-        profilePictureBase64: _profilePictureBase64,
+        policeClearanceBase64: _policeClearanceBase64,
+        policeClearanceExpiryDate: _policeClearanceExpiryDate,
       );
 
       if (!mounted) return;
@@ -422,19 +509,6 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionHeader(title: 'Profile Picture (Optional)'),
-                ProfilePictureUploadField(
-                  currentProfilePictureBase64: _profilePictureBase64,
-                  fullName:
-                      '${_firstNameController.text} ${_lastNameController.text}',
-                  onProfilePictureChanged: (String? newProfilePicture) {
-                    setState(() {
-                      _profilePictureBase64 = newProfilePicture;
-                    });
-                  },
-                  label: 'Profile Picture (Optional)',
-                ),
-
                 const SectionHeader(title: 'Personal Information'),
                 CustomTextField(
                   controller: _firstNameController,
@@ -526,12 +600,12 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
 
                 const SectionHeader(title: 'Required Documents'),
                 FileUploadField(
-                  label: 'Barangay Clearance Image',
-                  fileName: _barangayClearanceFileName,
-                  onTap: _isPickingFile ? null : _pickBarangayClearance,
+                  label: 'Police Clearance Image',
+                  fileName: _policeClearanceFileName,
+                  onTap: _isPickingFile ? null : _pickPoliceClearance,
                   placeholder: _isPickingFile
                       ? 'Selecting file...'
-                      : 'Upload Barangay Clearance Image (JPG, PNG)',
+                      : 'Upload Police Clearance Image (JPG, PNG)',
                   isLoading: _isPickingFile,
                 ),
                 const SizedBox(height: 8),

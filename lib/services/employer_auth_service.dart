@@ -52,7 +52,8 @@ class EmployerAuthService {
     required String password,
     required String municipality,
     required String barangay,
-    String? barangayClearanceBase64,
+    String? policeClearanceBase64,
+    String? policeClearanceExpiryDate,
     String? profilePictureBase64,
   }) async {
     try {
@@ -173,7 +174,8 @@ class EmployerAuthService {
             'password_hash': passwordHash,
             'municipality': municipality,
             'barangay': barangay,
-            'barangay_clearance_base64': barangayClearanceBase64,
+            'police_clearance_base64': policeClearanceBase64,
+            'police_clearance_expiry_date': policeClearanceExpiryDate,
             // NOTE: avoid inserting large base64 payloads on failure to prevent
             // DB index size issues. The client should retry upload after login.
             'profile_picture_base64': uploadSucceeded ? null : null,
@@ -181,6 +183,7 @@ class EmployerAuthService {
             'is_allowed': true,
             'is_verified': true,
             'trial_limit': 5,
+            'completed_jobs_count': 0,
           })
           .select()
           .single();
@@ -296,7 +299,8 @@ class EmployerAuthService {
     String? lastName,
     String? municipality,
     String? barangay,
-    String? barangayClearanceBase64,
+    String? policeClearanceBase64,
+    String? policeClearanceExpiryDate,
     String? profilePictureBase64,
   }) async {
     try {
@@ -306,8 +310,11 @@ class EmployerAuthService {
       if (lastName != null) updateData['last_name'] = lastName;
       if (municipality != null) updateData['municipality'] = municipality;
       if (barangay != null) updateData['barangay'] = barangay;
-      if (barangayClearanceBase64 != null) {
-        updateData['barangay_clearance_base64'] = barangayClearanceBase64;
+      if (policeClearanceBase64 != null) {
+        updateData['police_clearance_base64'] = policeClearanceBase64;
+      }
+      if (policeClearanceExpiryDate != null) {
+        updateData['police_clearance_expiry_date'] = policeClearanceExpiryDate;
       }
       if (profilePictureBase64 != null) {
         String? profilePictureValue;

@@ -524,6 +524,15 @@ class SubscriptionService {
     await prefs.remove('${usageKey}_count');
     await prefs.remove('${usageKey}_last_used');
     await prefs.remove('${usageKey}_created');
+
+    print('🧹 Cleared subscription data for user $userId');
+  }
+
+  // Force refresh subscription status by clearing cache
+  // This is called after login to ensure fresh data from database
+  static Future<void> forceRefreshSubscriptionStatus(String userId) async {
+    print('🔄 Force refreshing subscription status for user $userId');
+    await clearSubscriptionData(userId);
   }
 
   // Deduct trial limit from user (1 use per job post, service post, or job application)

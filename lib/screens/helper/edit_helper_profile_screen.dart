@@ -34,8 +34,9 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
   List<String> _selectedSkills = [];
   String? _selectedExperience;
   String? _selectedBarangay;
-  String? _barangayClearanceFileName;
-  String? _barangayClearanceBase64;
+  String? _policeClearanceFileName;
+  String? _policeClearanceBase64;
+  String? _policeClearanceExpiryDate;
   String? _profilePictureBase64;
   bool _isLoading = false;
   bool _hasChanges = false;
@@ -55,7 +56,8 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
     _selectedExperience = widget.helper.experience;
     _selectedMunicipality = widget.helper.municipality;
     _selectedBarangay = widget.helper.barangay;
-    _barangayClearanceBase64 = widget.helper.barangayClearanceBase64;
+    _policeClearanceBase64 = widget.helper.policeClearanceBase64;
+    _policeClearanceExpiryDate = widget.helper.policeClearanceExpiryDate;
     _profilePictureBase64 = widget.helper.profilePictureBase64;
 
     // *** FIX: set barangayList based on initial municipality ***
@@ -84,14 +86,15 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
     print(widget.helper.barangay);
   }
 
-  Future<void> _pickBarangayClearance() async {
+  Future<void> _pickPoliceClearance() async {
     try {
       final result = await FilePickerService.pickImageWithBase64();
 
       if (result != null && mounted) {
         setState(() {
-          _barangayClearanceFileName = result.fileName;
-          _barangayClearanceBase64 = result.base64Data;
+          _policeClearanceFileName = result.fileName;
+          _policeClearanceBase64 = result.base64Data;
+          _policeClearanceExpiryDate = null; // Reset expiry until verified
           _hasChanges = true;
         });
       }
@@ -139,7 +142,6 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
         skill: !listEquals(_selectedSkills, widget.helper.skill.split(', '))
             ? _selectedSkills.join(', ')
             : null,
-
         experience: _selectedExperience != widget.helper.experience
             ? _selectedExperience
             : null,
@@ -149,9 +151,14 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
         barangay: _selectedBarangay != widget.helper.barangay
             ? _selectedBarangay
             : null,
-        barangayClearanceBase64:
-            _barangayClearanceBase64 != widget.helper.barangayClearanceBase64
-            ? _barangayClearanceBase64
+        policeClearanceBase64:
+            _policeClearanceBase64 != widget.helper.policeClearanceBase64
+            ? _policeClearanceBase64
+            : null,
+        policeClearanceExpiryDate:
+            _policeClearanceExpiryDate !=
+                widget.helper.policeClearanceExpiryDate
+            ? _policeClearanceExpiryDate
             : null,
         profilePictureBase64:
             _profilePictureBase64 != widget.helper.profilePictureBase64
@@ -447,17 +454,15 @@ class _EditHelperProfileScreenState extends State<EditHelperProfileScreen> {
               const SizedBox(height: 16),
 
               FileUploadField(
-                label: LocalizationManager.translate(
-                  'barangay_clearance_image',
-                ),
+                label: LocalizationManager.translate('police_clearance_image'),
                 fileName:
-                    _barangayClearanceFileName ??
-                    (widget.helper.barangayClearanceBase64 != null
+                    _policeClearanceFileName ??
+                    (widget.helper.policeClearanceBase64 != null
                         ? LocalizationManager.translate('current_document')
                         : null),
-                onTap: _pickBarangayClearance,
+                onTap: _pickPoliceClearance,
                 placeholder: LocalizationManager.translate(
-                  'upload_barangay_clearance_image',
+                  'upload_police_clearance_image',
                 ),
               ),
 

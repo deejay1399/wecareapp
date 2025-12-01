@@ -9,7 +9,8 @@ class Helper {
   final String experience;
   final String municipality;
   final String barangay;
-  final String? barangayClearanceBase64;
+  final String? policeClearanceBase64;
+  final String? policeClearanceExpiryDate;
   final String? profilePictureBase64;
   final bool isVerified;
   final DateTime createdAt;
@@ -26,7 +27,8 @@ class Helper {
     required this.experience,
     required this.municipality,
     required this.barangay,
-    this.barangayClearanceBase64,
+    this.policeClearanceBase64,
+    this.policeClearanceExpiryDate,
     this.profilePictureBase64,
     required this.isVerified,
     required this.createdAt,
@@ -45,7 +47,8 @@ class Helper {
       experience: map['experience'] as String? ?? '',
       municipality: map['municipality'] as String? ?? '',
       barangay: map['barangay'] as String? ?? '',
-      barangayClearanceBase64: map['barangay_clearance_base64'] as String?,
+      policeClearanceBase64: map['police_clearance_base64'] as String?,
+      policeClearanceExpiryDate: map['police_clearance_expiry_date'] as String?,
       // Support either a stored base64 or a URL in the DB. Prefer base64 if present,
       // otherwise fall back to the profile_picture_url column.
       profilePictureBase64:
@@ -73,7 +76,8 @@ class Helper {
       'experience': experience,
       'municipality': municipality,
       'barangay': barangay,
-      'barangay_clearance_base64': barangayClearanceBase64,
+      'police_clearance_base64': policeClearanceBase64,
+      'police_clearance_expiry_date': policeClearanceExpiryDate,
       'profile_picture_base64': profilePictureBase64,
       'is_verified': isVerified,
       'created_at': createdAt.toIso8601String(),

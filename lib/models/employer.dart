@@ -7,7 +7,8 @@ class Employer {
   final int? age;
   final String? municipality;
   final String? barangay;
-  final String? barangayClearanceBase64;
+  final String? policeClearanceBase64;
+  final String? policeClearanceExpiryDate;
   final String? profilePictureBase64;
   final bool? isVerified;
   final DateTime createdAt;
@@ -22,7 +23,8 @@ class Employer {
     required this.age,
     required this.municipality,
     required this.barangay,
-    this.barangayClearanceBase64,
+    this.policeClearanceBase64,
+    this.policeClearanceExpiryDate,
     this.profilePictureBase64,
     required this.isVerified,
     required this.createdAt,
@@ -39,7 +41,8 @@ class Employer {
       age: map['age'] as int? ?? 0,
       municipality: map['municipality'] as String? ?? '',
       barangay: map['barangay'] as String? ?? '',
-      barangayClearanceBase64: map['barangay_clearance_base64'] as String?,
+      policeClearanceBase64: map['police_clearance_base64'] as String?,
+      policeClearanceExpiryDate: map['police_clearance_expiry_date'] as String?,
       // Accept either raw base64 or a URL stored in profile_picture_url
       profilePictureBase64:
           (map['profile_picture_base64'] as String?) ??
@@ -64,7 +67,8 @@ class Employer {
       'age': age,
       'municipality': municipality,
       'barangay': barangay,
-      'barangay_clearance_base64': barangayClearanceBase64,
+      'police_clearance_base64': policeClearanceBase64,
+      'police_clearance_expiry_date': policeClearanceExpiryDate,
       'profile_picture_base64': profilePictureBase64,
       'is_verified': isVerified,
       'created_at': createdAt.toIso8601String(),

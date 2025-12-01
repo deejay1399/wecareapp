@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import '../widgets/forms/custom_text_field.dart';
 import '../widgets/forms/birthday_picker_field.dart';
 import '../widgets/forms/phone_text_field.dart';
@@ -42,18 +43,82 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
   List<String> _selectedSkills = [];
   String? _selectedExperience;
   String? _selectedBarangay;
-  String? _barangayClearanceFileName;
-  String? _barangayClearanceBase64;
+  String? _policeClearanceFileName;
+  String? _policeClearanceBase64;
+  String? _policeClearanceExpiryDate;
   bool _agreeToTerms = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   bool _isPickingFile = false;
-  DateTime? _selectedBirthday;
   bool _aiVerifying = false;
   bool _aiVerified = false;
   double _aiConfidence = 0.0;
   List<String> _barangayList = [];
+  List<Map<String, dynamic>> _aiResults = [];
+
+  /// Extract expiration date from OCR text (looks for common date patterns)
+  String? _extractExpirationDate(String ocrText) {
+    final datePatterns = [
+      RegExp(r'\d{1,2}[/-]\d{1,2}[/-]\d{4}'),
+      RegExp(r'\d{4}[/-]\d{1,2}[/-]\d{1,2}'),
+      RegExp(
+        r'(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}',
+        caseSensitive: false,
+      ),
+    ];
+
+    for (var pattern in datePatterns) {
+      final match = pattern.firstMatch(ocrText);
+      if (match != null) {
+        return match.group(0);
+      }
+    }
+
+    return null;
+  }
+
+  /// Check if the provided expiration date string is still valid
+  bool _isExpirationDateValid(String? expiryDateStr) {
+    if (expiryDateStr == null || expiryDateStr.isEmpty) {
+      return false;
+    }
+
+    try {
+      DateTime? expiryDate;
+
+      final slashDashMatch = RegExp(
+        r'(\d{1,2})[/-](\d{1,2})[/-](\d{4})',
+      ).firstMatch(expiryDateStr);
+      if (slashDashMatch != null) {
+        final day = int.parse(slashDashMatch.group(1)!);
+        final month = int.parse(slashDashMatch.group(2)!);
+        final year = int.parse(slashDashMatch.group(3)!);
+        expiryDate = DateTime(year, month, day);
+      }
+
+      final isoMatch = RegExp(
+        r'(\d{4})[/-](\d{1,2})[/-](\d{1,2})',
+      ).firstMatch(expiryDateStr);
+      if (isoMatch != null && expiryDate == null) {
+        final year = int.parse(isoMatch.group(1)!);
+        final month = int.parse(isoMatch.group(2)!);
+        final day = int.parse(isoMatch.group(3)!);
+        expiryDate = DateTime(year, month, day);
+      }
+
+      if (expiryDate != null) {
+        expiryDate = expiryDate.add(const Duration(days: 1));
+        final now = DateTime.now();
+        return expiryDate.isAfter(now);
+      }
+    } catch (e) {
+      debugPrint('Error parsing expiration date: $e');
+    }
+
+    return false;
+  }
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -71,19 +136,23 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
     required String ocrText,
     required bool hasKeywords,
     required bool nameMatch,
+    required bool isNotExpired,
   }) {
     double score = 10.0;
+
     if (hasKeywords) score += 30.0;
+    if (nameMatch) score += 30.0;
+    if (isNotExpired) score += 30.0;
 
-    if (nameMatch) score += 40.0;
-
-    final lengthFactor = (ocrText.length.clamp(0, 200) / 200.0) * 20.0;
+    final lengthFactor = (ocrText.length.clamp(0, 200) / 200.0) * 10.0;
     score += lengthFactor;
+
     if (score > 100.0) score = 100.0;
     return double.parse(score.toStringAsFixed(1));
   }
 
-  Future<bool> _verifyBarangayClearanceAI(String base64Image) async {
+  /// 🔹 Enhanced AI Police Clearance Verification (Offline + Visual Detection + Expiry Check)
+  Future<bool> _verifyPoliceClearanceAI(String base64Image) async {
     setState(() {
       _aiVerifying = true;
       _aiVerified = false;
@@ -91,76 +160,92 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
     });
 
     try {
-      // Convert Base64 image to File
       final bytes = base64Decode(base64Image);
       final tempDir = await getTemporaryDirectory();
-      final filePath = '${tempDir.path}/temp_barangay_clearance.png';
+      final filePath = '${tempDir.path}/temp_police_clearance.png';
       final file = File(filePath);
       await file.writeAsBytes(bytes);
 
-      // Initialize text recognizer
+      final inputImage = InputImage.fromFile(file);
+
       final textRecognizer = TextRecognizer(
         script: TextRecognitionScript.latin,
       );
-      final inputImage = InputImage.fromFile(file);
       final recognizedText = await textRecognizer.processImage(inputImage);
       await textRecognizer.close();
 
       final text = recognizedText.text.toLowerCase();
       debugPrint('DEBUG: OCR extracted text: $text');
 
-      // STRICT: Document MUST contain BOTH "barangay" AND "clearance" keywords
-      // - Only "clearance" -> could be other clearance documents (reject)
-      // - Only "barangay" -> not specific enough (reject)
-      // - Both "barangay" AND "clearance" -> Barangay Clearance (accept)
-      final hasBarangay = text.contains('barangay');
+      final hasPolice = text.contains('police') || text.contains('nbi');
       final hasClearance = text.contains('clearance');
-      final hasKeywords = hasBarangay && hasClearance;
+      final hasKeywords = hasPolice && hasClearance;
 
-      if (!hasKeywords) {
-        _showErrorMessage(
-          'AI check failed: document does not look like a Barangay Clearance. Only Barangay Clearance documents are accepted.',
-        );
-        return false;
-      }
-
-      // Name matching (loose)
-      final first = _firstNameController.text.trim().toLowerCase();
-      final last = _lastNameController.text.trim().toLowerCase();
+      final first = _firstNameController.text.trim().toLowerCase().replaceAll(
+        RegExp(r'[.\s]+'),
+        '',
+      );
+      final last = _lastNameController.text.trim().toLowerCase().replaceAll(
+        RegExp(r'[.\s]+'),
+        '',
+      );
+      final ocrTextClean = text.replaceAll(RegExp(r'[.\s]+'), '');
       final nameMatch =
           first.isNotEmpty &&
           last.isNotEmpty &&
-          text.contains(first) &&
-          text.contains(last);
+          ocrTextClean.contains(first) &&
+          ocrTextClean.contains(last);
 
-      // Compute confidence
+      final expiryDateStr = _extractExpirationDate(text);
+      final isNotExpired = _isExpirationDateValid(expiryDateStr);
+
+      if (expiryDateStr != null) {
+        setState(() {
+          _policeClearanceExpiryDate = expiryDateStr;
+        });
+        debugPrint('DEBUG: Extracted expiration date: $expiryDateStr');
+      }
+
       final confidence = _computeConfidence(
         ocrText: text,
         hasKeywords: hasKeywords,
         nameMatch: nameMatch,
+        isNotExpired: isNotExpired,
       );
+
+      final results = [
+        {'label': 'Police keywords detected', 'ok': hasKeywords},
+        {'label': 'Name matches form', 'ok': nameMatch},
+        {'label': 'Not expired', 'ok': isNotExpired},
+      ];
 
       setState(() {
         _aiConfidence = confidence;
-        // decide verified if confidence >= 70 (heuristic)
-        _aiVerified = confidence >= 70.0;
+        _aiVerified = confidence >= 70.0 && isNotExpired;
+        _aiResults = results;
       });
 
-      // Provide clear messages for user
       if (!_aiVerified) {
+        String reason =
+            'AI check failed: document did not meet verification criteria.';
+
         if (!hasKeywords) {
-          _showErrorMessage(
-            'AI check failed: document does not look like a Barangay Clearance. Only Barangay Clearance documents are accepted.',
-          );
+          reason =
+              'AI check failed: document does not look like a Police Clearance.';
         } else if (!nameMatch) {
-          _showErrorMessage(
-            'AI check failed: name on document does not match the form.',
-          );
-        } else {
-          _showErrorMessage(
-            'AI check failed: document quality too low. Try a clearer photo.',
-          );
+          reason = 'AI check failed: name on document does not match the form.';
+        } else if (!isNotExpired) {
+          reason =
+              'AI check failed: Police Clearance has expired. Please provide a valid, non-expired clearance.';
         }
+
+        _showErrorMessage(reason);
+      } else {
+        debugPrint(
+          '✅ AI Verification PASSED | Confidence: $confidence% | '
+          'Keywords: $hasKeywords | Name: $nameMatch | Not Expired: $isNotExpired | '
+          'Expiry: $expiryDateStr',
+        );
       }
 
       return _aiVerified;
@@ -183,8 +268,7 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
     }
   }
 
-  Future<void> _pickBarangayClearance() async {
-    // Prevent multiple concurrent file picks
+  Future<void> _pickPoliceClearance() async {
     if (_isPickingFile) {
       _showErrorMessage(
         'File picker is already open. Please wait for the current operation to complete.',
@@ -192,7 +276,6 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
       return;
     }
 
-    // Check if file picker is already active globally (if your service exposes it)
     if (FilePickerService.isPickerActive) {
       _showErrorMessage(
         'Another file picker operation is in progress. Please wait and try again.',
@@ -215,34 +298,34 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
           'DEBUG: File selected - Name: ${result.fileName}, Base64 length: ${result.base64Data.length}',
         );
         setState(() {
-          _barangayClearanceFileName = result.fileName;
-          _barangayClearanceBase64 = result.base64Data;
-          // reset previous AI state on new upload
+          _policeClearanceFileName = result.fileName;
+          _policeClearanceBase64 = result.base64Data;
           _aiVerified = false;
           _aiConfidence = 0.0;
+          _policeClearanceExpiryDate = null;
         });
 
-        // Show verifying indicator
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Verifying Barangay Clearance with AI...'),
+            content: Text('Verifying Police Clearance with AI...'),
             backgroundColor: Colors.blue,
           ),
         );
 
-        final verified = await _verifyBarangayClearanceAI(result.base64Data);
+        final verified = await _verifyPoliceClearanceAI(result.base64Data);
 
         if (!verified) {
           setState(() {
-            _barangayClearanceBase64 = null;
-            _barangayClearanceFileName = null;
+            _policeClearanceBase64 = null;
+            _policeClearanceFileName = null;
+            _policeClearanceExpiryDate = null;
           });
           return;
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Barangay Clearance verified successfully!'),
+            content: Text('Police Clearance verified successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -275,8 +358,10 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
       return;
     }
 
-    if (_barangayClearanceBase64 == null) {
-      _showErrorMessage('Please upload your barangay clearance image');
+    if (!_aiVerified || _policeClearanceBase64 == null) {
+      _showErrorMessage(
+        'Police Clearance must be uploaded and AI-verified (and not expired) before proceeding.',
+      );
       return;
     }
 
@@ -315,7 +400,8 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
         experience: _selectedExperience!,
         municipality: _selectedMunicipality!,
         barangay: _selectedBarangay!,
-        barangayClearanceBase64: _barangayClearanceBase64,
+        policeClearanceBase64: _policeClearanceBase64,
+        policeClearanceExpiryDate: _policeClearanceExpiryDate,
       );
 
       if (!mounted) return;
@@ -357,9 +443,7 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
   }
 
   Widget _buildAiStatusWidget() {
-    if (_isPickingFile) {
-      return const SizedBox();
-    }
+    if (_isPickingFile) return const SizedBox();
 
     if (_aiVerifying) {
       return Row(
@@ -378,16 +462,55 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
     if (_aiConfidence > 0) {
       final verified = _aiVerified;
       final color = verified ? Colors.green : Colors.red;
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(verified ? Icons.check_circle : Icons.error, color: color),
-          const SizedBox(width: 8),
-          Text(
-            'AI Confidence: ${_aiConfidence.toStringAsFixed(1)}% — ${verified ? 'Verified' : 'Failed'}',
-            style: TextStyle(color: color, fontWeight: FontWeight.bold),
-          ),
-        ],
+
+      return Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(verified ? Icons.check_circle : Icons.error, color: color),
+                const SizedBox(width: 8),
+                Text(
+                  verified
+                      ? 'AI Verified — ${_aiConfidence.toStringAsFixed(1)}%'
+                      : 'AI Failed — ${_aiConfidence.toStringAsFixed(1)}%',
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ..._aiResults.map((r) {
+              final ok = r['ok'] as bool;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Icon(
+                      ok ? Icons.check_circle : Icons.cancel,
+                      color: ok ? Colors.green : Colors.red,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      r['label'],
+                      style: TextStyle(
+                        color: ok ? Colors.green[800] : Colors.red[800],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
       );
     }
 
@@ -652,12 +775,12 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
 
                 const SectionHeader(title: 'Required Documents'),
                 FileUploadField(
-                  label: 'Barangay Clearance Image',
-                  fileName: _barangayClearanceFileName,
-                  onTap: _isPickingFile ? null : _pickBarangayClearance,
+                  label: 'Police Clearance Image',
+                  fileName: _policeClearanceFileName,
+                  onTap: _isPickingFile ? null : _pickPoliceClearance,
                   placeholder: _isPickingFile
                       ? 'Selecting file...'
-                      : 'Upload Barangay Clearance Image (JPG, PNG)',
+                      : 'Upload Police Clearance Image (JPG, PNG)',
                   isLoading: _isPickingFile,
                 ),
                 const SizedBox(height: 8),

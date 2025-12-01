@@ -35,12 +35,12 @@ class _AdminDocumentsPageState extends State<AdminDocumentsPage> {
     try {
       final helpersResponse = await supabase
           .from('helpers')
-          .select('id, first_name, last_name, barangay_clearance_base64')
+          .select('id, first_name, last_name, police_clearance_base64')
           .order('created_at', ascending: false);
 
       final employersResponse = await supabase
           .from('employers')
-          .select('id, first_name, last_name, barangay_clearance_base64')
+          .select('id, first_name, last_name, police_clearance_base64')
           .order('created_at', ascending: false);
 
       setState(() {
@@ -50,7 +50,7 @@ class _AdminDocumentsPageState extends State<AdminDocumentsPage> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Failed to load barangay clearances: $e';
+        _error = 'Failed to load police clearances: $e';
         _isLoading = false;
       });
     }
@@ -60,7 +60,7 @@ class _AdminDocumentsPageState extends State<AdminDocumentsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BarangayClearancePreview(
+        builder: (context) => PoliceClearancePreview(
           imageBytes: imageBytes,
           name: name,
           mainRed: mainRed,
@@ -115,7 +115,7 @@ class _AdminDocumentsPageState extends State<AdminDocumentsPage> {
     final firstName = person['first_name'] ?? '';
     final lastName = person['last_name'] ?? '';
     final fullName = '$firstName $lastName'.trim();
-    final base64File = person['barangay_clearance_base64'];
+    final base64File = person['police_clearance_base64'];
 
     Uint8List? imageBytes;
     String? imageUrl;
@@ -138,7 +138,7 @@ class _AdminDocumentsPageState extends State<AdminDocumentsPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BarangayClearancePreviewNetwork(
+              builder: (context) => PoliceClearancePreviewNetwork(
                 imageUrl: imageUrl!,
                 name: fullName,
                 mainRed: mainRed,
@@ -215,7 +215,7 @@ class _AdminDocumentsPageState extends State<AdminDocumentsPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '$role Barangay Clearance',
+                          '$role Police Clearance',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.black54,
@@ -251,7 +251,7 @@ class _AdminDocumentsPageState extends State<AdminDocumentsPage> {
             Icon(Icons.folder_off_rounded, size: 80, color: Colors.grey),
             SizedBox(height: 16),
             Text(
-              'No barangay clearances found.',
+              'No police clearances found.',
               style: TextStyle(fontSize: 16, color: Colors.black54),
               textAlign: TextAlign.center,
             ),
@@ -278,7 +278,7 @@ class _AdminDocumentsPageState extends State<AdminDocumentsPage> {
       appBar: AppBar(
         backgroundColor: mainRed,
         title: const Text(
-          'Barangay Clearances',
+          'Police Clearances',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -324,12 +324,12 @@ class _AdminDocumentsPageState extends State<AdminDocumentsPage> {
 }
 
 // 🔍 Preview Page
-class BarangayClearancePreview extends StatelessWidget {
+class PoliceClearancePreview extends StatelessWidget {
   final Uint8List imageBytes;
   final String name;
   final Color mainRed;
 
-  const BarangayClearancePreview({
+  const PoliceClearancePreview({
     super.key,
     required this.imageBytes,
     required this.name,
@@ -361,12 +361,12 @@ class BarangayClearancePreview extends StatelessWidget {
 }
 
 // Network variant for previewing images by URL
-class BarangayClearancePreviewNetwork extends StatelessWidget {
+class PoliceClearancePreviewNetwork extends StatelessWidget {
   final String imageUrl;
   final String name;
   final Color mainRed;
 
-  const BarangayClearancePreviewNetwork({
+  const PoliceClearancePreviewNetwork({
     super.key,
     required this.imageUrl,
     required this.name,

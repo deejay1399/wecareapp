@@ -28,8 +28,9 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
 
   String? _selectedMunicipality;
   String? _selectedBarangay;
-  String? _barangayClearanceFileName;
-  String? _barangayClearanceBase64;
+  String? _policeClearanceFileName;
+  String? _policeClearanceBase64;
+  String? _policeClearanceExpiryDate;
   String? _profilePictureBase64;
   bool _isLoading = false;
   bool _hasChanges = false;
@@ -47,7 +48,8 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
     _lastNameController.text = widget.employer.lastName ?? '';
     _selectedMunicipality = widget.employer.municipality ?? '';
     _selectedBarangay = widget.employer.barangay;
-    _barangayClearanceBase64 = widget.employer.barangayClearanceBase64;
+    _policeClearanceBase64 = widget.employer.policeClearanceBase64;
+    _policeClearanceExpiryDate = widget.employer.policeClearanceExpiryDate;
     _profilePictureBase64 = widget.employer.profilePictureBase64;
 
     // Add listeners to detect changes
@@ -70,14 +72,15 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _pickBarangayClearance() async {
+  Future<void> _pickPoliceClearance() async {
     try {
       final result = await FilePickerService.pickImageWithBase64();
 
       if (result != null && mounted) {
         setState(() {
-          _barangayClearanceFileName = result.fileName;
-          _barangayClearanceBase64 = result.base64Data;
+          _policeClearanceFileName = result.fileName;
+          _policeClearanceBase64 = result.base64Data;
+          _policeClearanceExpiryDate = null;
           _hasChanges = true;
         });
       }
@@ -123,9 +126,14 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
         barangay: _selectedBarangay != widget.employer.barangay
             ? _selectedBarangay
             : null,
-        barangayClearanceBase64:
-            _barangayClearanceBase64 != widget.employer.barangayClearanceBase64
-            ? _barangayClearanceBase64
+        policeClearanceBase64:
+            _policeClearanceBase64 != widget.employer.policeClearanceBase64
+            ? _policeClearanceBase64
+            : null,
+        policeClearanceExpiryDate:
+            _policeClearanceExpiryDate !=
+                widget.employer.policeClearanceExpiryDate
+            ? _policeClearanceExpiryDate
             : null,
         profilePictureBase64:
             _profilePictureBase64 != widget.employer.profilePictureBase64
@@ -390,17 +398,15 @@ class _EditEmployerProfileScreenState extends State<EditEmployerProfileScreen> {
               const SizedBox(height: 16),
 
               FileUploadField(
-                label: LocalizationManager.translate(
-                  'barangay_clearance_image',
-                ),
+                label: LocalizationManager.translate('police_clearance_image'),
                 fileName:
-                    _barangayClearanceFileName ??
-                    (widget.employer.barangayClearanceBase64 != null
+                    _policeClearanceFileName ??
+                    (widget.employer.policeClearanceBase64 != null
                         ? 'Current document'
                         : null),
-                onTap: _pickBarangayClearance,
+                onTap: _pickPoliceClearance,
                 placeholder: LocalizationManager.translate(
-                  'upload_barangay_clearance_image',
+                  'upload_police_clearance_image',
                 ),
               ),
 

@@ -6,9 +6,7 @@ class TermsConditionsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         padding: const EdgeInsets.all(20),
         constraints: BoxConstraints(
@@ -41,7 +39,7 @@ class TermsConditionsDialog extends StatelessWidget {
             const SizedBox(height: 16),
             const Divider(color: Color(0xFFE0E0E0)),
             const SizedBox(height: 16),
-            
+
             // Terms Content
             Expanded(
               child: SingleChildScrollView(
@@ -57,23 +55,39 @@ class TermsConditionsDialog extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
-                    _buildTermsItem('• The app connects helpers and employers within Bohol.'),
-                    _buildTermsItem('• Users must be 18+ and provide truthful information.'),
-                    _buildTermsItem('• A free trial is available; continued use requires a paid subscription.'),
-                    _buildTermsItem('• You may post jobs, chat, share location, and accept/reject applications.'),
-                    _buildTermsItem('• Users are responsible for their own safety and compliance with laws.'),
-                    _buildTermsItem('• WeCare is not an employer or agency and is not liable for disputes.'),
-                    _buildTermsItem('• Accounts may be suspended for misuse or violations.'),
+                    _buildTermsItem(
+                      '• The app connects helpers and employers within Bohol.',
+                    ),
+                    _buildTermsItem(
+                      '• Users must be 18+ and provide truthful information.',
+                    ),
+                    _buildTermsItem(
+                      '• A free trial is available; continued use requires a paid subscription.',
+                    ),
+                    _buildTermsItem(
+                      '• You may post jobs, chat, share location, and accept/reject applications.',
+                    ),
+                    _buildTermsItem(
+                      '• Users are responsible for their own safety and compliance with laws.',
+                    ),
+                    _buildTermsItem(
+                      '• WeCare is not an employer or agency and is not liable for disputes.',
+                    ),
+                    _buildTermsItem(
+                      '• Accounts may be suspended for misuse or violations.',
+                    ),
+                    _buildTermsItem(
+                      '• If the agreed schedule exceeds the 2-hour limit and one party cancels, they must pay the other party the agreed compensation. Failure to pay may allow the affected party to report the issue or request the account to be blocked by the app administrators.',
+                    ),
                   ],
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
             const Divider(color: Color(0xFFE0E0E0)),
             const SizedBox(height: 16),
-            
+
             // Accept Button
             SizedBox(
               width: double.infinity,
@@ -90,10 +104,7 @@ class TermsConditionsDialog extends StatelessWidget {
                 ),
                 child: const Text(
                   'I Understand and Agree',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

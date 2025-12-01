@@ -20,13 +20,13 @@ class SessionService {
     String? emailOrPhone,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     await prefs.setBool(_keyIsLoggedIn, true);
     await prefs.setString(_keyUserType, userType);
     await prefs.setString(_keyUserId, userId);
     await prefs.setString(_keyUserData, jsonEncode(userData));
     await prefs.setBool(_keyRememberMe, rememberMe);
-    
+
     if (rememberMe && emailOrPhone != null) {
       await prefs.setString(_keyEmailOrPhone, emailOrPhone);
     }
@@ -36,36 +36,36 @@ class SessionService {
   static Future<bool> validateSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       final isLoggedIn = prefs.getBool(_keyIsLoggedIn) ?? false;
       if (!isLoggedIn) return false;
-      
+
       final userType = prefs.getString(_keyUserType);
       final userId = prefs.getString(_keyUserId);
       final userDataJson = prefs.getString(_keyUserData);
-      
+
       // Check if all required data exists
       if (userType == null || userId == null || userDataJson == null) {
         await clearSession();
         return false;
       }
-      
+
       // Validate user type
       if (userType != 'Employer' && userType != 'Helper') {
         await clearSession();
         return false;
       }
-      
+
       // Try to parse user data
       try {
         final userData = jsonDecode(userDataJson) as Map<String, dynamic>;
-        
+
         // Validate that userData has required fields
         if (!userData.containsKey('id') || !userData.containsKey('email')) {
           await clearSession();
           return false;
         }
-        
+
         return true;
       } catch (e) {
         await clearSession();
@@ -102,12 +102,12 @@ class SessionService {
   static Future<Employer?> getCurrentEmployer() async {
     final prefs = await SharedPreferences.getInstance();
     final userType = prefs.getString(_keyUserType);
-    
+
     if (userType != 'Employer') return null;
-    
+
     final userDataJson = prefs.getString(_keyUserData);
     if (userDataJson == null) return null;
-    
+
     try {
       final userData = jsonDecode(userDataJson) as Map<String, dynamic>;
       return Employer.fromMap(userData);
@@ -120,12 +120,12 @@ class SessionService {
   static Future<Helper?> getCurrentHelper() async {
     final prefs = await SharedPreferences.getInstance();
     final userType = prefs.getString(_keyUserType);
-    
+
     if (userType != 'Helper') return null;
-    
+
     final userDataJson = prefs.getString(_keyUserData);
     if (userDataJson == null) return null;
-    
+
     try {
       final userData = jsonDecode(userDataJson) as Map<String, dynamic>;
       return Helper.fromMap(userData);
@@ -144,7 +144,7 @@ class SessionService {
   static Future<bool> isLoggedIn() async {
     final basicCheck = await _isBasicLoggedIn();
     if (!basicCheck) return false;
-    
+
     // Validate session integrity
     return await validateSession();
   }
@@ -165,22 +165,50 @@ class SessionService {
   static Future<String?> getRememberedEmailOrPhone() async {
     final prefs = await SharedPreferences.getInstance();
     final rememberMe = prefs.getBool(_keyRememberMe) ?? false;
-    
+
     if (!rememberMe) return null;
-    
+
     return prefs.getString(_keyEmailOrPhone);
   }
 
   // Logout and clear session
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
+    // Get user ID before clearing to clean up subscription data
+    final userId = prefs.getString(_keyUserId);
+
+    // CRITICAL: Clear subscription cache before clearing all session data
+    // This ensures that stale subscription data won't show after re-login
+    if (userId != null) {
+      await _clearAllSubscriptionCacheForUser(userId);
+    }
+
     // Clear all session data
     await prefs.clear();
-    
+
     // Specifically clear the requested keys if they exist
     await prefs.remove('flutter.remember.me');
     await prefs.remove('flutter.email_or_phone');
+
+    print('✅ Logout complete - subscription cache cleared');
+  }
+
+  // Clear ALL subscription-related cache keys for a user
+  static Future<void> _clearAllSubscriptionCacheForUser(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Clear subscription keys
+    final keys = await prefs.getKeys();
+
+    for (final key in keys) {
+      if (key.startsWith('subscription_$userId') ||
+          key.startsWith('usage_tracking_$userId')) {
+        await prefs.remove(key);
+      }
+    }
+
+    print('🧹 Cleared all subscription cache for user $userId');
   }
 
   // Clear all data including remember me
