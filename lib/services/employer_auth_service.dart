@@ -194,7 +194,7 @@ class EmployerAuthService {
         'success': true,
         'message': uploadSucceeded
             ? 'Registration successful'
-            : 'Registration successful (profile picture upload failed)',
+            : 'Registration successful',
         'employer': employer,
         'uploadSucceeded': uploadSucceeded,
         'uploadError': uploadError,

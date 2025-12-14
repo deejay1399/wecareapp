@@ -65,6 +65,7 @@
     "today": "ngayon",
     "my_jobs": "Aking Trabaho",
     "applications": "Aplikasyon",
+    "to_do": "Gawain",
     "post_a_job": "Mag-post ng Trabaho",
     "failed_to_load_active_jobs": "Nabigong i-load ang mga aktibong trabaho",
     "user_session_not_found": "Hindi makita ang user session",
@@ -444,6 +445,9 @@
     "view_all_services_coming_soon": "Tingnan ang Lahat ng Serbisyo - Darating Na",
     "employer_rating": "Rating ng Employer",
     "apply": "Mag-apply",
+    "expires_at": "Nag-expire sa",
+    "expired": "Nag-expire na",
+    "no_expiration_date": "Walang petsa ng pag-expire",
     "failed_to_load_helper_information": "Nabigong i-load ang impormasyon ng helper",
     "withdraw_confirmation": "Sigurado ka bang nais mong i-withdraw ang iyong aplikasyon para sa",
     "withdraw_application_successfully": "Matagumpay na na-withdraw ang aplikasyon",
@@ -572,5 +576,10 @@
     "harassment": "Pang-aabuso",
     "other": "Iba",
     "already_reported": "Nag-ulat ka na ng item na ito",
-    "cannot_report_yourself": "Hindi mo kayang iulat ang iyong sariling posting"
+    "cannot_report_yourself": "Hindi mo kayang iulat ang iyong sariling posting",
+    "available_until": "Available Hanggang",
+    "select_expiry_date": "Pumili ng expiry date (opsyonal)",
+    "expiry_date_must_be_in_the_future": "Ang expiry date ay dapat sa hinaharap",
+    "job_will_not_show_after_expiry_date": "Ang job posting ay hindi makikita ng mga helper pagkatapos ng petsa na ito",
+    "service_will_not_show_after_expiry_date": "Ang serbisyo ay hindi makikita ng mga employer pagkatapos ng petsa na ito"
 }

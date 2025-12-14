@@ -10,6 +10,7 @@ class JobOpportunity {
   final double salary;
   final String salaryPeriod; // 'hourly', 'daily', 'weekly', 'monthly'
   final DateTime postedDate;
+  final DateTime? expiresAt;
   final List<String> requiredSkills;
   final String experienceLevel;
   final String jobType; // 'full-time', 'part-time', 'contract', 'live-in'
@@ -28,12 +29,24 @@ class JobOpportunity {
     required this.requiredSkills,
     required this.experienceLevel,
     required this.jobType,
+    this.expiresAt,
     this.isUrgent = false,
     this.applicationsCount = 0,
   });
 
   String formatSalary() {
     return '₱${salary.toStringAsFixed(0)}/$salaryPeriod';
+  }
+
+  String formatExpiryDate() {
+    if (expiresAt == null) return '';
+    final formatter = expiresAt!;
+    return '${formatter.day.toString().padLeft(2, '0')}/${formatter.month.toString().padLeft(2, '0')}/${formatter.year} ${formatter.hour.toString().padLeft(2, '0')}:${formatter.minute.toString().padLeft(2, '0')}';
+  }
+
+  bool get isExpired {
+    if (expiresAt == null) return false;
+    return DateTime.now().isAfter(expiresAt!);
   }
 
   String formatPostedDate() {

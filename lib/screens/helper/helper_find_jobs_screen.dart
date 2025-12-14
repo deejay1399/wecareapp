@@ -611,7 +611,7 @@ class _HelperFindJobsScreenState extends State<HelperFindJobsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${LocalizationManager.translate('error')}: $e'),
+            content: Text(LocalizationManager.translate('error')),
             backgroundColor: Colors.red,
           ),
         );

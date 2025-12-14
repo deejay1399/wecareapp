@@ -47,6 +47,60 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     }
   }
 
+  Future<Map<String, String>> _fetchReportedItemDetails(Report report) async {
+    try {
+      debugPrint(
+        'Fetching details for report type: ${report.type}, ref: ${report.referenceId}',
+      );
+
+      final supabase = Supabase.instance.client;
+
+      if (report.type == 'job_posting') {
+        try {
+          final response = await supabase
+              .from('job_postings')
+              .select()
+              .eq('id', report.referenceId)
+              .single();
+
+          final title = response['title'] as String? ?? 'N/A';
+          final description = response['description'] as String? ?? 'N/A';
+
+          debugPrint('Got job posting: $title');
+          debugPrint('Job description: $description');
+
+          return {'title': title, 'description': description};
+        } catch (jobError) {
+          debugPrint('Exception in job posting fetch: $jobError');
+          rethrow;
+        }
+      } else if (report.type == 'service_posting') {
+        try {
+          final response = await supabase
+              .from('helper_service_postings')
+              .select()
+              .eq('id', report.referenceId)
+              .single();
+
+          final title = response['title'] as String? ?? 'N/A';
+          final description = response['description'] as String? ?? 'N/A';
+
+          debugPrint('Got service posting: $title');
+
+          return {'title': title, 'description': description};
+        } catch (serviceError) {
+          debugPrint('Exception in service posting fetch: $serviceError');
+          rethrow;
+        }
+      } else {
+        debugPrint('Report type not matched: ${report.type}');
+      }
+    } catch (e) {
+      debugPrint('Error in _fetchReportedItemDetails: $e');
+    }
+    return {};
+  }
+
   void _showReportDetails(Report report) {
     showDialog(
       context: context,
@@ -311,6 +365,138 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                             ),
                           ],
                         ),
+                      ),
+                      // Job/Service Details
+                      const SizedBox(height: 12),
+                      FutureBuilder<Map<String, String>>(
+                        future: _fetchReportedItemDetails(report),
+                        builder: (context, snapshot) {
+                          debugPrint(
+                            'FutureBuilder state: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, data: ${snapshot.data}',
+                          );
+
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return SizedBox(
+                              height: 40,
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.blue[600]!,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (snapshot.hasError) {
+                            return Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red[50],
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.red[300]!),
+                              ),
+                              child: Text(
+                                'Error: ${snapshot.error}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red[700],
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                            final data = snapshot.data!;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (data['title'] != null) ...[
+                                  Text(
+                                    'Title:',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.6),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: Colors.grey[300]!,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      data['title']!,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF374151),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                ],
+                                if (data['description'] != null) ...[
+                                  Text(
+                                    'Description:',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.6),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: Colors.grey[300]!,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      data['description']!,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Color(0xFF6B7280),
+                                      ),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            );
+                          }
+
+                          return Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: Text(
+                              'No additional details available',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -589,7 +775,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to block user: $e'),
+            content: const Text('Failed to block user. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -617,7 +803,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update report: $e'),
+            content: const Text('Failed to update report. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );

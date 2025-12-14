@@ -3,6 +3,7 @@ import 'employer/employer_home_screen.dart';
 import 'employer/employer_my_jobs_screen.dart';
 import 'employer/employer_applications_screen.dart';
 import 'employer/employer_profile_screen.dart';
+import 'employer/employer_in_progress_jobs_screen.dart';
 import '../widgets/navigation/employer_bottom_nav.dart';
 import '../../language_manager.dart';
 
@@ -15,12 +16,13 @@ class EmployerDashboardScreen extends StatefulWidget {
 }
 
 class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
-  int _currentIndex = 0;
+  int _currentIndex = 2; // Default to home (center)
   final List<Widget> _screens = const [
-    EmployerHomeScreen(),
-    EmployerMyJobsScreen(),
-    EmployerApplicationsScreen(),
-    EmployerProfileScreen(),
+    EmployerMyJobsScreen(), // index 0
+    EmployerApplicationsScreen(), // index 1
+    EmployerHomeScreen(), // index 2 (center)
+    EmployerInProgressJobsScreen(), // index 3 (To Do)
+    EmployerProfileScreen(), // index 4
   ];
 
   @override
@@ -48,11 +50,14 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: EmployerBottomNav(
-        currentIndex: _currentIndex,
-        onTap: _onNavTap,
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        body: _screens[_currentIndex],
+        bottomNavigationBar: EmployerBottomNav(
+          currentIndex: _currentIndex,
+          onTap: _onNavTap,
+        ),
       ),
     );
   }

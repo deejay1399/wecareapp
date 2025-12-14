@@ -53,17 +53,6 @@ class EmployerBottomNav extends StatelessWidget {
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.home_outlined, size: 24),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.home, size: 24),
-              ),
-              label: LocalizationManager.translate('home'),
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
                 child: Icon(Icons.work_outline, size: 24),
               ),
               activeIcon: Padding(
@@ -82,6 +71,28 @@ class EmployerBottomNav extends StatelessWidget {
                 child: Icon(Icons.people, size: 24),
               ),
               label: LocalizationManager.translate('applications'),
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Icon(Icons.home_outlined, size: 24),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Icon(Icons.home, size: 24),
+              ),
+              label: LocalizationManager.translate('home'),
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Icon(Icons.checklist, size: 24),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Icon(Icons.checklist, size: 24),
+              ),
+              label: LocalizationManager.translate('to_do'),
             ),
 
             BottomNavigationBarItem(

@@ -73,6 +73,7 @@
     "home": "Home",
     "my_jobs": "My Jobs",
     "applications": "Applications",
+    "to_do": "To Do",
     "post_a_job": "Post a Job",
     "failed_to_load_active_jobs": "Failed to load active jobs",
     "user_session_not_found": "User session not found",
@@ -454,6 +455,9 @@
     "view_all_services_coming_soon": "View All Services - Coming Soon",
     "employer_rating": "Employer Rating",
     "apply": "Apply",
+    "expires_at": "Expires at",
+    "expired": "Expired",
+    "no_expiration_date": "No expiration date",
     "failed_to_load_helper_information": "Failed to load helper information",
     "withdraw_confirmation": "Are you sure you want to withdraw your application for",
     "withdraw_application_successfully": "Application withdrawn successfully",
@@ -580,5 +584,10 @@
     "harassment": "Harassment",
     "other": "Other",
     "already_reported": "You have already reported this item",
-    "cannot_report_yourself": "You cannot report your own posting"
+    "cannot_report_yourself": "You cannot report your own posting",
+    "available_until": "Available Until",
+    "select_expiry_date": "Select expiry date (optional)",
+    "expiry_date_must_be_in_the_future": "Expiry date must be in the future",
+    "job_will_not_show_after_expiry_date": "The job posting will not be visible to helpers after this date",
+    "service_will_not_show_after_expiry_date": "The service will not be visible to employers after this date"
 }

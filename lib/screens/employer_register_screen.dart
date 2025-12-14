@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:wecareapp/widgets/forms/birthday_picker_field.dart';
 import '../widgets/forms/custom_text_field.dart';
 import '../widgets/forms/phone_text_field.dart';
@@ -52,6 +51,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
   bool _aiVerified = false; // must be true to proceed
   double _aiConfidence = 0.0; // 0.0 - 100.0
   List<String> _barangayList = [];
+  List<Map<String, dynamic>> _aiResults = [];
 
   @override
   void dispose() {
@@ -65,23 +65,66 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
     super.dispose();
   }
 
-  /// Extract expiration date from OCR text (looks for common date patterns)
+  /// Extract expiration date from OCR text (looks for dates after "valid until" or "expires")
   /// Returns the expiration date string if found, or null
   String? _extractExpirationDate(String ocrText) {
-    // Common patterns: DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, DD-MM-YYYY, etc.
+    // First, try to find date after "valid until", "expires", "valid up to", etc.
+    final expiryKeywords = [
+      'valid until',
+      'valid up to',
+      'expires',
+      'expiry',
+      'expiration',
+      'valid through',
+    ];
+
+    for (var keyword in expiryKeywords) {
+      final keywordIndex = ocrText.indexOf(keyword);
+      if (keywordIndex != -1) {
+        // Extract text after the keyword
+        final textAfterKeyword = ocrText.substring(
+          keywordIndex + keyword.length,
+        );
+
+        // Look for date patterns in the text after keyword
+        final datePatterns = [
+          RegExp(
+            r'(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}',
+            caseSensitive: false,
+          ),
+          RegExp(r'\d{1,2}[/-]\d{1,2}[/-]\d{4}'),
+          RegExp(r'\d{4}[/-]\d{1,2}[/-]\d{1,2}'),
+        ];
+
+        for (var pattern in datePatterns) {
+          final match = pattern.firstMatch(textAfterKeyword);
+          if (match != null) {
+            return match.group(0);
+          }
+        }
+      }
+    }
+
+    // Fallback: if no "valid until" found, try to get the SECOND date in the document
+    // (first is usually "date issued", second is usually "valid until")
     final datePatterns = [
-      RegExp(r'\d{1,2}[/-]\d{1,2}[/-]\d{4}'),
-      RegExp(r'\d{4}[/-]\d{1,2}[/-]\d{1,2}'),
       RegExp(
-        r'(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}',
+        r'(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}',
         caseSensitive: false,
       ),
+      RegExp(r'\d{1,2}[/-]\d{1,2}[/-]\d{4}'),
+      RegExp(r'\d{4}[/-]\d{1,2}[/-]\d{1,2}'),
     ];
 
     for (var pattern in datePatterns) {
-      final match = pattern.firstMatch(ocrText);
-      if (match != null) {
-        return match.group(0);
+      final matches = pattern.allMatches(ocrText).toList();
+      // If we found multiple dates, return the last one (most likely expiry)
+      if (matches.length >= 2) {
+        return matches.last.group(0);
+      }
+      // If only one date found, return it
+      if (matches.isNotEmpty) {
+        return matches.first.group(0);
       }
     }
 
@@ -120,11 +163,59 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
         expiryDate = DateTime(year, month, day);
       }
 
+      // Format: Month Day, Year (e.g., "march 08, 2026" or "March 08, 2026")
+      if (expiryDate == null) {
+        final monthNameMatch = RegExp(
+          r'(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})',
+          caseSensitive: false,
+        ).firstMatch(expiryDateStr);
+
+        if (monthNameMatch != null) {
+          final monthStr = monthNameMatch.group(1)!.toLowerCase();
+          final day = int.parse(monthNameMatch.group(2)!);
+          final year = int.parse(monthNameMatch.group(3)!);
+
+          // Convert month name to number
+          final monthMap = {
+            'january': 1,
+            'jan': 1,
+            'february': 2,
+            'feb': 2,
+            'march': 3,
+            'mar': 3,
+            'april': 4,
+            'apr': 4,
+            'may': 5,
+            'june': 6,
+            'jun': 6,
+            'july': 7,
+            'jul': 7,
+            'august': 8,
+            'aug': 8,
+            'september': 9,
+            'sep': 9,
+            'sept': 9,
+            'october': 10,
+            'oct': 10,
+            'november': 11,
+            'nov': 11,
+            'december': 12,
+            'dec': 12,
+          };
+
+          final month = monthMap[monthStr];
+          if (month != null) {
+            expiryDate = DateTime(year, month, day);
+          }
+        }
+      }
+
       if (expiryDate != null) {
-        // Add one day to expiry date (to allow usage until end of day)
-        expiryDate = expiryDate.add(const Duration(days: 1));
+        // Compare only the date part (not time)
         final now = DateTime.now();
-        return expiryDate.isAfter(now);
+        final todayDate = DateTime(now.year, now.month, now.day);
+        return expiryDate.isAfter(todayDate) ||
+            expiryDate.isAtSameMomentAs(todayDate);
       }
     } catch (e) {
       debugPrint('Error parsing expiration date: $e');
@@ -221,9 +312,17 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
         isNotExpired: isNotExpired,
       );
 
+      final results = [
+        {'label': 'Police keywords detected', 'ok': hasKeywords},
+        {'label': 'Name matches form', 'ok': nameMatch},
+        {'label': 'Not expired', 'ok': isNotExpired},
+      ];
+
       setState(() {
         _aiConfidence = confidence;
-        _aiVerified = confidence >= 70.0 && isNotExpired;
+        _aiVerified =
+            confidence >= 90.0 && hasKeywords && nameMatch && isNotExpired;
+        _aiResults = results;
       });
 
       // ---------- STEP 5: USER FEEDBACK ----------
@@ -433,9 +532,7 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
 
   // Helper widget for showing AI status (confidence meter)
   Widget _buildAiStatusWidget() {
-    if (_isPickingFile) {
-      return const SizedBox(); // while file picking -> no status
-    }
+    if (_isPickingFile) return const SizedBox();
 
     if (_aiVerifying) {
       return Row(
@@ -454,16 +551,55 @@ class _EmployerRegisterScreenState extends State<EmployerRegisterScreen> {
     if (_aiConfidence > 0) {
       final verified = _aiVerified;
       final color = verified ? Colors.green : Colors.red;
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(verified ? Icons.check_circle : Icons.error, color: color),
-          const SizedBox(width: 8),
-          Text(
-            'AI Confidence: ${_aiConfidence.toStringAsFixed(1)}% — ${verified ? 'Verified' : 'Failed'}',
-            style: TextStyle(color: color, fontWeight: FontWeight.bold),
-          ),
-        ],
+
+      return Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(verified ? Icons.check_circle : Icons.error, color: color),
+                const SizedBox(width: 8),
+                Text(
+                  verified
+                      ? 'AI Verified — ${_aiConfidence.toStringAsFixed(1)}%'
+                      : 'AI Failed — ${_aiConfidence.toStringAsFixed(1)}%',
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ..._aiResults.map((r) {
+              final ok = r['ok'] as bool;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Icon(
+                      ok ? Icons.check_circle : Icons.cancel,
+                      color: ok ? Colors.green : Colors.red,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      r['label'],
+                      style: TextStyle(
+                        color: ok ? Colors.green[800] : Colors.red[800],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
       );
     }
 

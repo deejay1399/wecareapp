@@ -15,6 +15,7 @@ class HelperServicePostingService {
     required double hourlyRate,
     required String availability,
     required List<String> serviceAreas,
+    DateTime? expiresAt,
   }) async {
     try {
       // Check if helper has active subscription
@@ -48,6 +49,7 @@ class HelperServicePostingService {
         'availability': availability,
         'service_areas': serviceAreas,
         'status': 'active',
+        'expires_at': expiresAt?.toIso8601String(),
         'views_count': 0,
         'contacts_count': 0,
       };
@@ -69,10 +71,12 @@ class HelperServicePostingService {
     String helperId,
   ) async {
     try {
+      final now = DateTime.now();
       final response = await SupabaseService.client
           .from(_tableName)
           .select('*, helpers(first_name, last_name)')
           .eq('helper_id', helperId)
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false);
 
       return (response as List)
@@ -86,15 +90,19 @@ class HelperServicePostingService {
   /// Get all active service postings
   static Future<List<HelperServicePosting>> getActiveServicePostings() async {
     try {
+      final now = DateTime.now();
       final response = await SupabaseService.client
           .from(_tableName)
           .select('*, helpers(first_name, last_name)')
           .eq('status', 'active')
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false);
 
-      return (response as List)
+      final services = (response as List)
           .map((data) => _mapToHelperServicePosting(data))
           .toList();
+
+      return services;
     } catch (e) {
       throw Exception('Failed to fetch active service postings: $e');
     }
@@ -105,16 +113,20 @@ class HelperServicePostingService {
     String skill,
   ) async {
     try {
+      final now = DateTime.now();
       final response = await SupabaseService.client
           .from(_tableName)
           .select('*, helpers(first_name, last_name)')
           .contains('skills', [skill])
           .eq('status', 'active')
+          .gt('expires_at', now.toIso8601String())
           .order('created_at', ascending: false);
 
-      return (response as List)
+      final services = (response as List)
           .map((data) => _mapToHelperServicePosting(data))
           .toList();
+
+      return services;
     } catch (e) {
       throw Exception('Failed to fetch service postings by skill: $e');
     }
@@ -125,16 +137,20 @@ class HelperServicePostingService {
     String area,
   ) async {
     try {
+      final now = DateTime.now();
       final response = await SupabaseService.client
           .from(_tableName)
           .select('*, helpers(first_name, last_name)')
           .contains('service_areas', [area])
           .eq('status', 'active')
+          .gt('expires_at', now.toIso8601String())
           .order('created_at', ascending: false);
 
-      return (response as List)
+      final services = (response as List)
           .map((data) => _mapToHelperServicePosting(data))
           .toList();
+
+      return services;
     } catch (e) {
       throw Exception('Failed to fetch service postings by area: $e');
     }
@@ -292,6 +308,9 @@ class HelperServicePostingService {
       availability: data['availability'] as String,
       serviceAreas: List<String>.from(data['service_areas'] as List),
       createdDate: DateTime.parse(data['created_at'] as String),
+      expiresAt: data['expires_at'] != null
+          ? DateTime.parse(data['expires_at'] as String)
+          : null,
       status: data['status'] as String,
       viewsCount: data['views_count'] as int? ?? 0,
       contactsCount: data['contacts_count'] as int? ?? 0,

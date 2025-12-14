@@ -99,7 +99,10 @@ class _AdminBlockUsersPageState extends State<AdminBlockUsersPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('An error occurred. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

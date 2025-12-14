@@ -26,6 +26,7 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
   String _selectedAvailability = 'Part-time';
   List<String> _selectedServiceAreas = [];
   bool _isLoading = false;
+  DateTime? _selectedExpiryDate; // New field for expiry date
 
   final List<String> _experienceLevels = [
     LocalizationManager.translate('entry_level'),
@@ -101,6 +102,20 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
       return;
     }
 
+    // Validate expiry date
+    if (_selectedExpiryDate != null &&
+        _selectedExpiryDate!.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            LocalizationManager.translate('expiry_date_must_be_in_the_future'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -115,6 +130,7 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
         hourlyRate: double.parse(_hourlyRateController.text),
         availability: _selectedAvailability,
         serviceAreas: _selectedServiceAreas,
+        expiresAt: _selectedExpiryDate,
       );
 
       if (mounted) {
@@ -291,6 +307,62 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _selectExpiryDate() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate:
+          _selectedExpiryDate ?? DateTime.now().add(Duration(days: 30)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: Color(0xFFFF8A50)),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      if (!mounted) return;
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(
+          _selectedExpiryDate ?? DateTime.now().add(Duration(days: 30)),
+        ),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(primary: Color(0xFFFF8A50)),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      if (pickedTime != null) {
+        // Create DateTime in local Philippine time (do NOT convert to UTC)
+        // Store as local time so comparisons work correctly when phone time changes
+        final localDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        setState(() {
+          _selectedExpiryDate = localDateTime;
+        });
+      }
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -588,6 +660,68 @@ class _PostServiceScreenState extends State<PostServiceScreen> {
 
                 // Service Areas
                 _buildServiceAreasSection(),
+
+                const SizedBox(height: 32),
+
+                // Service Expiry Date
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      LocalizationManager.translate('available_until'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: _selectExpiryDate,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFD1D5DB),
+                            width: 1,
+                          ),
+                          color: Colors.white,
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedExpiryDate == null
+                                  ? LocalizationManager.translate(
+                                      'select_expiry_date',
+                                    )
+                                  : _formatDate(_selectedExpiryDate!),
+                              style: TextStyle(
+                                color: _selectedExpiryDate == null
+                                    ? Color(0xFF9CA3AF)
+                                    : Color(0xFF374151),
+                                fontSize: 16,
+                              ),
+                            ),
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              color: const Color(0xFFFF8A50),
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      LocalizationManager.translate(
+                        'service_will_not_show_after_expiry_date',
+                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 32),
 

@@ -36,7 +36,7 @@ class _EmployerMyJobsScreenState extends State<EmployerMyJobsScreen> {
       // Get current employer
       final employer = await SessionService.getCurrentEmployer();
       if (employer != null) {
-        // Load job postings for this employer
+        // Load job postings for this employer (expired jobs are automatically filtered out)
         final jobPostings = await JobPostingService.getJobPostingsByEmployer(
           employer.id,
         );

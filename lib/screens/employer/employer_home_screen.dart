@@ -42,7 +42,23 @@ class _EmployerHomeScreenState extends State<EmployerHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _initializeScreen();
+  }
+
+  Future<void> _initializeScreen() async {
+    // Force refresh subscription status before loading other data
+    // This ensures we get fresh data after logout/login
+    try {
+      final userId = await SessionService.getCurrentUserId();
+      if (userId != null) {
+        await SubscriptionService.forceRefreshSubscriptionStatus(userId);
+      }
+    } catch (e) {
+      debugPrint('Error refreshing subscription: $e');
+    }
+
+    // Then load all other data
+    await _loadData();
   }
 
   Future<void> _loadData() async {

@@ -302,6 +302,30 @@ class ApplicationService {
           targetId: applicationId,
         );
         print('DEBUG: Rejection notification created');
+      } else if (status == 'completed') {
+        // Mark job as completed when application is completed
+        // This will trigger the reward system (bonus uses)
+        final jobId = appResponse['job_posting_id'] as String;
+        try {
+          print(
+            'DEBUG: Marking job $jobId as completed (from application completion)',
+          );
+          await JobPostingService.markJobAsCompleted(jobId);
+          print('DEBUG: Job marked as completed - reward system activated');
+
+          // Create completion notification for helper
+          await NotificationService.createNotification(
+            recipientId: helperId,
+            title: 'Job Completed! 🎉',
+            body: 'Your work on "$jobTitle" has been marked as completed',
+            type: 'job_completed',
+            category: 'new',
+            targetId: jobId,
+          );
+        } catch (e) {
+          print('ERROR: Failed to mark job as completed: $e');
+          rethrow;
+        }
       }
 
       // Return the updated application

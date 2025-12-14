@@ -16,6 +16,7 @@ class JobPosting {
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? expiresAt; // New field for expiration date
   final int applicationsCount;
   final String? assignedHelperId; // Helper who got the job
   final String? assignedHelperName; // Helper's name for easy reference
@@ -33,6 +34,7 @@ class JobPosting {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
+    this.expiresAt,
     this.applicationsCount = 0,
     this.employer,
     this.assignedHelper,
@@ -50,6 +52,18 @@ class JobPosting {
   bool get isAvailableForApplications => status == 'active';
   bool get isActivelyWorked => status == 'in_progress';
   bool get canBeCompleted => status == 'in_progress';
+  bool get isExpired {
+    if (expiresAt == null) return false;
+    // expiresAt is stored in local time, compare with local time
+    final now = DateTime.now();
+    final isExpired = now.isAfter(expiresAt!);
+    if (expiresAt != null) {
+      print(
+        'DEBUG isExpired: now=$now, expiresAt=$expiresAt, isExpired=$isExpired',
+      );
+    }
+    return isExpired;
+  }
 
   String get statusDisplayText {
     switch (status) {
@@ -101,6 +115,7 @@ class JobPosting {
       status: map['status'] ?? '',
       createdAt: _parseDate(map['created_at']),
       updatedAt: _parseDate(map['updated_at']),
+      expiresAt: _parseDateNullable(map['expires_at']),
       applicationsCount: map['applications_count'] ?? 0,
       assignedHelperId: map['assigned_helper_id']?.toString() ?? helper?.id,
       assignedHelperName: map['assigned_helper_name'] ?? helper?.fullName,
@@ -112,6 +127,13 @@ class JobPosting {
     if (value is DateTime) return value;
     if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     return DateTime.now();
+  }
+
+  static DateTime? _parseDateNullable(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 
   // ---------- JSON CONVERSIONS ----------
@@ -135,6 +157,7 @@ class JobPosting {
       'status': status,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'expires_at': expiresAt?.toIso8601String(),
       'applications_count': applicationsCount,
       'assigned_helper_id': assignedHelperId,
       'assigned_helper_name': assignedHelperName,
@@ -152,6 +175,7 @@ class JobPosting {
       'payment_frequency': paymentFrequency,
       'required_skills': requiredSkills,
       'status': status,
+      'expires_at': expiresAt?.toIso8601String(),
       'assigned_helper_id': assignedHelperId,
       'assigned_helper_name': assignedHelperName,
     };
@@ -173,6 +197,7 @@ class JobPosting {
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? expiresAt,
     int? applicationsCount,
     String? assignedHelperId,
     String? assignedHelperName,
@@ -192,6 +217,7 @@ class JobPosting {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      expiresAt: expiresAt ?? this.expiresAt,
       applicationsCount: applicationsCount ?? this.applicationsCount,
       assignedHelperId: assignedHelperId ?? this.assignedHelperId,
       assignedHelperName: assignedHelperName ?? this.assignedHelperName,

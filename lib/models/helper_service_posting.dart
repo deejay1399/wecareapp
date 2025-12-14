@@ -13,6 +13,7 @@ class HelperServicePosting {
   final String availability; // 'full-time', 'part-time', 'weekends', 'flexible'
   final List<String> serviceAreas; // locations where helper can work
   final DateTime createdDate;
+  final DateTime? expiresAt; // When the service posting expires
   final String status; // 'active', 'paused', 'inactive'
   final int viewsCount;
   final int contactsCount;
@@ -30,6 +31,7 @@ class HelperServicePosting {
     required this.serviceAreas,
     required this.createdDate,
     required this.status,
+    this.expiresAt,
     this.viewsCount = 0,
     this.contactsCount = 0,
   });
@@ -41,7 +43,7 @@ class HelperServicePosting {
   String formatCreatedDate() {
     final now = DateTime.now();
     final difference = now.difference(createdDate).inDays;
-    
+
     if (difference == 0) return 'Created today';
     if (difference == 1) return 'Created yesterday';
     if (difference < 7) return 'Created $difference days ago';
@@ -61,6 +63,8 @@ class HelperServicePosting {
     }
   }
 
+  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
+
   String get statusDisplayText {
     switch (status) {
       case 'active':
@@ -75,14 +79,14 @@ class HelperServicePosting {
   }
 
   String get primaryExpertise => skills.isNotEmpty ? skills.first : '';
-  
+
   String get expertiseText {
     if (skills.isEmpty) return '';
     if (skills.length == 1) return skills.first;
     if (skills.length == 2) return '${skills.first} & ${skills.last}';
     return '${skills.first} +${skills.length - 1} more';
   }
-  
+
   // Keep the old getters for backward compatibility
   String get primarySkill => primaryExpertise;
   String get skillsText => expertiseText;
@@ -90,7 +94,9 @@ class HelperServicePosting {
   String get serviceAreasText {
     if (serviceAreas.isEmpty) return '';
     if (serviceAreas.length == 1) return serviceAreas.first;
-    if (serviceAreas.length == 2) return '${serviceAreas.first} & ${serviceAreas.last}';
+    if (serviceAreas.length == 2) {
+      return '${serviceAreas.first} & ${serviceAreas.last}';
+    }
     return '${serviceAreas.first} +${serviceAreas.length - 1} ${LocalizationManager.translate('more')}';
   }
 }

@@ -965,7 +965,10 @@ class _ApplicationDetailsScreenState extends State<ApplicationDetailsScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('An error occurred. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }

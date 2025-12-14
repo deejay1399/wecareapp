@@ -17,6 +17,8 @@ class Application {
   final String? helperEmail;
   final List<String> helperSkills;
   final String helperExperience;
+  final DateTime? startTime;
+  final DateTime? endTime;
 
   Application({
     required this.id,
@@ -33,6 +35,8 @@ class Application {
     this.helperEmail,
     required this.helperSkills,
     required this.helperExperience,
+    this.startTime,
+    this.endTime,
   });
 
   bool get isPending => status == 'pending';

@@ -59,11 +59,18 @@ class _RatingDialogScreenState extends State<RatingDialogScreen> {
     try {
       // First check if job is completed (for job-based ratings)
       if (widget.jobPostingId != null) {
-        final applications = await ApplicationService.getApplicationsForJob(widget.jobPostingId!);
-        final userApplication = applications.where((app) => 
-          (widget.raterType == 'helper' && app.helperId == widget.raterId) ||
-          (widget.raterType == 'employer' && app.jobId == widget.jobPostingId)
-        ).firstOrNull;
+        final applications = await ApplicationService.getApplicationsForJob(
+          widget.jobPostingId!,
+        );
+        final userApplication = applications
+            .where(
+              (app) =>
+                  (widget.raterType == 'helper' &&
+                      app.helperId == widget.raterId) ||
+                  (widget.raterType == 'employer' &&
+                      app.jobId == widget.jobPostingId),
+            )
+            .firstOrNull;
 
         if (userApplication == null || !userApplication.isCompleted) {
           setState(() {
@@ -128,8 +135,8 @@ class _RatingDialogScreenState extends State<RatingDialogScreen> {
         result = await _ratingService.updateRating(
           _existingRating!.id,
           rating: _rating,
-          reviewText: _reviewController.text.trim().isEmpty 
-              ? null 
+          reviewText: _reviewController.text.trim().isEmpty
+              ? null
               : _reviewController.text.trim(),
           isAnonymous: _isAnonymous,
         );
@@ -144,8 +151,8 @@ class _RatingDialogScreenState extends State<RatingDialogScreen> {
           jobPostingId: widget.jobPostingId,
           servicePostingId: widget.servicePostingId,
           rating: _rating,
-          reviewText: _reviewController.text.trim().isEmpty 
-              ? null 
+          reviewText: _reviewController.text.trim().isEmpty
+              ? null
               : _reviewController.text.trim(),
           isAnonymous: _isAnonymous,
           createdAt: DateTime.now(),
@@ -160,8 +167,8 @@ class _RatingDialogScreenState extends State<RatingDialogScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                _existingRating != null 
-                    ? 'Rating updated successfully!' 
+                _existingRating != null
+                    ? 'Rating updated successfully!'
                     : 'Rating submitted successfully!',
               ),
               backgroundColor: Colors.green,
@@ -183,7 +190,7 @@ class _RatingDialogScreenState extends State<RatingDialogScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: const Text('An error occurred. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -217,11 +224,7 @@ class _RatingDialogScreenState extends State<RatingDialogScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.block,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.block, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Rating Not Available',
@@ -233,9 +236,9 @@ class _RatingDialogScreenState extends State<RatingDialogScreen> {
           const SizedBox(height: 8),
           Text(
             _blockingMessage ?? 'Unable to rate at this time.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -261,7 +264,7 @@ class _RatingDialogScreenState extends State<RatingDialogScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _existingRating != null 
+                    _existingRating != null
                         ? 'Update your rating for ${widget.ratedName}'
                         : 'How was your experience with ${widget.ratedName}?',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -350,8 +353,8 @@ class _RatingDialogScreenState extends State<RatingDialogScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(
-                      _existingRating != null 
-                          ? 'Update Rating' 
+                      _existingRating != null
+                          ? 'Update Rating'
                           : 'Submit Rating',
                       style: const TextStyle(fontSize: 16),
                     ),

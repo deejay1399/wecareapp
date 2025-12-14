@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/forms/email_phone_text_field.dart';
 import '../widgets/forms/custom_text_field.dart';
 import '../utils/validators/login_validators.dart';
@@ -154,6 +155,23 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
+  }
+
+  Future<void> _openFacebookAppeal() async {
+    const facebookUrl =
+        'https://www.facebook.com/profile.php?id=61584711443164';
+    try {
+      if (await canLaunchUrl(Uri.parse(facebookUrl))) {
+        await launchUrl(
+          Uri.parse(facebookUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        _showErrorMessage('Could not open Facebook link');
+      }
+    } catch (e) {
+      _showErrorMessage('Error opening Facebook: $e');
+    }
   }
 
   void _forgotPassword() {
@@ -443,6 +461,71 @@ class _LoginScreenState extends State<LoginScreen> {
                             letterSpacing: 0.5,
                           ),
                         ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Appeal Account Button (for blocked users)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3E2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFFF8A50),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            color: Color(0xFFFF8A50),
+                            size: 24,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Account Blocked?',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF374151),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'If your account has been blocked, you can appeal by contacting us on Facebook.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6B7280),
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _openFacebookAppeal,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1877F2),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              icon: const Icon(Icons.open_in_new, size: 18),
+                              label: const Text(
+                                'Appeal on Facebook',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 

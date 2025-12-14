@@ -97,11 +97,11 @@ class _HelperActiveJobsScreenState extends State<HelperActiveJobsScreen> {
       final currentUserId = await SessionService.getCurrentUserId();
       final currentUserType = await SessionService.getCurrentUserType();
       if (currentUserId != null && currentUserType != null) {
-        final added =
-            await SubscriptionService.incrementCompletedJobsAndMaybeAddFreeUses(
-              currentUserId,
-              currentUserType,
-            );
+        final added = await SubscriptionService.addBonusTrialUses(
+          currentUserId,
+          currentUserType,
+          currentUserType == 'Helper' ? 'helpers' : 'employers',
+        );
 
         if (added > 0 && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -157,7 +157,7 @@ class HelperAuthService {
         'success': true,
         'message': uploadSucceeded
             ? 'Registration successful'
-            : 'Registration successful (profile picture upload failed)',
+            : 'Registration successful',
         'helper': helper,
         'uploadSucceeded': uploadSucceeded,
         'uploadError': uploadError,

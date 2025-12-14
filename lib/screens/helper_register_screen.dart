@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import '../widgets/forms/custom_text_field.dart';
 import '../widgets/forms/birthday_picker_field.dart';
 import '../widgets/forms/phone_text_field.dart';
@@ -59,19 +58,63 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
 
   /// Extract expiration date from OCR text (looks for common date patterns)
   String? _extractExpirationDate(String ocrText) {
+    // First, try to find date after "valid until", "expires", "valid up to", etc.
+    final expiryKeywords = [
+      'valid until',
+      'valid up to',
+      'expires',
+      'expiry',
+      'expiration',
+      'valid through',
+    ];
+
+    for (var keyword in expiryKeywords) {
+      final keywordIndex = ocrText.indexOf(keyword);
+      if (keywordIndex != -1) {
+        // Extract text after the keyword
+        final textAfterKeyword = ocrText.substring(
+          keywordIndex + keyword.length,
+        );
+
+        // Look for date patterns in the text after keyword
+        final datePatterns = [
+          RegExp(
+            r'(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}',
+            caseSensitive: false,
+          ),
+          RegExp(r'\d{1,2}[/-]\d{1,2}[/-]\d{4}'),
+          RegExp(r'\d{4}[/-]\d{1,2}[/-]\d{1,2}'),
+        ];
+
+        for (var pattern in datePatterns) {
+          final match = pattern.firstMatch(textAfterKeyword);
+          if (match != null) {
+            return match.group(0);
+          }
+        }
+      }
+    }
+
+    // Fallback: if no "valid until" found, try to get the SECOND date in the document
+    // (first is usually "date issued", second is usually "valid until")
     final datePatterns = [
-      RegExp(r'\d{1,2}[/-]\d{1,2}[/-]\d{4}'),
-      RegExp(r'\d{4}[/-]\d{1,2}[/-]\d{1,2}'),
       RegExp(
-        r'(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}',
+        r'(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}',
         caseSensitive: false,
       ),
+      RegExp(r'\d{1,2}[/-]\d{1,2}[/-]\d{4}'),
+      RegExp(r'\d{4}[/-]\d{1,2}[/-]\d{1,2}'),
     ];
 
     for (var pattern in datePatterns) {
-      final match = pattern.firstMatch(ocrText);
-      if (match != null) {
-        return match.group(0);
+      final matches = pattern.allMatches(ocrText).toList();
+      // If we found multiple dates, return the last one (most likely expiry)
+      if (matches.length >= 2) {
+        return matches.last.group(0);
+      }
+      // If only one date found, return it
+      if (matches.isNotEmpty) {
+        return matches.first.group(0);
       }
     }
 
@@ -107,10 +150,59 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
         expiryDate = DateTime(year, month, day);
       }
 
+      // Format: Month Day, Year (e.g., "march 08, 2026" or "March 08, 2026")
+      if (expiryDate == null) {
+        final monthNameMatch = RegExp(
+          r'(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})',
+          caseSensitive: false,
+        ).firstMatch(expiryDateStr);
+
+        if (monthNameMatch != null) {
+          final monthStr = monthNameMatch.group(1)!.toLowerCase();
+          final day = int.parse(monthNameMatch.group(2)!);
+          final year = int.parse(monthNameMatch.group(3)!);
+
+          // Convert month name to number
+          final monthMap = {
+            'january': 1,
+            'jan': 1,
+            'february': 2,
+            'feb': 2,
+            'march': 3,
+            'mar': 3,
+            'april': 4,
+            'apr': 4,
+            'may': 5,
+            'june': 6,
+            'jun': 6,
+            'july': 7,
+            'jul': 7,
+            'august': 8,
+            'aug': 8,
+            'september': 9,
+            'sep': 9,
+            'sept': 9,
+            'october': 10,
+            'oct': 10,
+            'november': 11,
+            'nov': 11,
+            'december': 12,
+            'dec': 12,
+          };
+
+          final month = monthMap[monthStr];
+          if (month != null) {
+            expiryDate = DateTime(year, month, day);
+          }
+        }
+      }
+
       if (expiryDate != null) {
-        expiryDate = expiryDate.add(const Duration(days: 1));
+        // Compare only the date part (not time)
         final now = DateTime.now();
-        return expiryDate.isAfter(now);
+        final todayDate = DateTime(now.year, now.month, now.day);
+        return expiryDate.isAfter(todayDate) ||
+            expiryDate.isAtSameMomentAs(todayDate);
       }
     } catch (e) {
       debugPrint('Error parsing expiration date: $e');
@@ -221,7 +313,8 @@ class _HelperRegisterScreenState extends State<HelperRegisterScreen> {
 
       setState(() {
         _aiConfidence = confidence;
-        _aiVerified = confidence >= 70.0 && isNotExpired;
+        _aiVerified =
+            confidence >= 90.0 && hasKeywords && nameMatch && isNotExpired;
         _aiResults = results;
       });
 

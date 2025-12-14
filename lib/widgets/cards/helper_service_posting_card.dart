@@ -77,6 +77,19 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
     );
   }
 
+  String _formatExpirationDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    final hour12 = date.hour > 12
+        ? date.hour - 12
+        : (date.hour == 0 ? 12 : date.hour);
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    final hour = hour12.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year $hour:$minute $period';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -314,74 +327,131 @@ class _HelperServicePostingCardState extends State<HelperServicePostingCard> {
                 const SizedBox(height: 16),
 
                 // Bottom row with stats and actions
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.visibility_outlined,
-                                size: 16,
-                                color: Colors.grey[600],
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.visibility_outlined,
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${widget.servicePosting.viewsCount} views',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Icon(
+                                    Icons.message_outlined,
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${widget.servicePosting.contactsCount} contacts',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(height: 4),
                               Text(
-                                '${widget.servicePosting.viewsCount} views',
+                                widget.servicePosting.formatCreatedDate(),
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Icon(
-                                Icons.message_outlined,
-                                size: 16,
-                                color: Colors.grey[600],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${widget.servicePosting.contactsCount} contacts',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
+                                  color: Colors.grey[500],
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.servicePosting.formatCreatedDate(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[500],
+                        ),
+                        if (widget.onEdit != null)
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFFFF8A50,
+                              ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: IconButton(
+                              onPressed: widget.onEdit,
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                color: Color(0xFFFF8A50),
+                                size: 20,
+                              ),
+                              tooltip: 'Edit Service',
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (widget.servicePosting.expiresAt != null &&
+                        widget.servicePosting.expiresAt!.isAfter(
+                          DateTime.now(),
+                        )) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: 16,
+                            color: Colors.orange[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Expires: ${_formatExpirationDate(widget.servicePosting.expiresAt!)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.orange[600],
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    if (widget.onEdit != null)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF8A50).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: IconButton(
-                          onPressed: widget.onEdit,
-                          icon: const Icon(
-                            Icons.edit_outlined,
-                            color: Color(0xFFFF8A50),
-                            size: 20,
+                    ] else if (widget.servicePosting.expiresAt == null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: 16,
+                            color: Colors.green[600],
                           ),
-                          tooltip: 'Edit Service',
-                          constraints: const BoxConstraints(
-                            minWidth: 36,
-                            minHeight: 36,
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              LocalizationManager.translate(
+                                'no_expiration_date',
+                              ),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.green[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
+                    ],
                   ],
                 ),
               ],

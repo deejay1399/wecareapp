@@ -29,6 +29,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
   List<String> _requiredSkills = [];
   bool _isLoading = false;
   Employer? _currentEmployer;
+  DateTime? _selectedExpiryDate; // New field for expiry date
 
   // Form validation errors
   String? _titleError;
@@ -37,6 +38,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
   String? _paymentFrequencyError;
   String? _barangayError;
   String? _skillsError;
+  String? _expiryDateError; // New validation error
   List<String> _barangayList = [];
   @override
   void initState() {
@@ -77,6 +79,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
       _paymentFrequencyError = null;
       _barangayError = null;
       _skillsError = null;
+      _expiryDateError = null;
 
       // Validate title
       if (_titleController.text.trim().isEmpty) {
@@ -129,6 +132,15 @@ class _PostJobScreenState extends State<PostJobScreen> {
         );
         isValid = false;
       }
+
+      // Validate expiry date
+      if (_selectedExpiryDate != null &&
+          _selectedExpiryDate!.isBefore(DateTime.now())) {
+        _expiryDateError = LocalizationManager.translate(
+          'expiry_date_must_be_in_the_future',
+        );
+        isValid = false;
+      }
     });
 
     return isValid;
@@ -152,6 +164,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
         municipality: _selectedMunicipality!,
         barangay: _selectedBarangay!,
         requiredSkills: _requiredSkills,
+        expiresAt: _selectedExpiryDate,
       );
 
       if (mounted) {
@@ -188,6 +201,63 @@ class _PostJobScreenState extends State<PostJobScreen> {
         });
       }
     }
+  }
+
+  Future<void> _selectExpiryDate() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate:
+          _selectedExpiryDate ?? DateTime.now().add(Duration(days: 30)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: Color(0xFF1565C0)),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      if (!mounted) return;
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(
+          _selectedExpiryDate ?? DateTime.now().add(Duration(days: 30)),
+        ),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(primary: Color(0xFF1565C0)),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      if (pickedTime != null) {
+        // Create DateTime in local Philippine time (do NOT convert to UTC)
+        // Store as local time so comparisons work correctly when phone time changes
+        final localDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        setState(() {
+          _selectedExpiryDate = localDateTime;
+          _expiryDateError = null;
+        });
+      }
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -451,6 +521,79 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   errorText: _skillsError != null
                       ? LocalizationManager.translate(_skillsError!)
                       : null,
+                ),
+                const SizedBox(height: 24),
+
+                // Job Expiry Date
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      LocalizationManager.translate('available_until'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: _selectExpiryDate,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _expiryDateError != null
+                                ? Colors.red.shade400
+                                : const Color(0xFFD1D5DB),
+                            width: 1,
+                          ),
+                          color: Colors.white,
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedExpiryDate == null
+                                  ? LocalizationManager.translate(
+                                      'select_expiry_date',
+                                    )
+                                  : _formatDate(_selectedExpiryDate!),
+                              style: TextStyle(
+                                color: _selectedExpiryDate == null
+                                    ? Color(0xFF9CA3AF)
+                                    : Color(0xFF374151),
+                                fontSize: 16,
+                              ),
+                            ),
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              color: const Color(0xFF1565C0),
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (_expiryDateError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _expiryDateError!,
+                        style: TextStyle(
+                          color: Colors.red.shade600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      LocalizationManager.translate(
+                        'job_will_not_show_after_expiry_date',
+                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 40),
 

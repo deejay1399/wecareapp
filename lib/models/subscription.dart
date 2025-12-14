@@ -21,7 +21,7 @@ class Subscription {
 
   factory Subscription.fromMap(Map<String, dynamic> map) {
     return Subscription(
-      id: map['id'] ?? '',
+      id: (map['id'] ?? '').toString(),
       userId: map['user_id'] ?? '',
       userType: map['user_type'] ?? '',
       planType: map['plan_type'] ?? '',

@@ -7,6 +7,7 @@ import '../../models/helper.dart';
 import '../../services/subscription_service.dart';
 import '../../services/database_messaging_service.dart';
 import '../../services/job_posting_service.dart';
+import '../../services/application_service.dart';
 import '../../services/helper_service_posting_service.dart';
 import '../../services/session_service.dart';
 import '../../services/report_service.dart';
@@ -45,14 +46,49 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
   bool _isLoadingJobs = true;
   bool _isLoadingServices = true;
   final _ratingService = RatingService();
+  Set<String> _appliedJobIds = {};
   @override
   void initState() {
     super.initState();
+    _initializeScreen();
+  }
+
+  Future<void> _initializeScreen() async {
+    // Force refresh subscription status before loading other data
+    // This ensures we get fresh data after logout/login
+    try {
+      final userId = await SessionService.getCurrentUserId();
+      if (userId != null) {
+        await SubscriptionService.forceRefreshSubscriptionStatus(userId);
+      }
+    } catch (e) {
+      debugPrint('Error refreshing subscription: $e');
+    }
+
+    // Then load all other data
     _loadCurrentHelper();
     _loadSubscriptionStatus();
     _loadUnreadMessageCount();
     _loadUnreadNotificationCount();
     _loadMatchedJobs(); // Load all job opportunities
+    _loadAppliedJobs(); // Load applied job IDs
+  }
+
+  Future<void> _loadAppliedJobs() async {
+    try {
+      if (_currentHelper != null) {
+        final applications = await ApplicationService.getApplicationsByHelper(
+          _currentHelper!.id,
+        );
+        if (mounted) {
+          setState(() {
+            _appliedJobIds = applications.map((app) => app.jobId).toSet();
+          });
+        }
+      }
+    } catch (e) {
+      // Handle error silently
+    }
   }
 
   Future<void> _loadCurrentHelper() async {
@@ -709,6 +745,7 @@ class _HelperHomeScreenState extends State<HelperHomeScreen> {
       job: job,
       onTap: () => _onJobTap(context, job),
       ratingService: _ratingService,
+      isApplied: _appliedJobIds.contains(job.id),
     );
   }
 
@@ -826,11 +863,13 @@ class _HomeJobCard extends StatefulWidget {
   final JobPosting job;
   final VoidCallback onTap;
   final RatingService ratingService;
+  final bool isApplied;
 
   const _HomeJobCard({
     required this.job,
     required this.onTap,
     required this.ratingService,
+    required this.isApplied,
   });
 
   @override
@@ -867,6 +906,16 @@ class _HomeJobCardState extends State<_HomeJobCard> {
         });
       }
     }
+  }
+
+  String _formatExpiryDate(DateTime expiryDate) {
+    final hour12 = expiryDate.hour > 12
+        ? expiryDate.hour - 12
+        : (expiryDate.hour == 0 ? 12 : expiryDate.hour);
+    final period = expiryDate.hour >= 12 ? 'PM' : 'AM';
+    final hour = hour12.toString().padLeft(2, '0');
+    final minute = expiryDate.minute.toString().padLeft(2, '0');
+    return '${expiryDate.day.toString().padLeft(2, '0')}/${expiryDate.month.toString().padLeft(2, '0')}/${expiryDate.year} $hour:$minute $period';
   }
 
   void _showReportDialog(BuildContext context) async {
@@ -1210,31 +1259,94 @@ class _HomeJobCardState extends State<_HomeJobCard> {
                   const SizedBox(height: 12),
                 ],
 
-                // Apply button
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    onPressed: widget.onTap,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF8A50),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                // Expiration date display and Apply button on same row
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFFF59E0B,
+                          ).withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(
+                              0xFFF59E0B,
+                            ).withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 16,
+                              color: const Color(0xFFF59E0B),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    LocalizationManager.translate('expires_at'),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFFF59E0B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    widget.job.expiresAt != null
+                                        ? _formatExpiryDate(
+                                            widget.job.expiresAt!,
+                                          )
+                                        : LocalizationManager.translate(
+                                            'no_expiration_date',
+                                          ),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFFF59E0B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    child: Text(
-                      LocalizationManager.translate('apply'),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: widget.isApplied ? null : widget.onTap,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: widget.isApplied
+                            ? Colors.grey[400]
+                            : const Color(0xFFFF8A50),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        widget.isApplied
+                            ? LocalizationManager.translate('applied')
+                            : LocalizationManager.translate('apply'),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
+                const SizedBox(height: 12),
               ],
             ),
           ),

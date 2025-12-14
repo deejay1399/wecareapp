@@ -14,6 +14,7 @@ class JobPostingService {
     required String municipality,
     required String barangay,
     required List<String> requiredSkills,
+    DateTime? expiresAt,
   }) async {
     try {
       // Check if employer has active subscription
@@ -50,6 +51,7 @@ class JobPostingService {
         status: 'active',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        expiresAt: expiresAt,
       );
       final response = await SupabaseService.client
           .from(_tableName)
@@ -121,6 +123,7 @@ class JobPostingService {
       final employerId = jobDetails['employer_id'] as String;
       final helperId = jobDetails['assigned_helper_id'] as String?;
 
+      // Update the job posting status
       final response = await SupabaseService.client
           .from(_tableName)
           .update({
@@ -130,6 +133,19 @@ class JobPostingService {
           .eq('id', jobId)
           .select()
           .single();
+
+      // Also update the application status to completed
+      if (helperId != null && helperId.isNotEmpty) {
+        await SupabaseService.client
+            .from('applications')
+            .update({
+              'status': 'completed',
+              'updated_at': DateTime.now().toIso8601String(),
+            })
+            .eq('job_id', jobId)
+            .eq('helper_id', helperId)
+            .eq('status', 'accepted');
+      }
 
       // Check if employer has completed 3 jobs and add bonus
       if (employerId.isNotEmpty) {
@@ -163,7 +179,7 @@ class JobPostingService {
           .from(_tableName)
           .select()
           .eq('assigned_helper_id', helperId)
-          .eq('status', 'in progress')
+          .eq('status', 'in_progress')
           .order('updated_at', ascending: false);
 
       return (response as List)
@@ -271,16 +287,95 @@ class JobPostingService {
     }
   }
 
+  static Future<List<JobPosting>> getAcceptedJobsForUser({
+    required String userId,
+    required String userType, // 'helper' or 'employer'
+  }) async {
+    final supabase = SupabaseService.client;
+
+    try {
+      dynamic response;
+
+      if (userType == 'helper') {
+        // Get jobs where the helper's application is accepted (in progress).
+        response = await supabase
+            .from('applications')
+            .select('''
+            job_postings (
+              id,
+              employer_id,
+              title,
+              description,
+              municipality,
+              barangay,
+              salary,
+              payment_frequency,
+              required_skills,
+              status,
+              assigned_helper_id,
+              assigned_helper_name,
+              assigned_helper:helpers(id, first_name, last_name, profile_picture_base64, created_at, updated_at),
+              employer:employers(id, first_name, last_name, profile_picture_base64, created_at, updated_at),
+              created_at,
+              updated_at
+            )
+          ''')
+            .eq('helper_id', userId)
+            .eq('status', 'accepted')
+            .order('applied_at', ascending: false);
+      } else {
+        response = await supabase
+            .from('applications')
+            .select('''
+            job_postings (
+              id,
+              employer_id,
+              title,
+              description,
+              municipality,
+              barangay,
+              salary,
+              payment_frequency,
+              required_skills,
+              status,
+              assigned_helper_id,
+              assigned_helper_name,
+              assigned_helper:helpers(id, first_name, last_name, profile_picture_base64, created_at, updated_at),
+              created_at,
+              updated_at
+            )
+          ''')
+            .eq('status', 'accepted')
+            .eq('job_postings.employer_id', userId)
+            .order('applied_at', ascending: false);
+      }
+
+      if (response == null || response.isEmpty) return [];
+
+      final jobs = (response as List)
+          .map((app) => app['job_postings'])
+          .where((job) => job != null)
+          .map((job) => JobPosting.fromMap(job))
+          .toList();
+
+      return jobs;
+    } catch (e) {
+      throw Exception('Failed to load accepted jobs: $e');
+    }
+  }
+
   static Future<List<JobPosting>> getJobPostingsByEmployer(
     String employerId,
   ) async {
     try {
+      final now = DateTime.now();
       final response = await SupabaseService.client
           .from(_tableName)
           .select(
             '*, employers(id, age, first_name, last_name, profile_picture_base64)',
           )
           .eq('employer_id', employerId)
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false);
 
       return (response as List).map((data) {
@@ -306,15 +401,19 @@ class JobPostingService {
 
   static Future<List<JobPosting>> getActiveJobPostings() async {
     try {
+      final now = DateTime.now();
       final response = await SupabaseService.client
           .from(_tableName)
           .select()
           .eq('status', 'active')
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false);
 
-      return (response as List)
+      final jobs = (response as List)
           .map((data) => JobPosting.fromMap(data))
           .toList();
+
+      return jobs;
     } catch (e) {
       throw Exception('Failed to fetch active job postings: $e');
     }
@@ -333,32 +432,41 @@ class JobPostingService {
           .toList();
 
       if (skillsList.isEmpty) {
+        final now = DateTime.now();
         final response = await SupabaseService.client
             .from(_tableName)
             .select()
             .eq('status', 'active')
             .eq('barangay', helperBarangay)
+            .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
             .order('created_at', ascending: false)
             .limit(limit);
 
-        return (response as List)
+        final jobs = (response as List)
             .map((data) => JobPosting.fromMap(data))
             .toList();
+
+        return jobs;
       }
 
+      final now = DateTime.now();
       final allJobsResponse = await SupabaseService.client
           .from(_tableName)
           .select()
           .eq('status', 'active')
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false);
 
       final allJobs = (allJobsResponse as List)
           .map((data) => JobPosting.fromMap(data))
           .toList();
 
+      // All jobs are already filtered by expiration at database level
+      final activeJobs = allJobs;
+
       final List<MapEntry<JobPosting, int>> scoredJobs = [];
 
-      for (final job in allJobs) {
+      for (final job in activeJobs) {
         int matchScore = 0;
 
         for (final requiredSkill in job.requiredSkills) {
@@ -391,16 +499,20 @@ class JobPostingService {
     String barangay,
   ) async {
     try {
+      final now = DateTime.now();
       final response = await SupabaseService.client
           .from(_tableName)
           .select()
           .eq('barangay', barangay)
           .eq('status', 'active')
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false);
 
-      return (response as List)
+      final jobs = (response as List)
           .map((data) => JobPosting.fromMap(data))
           .toList();
+
+      return jobs;
     } catch (e) {
       throw Exception('Failed to fetch job postings by barangay: $e');
     }
@@ -465,19 +577,22 @@ class JobPostingService {
     int limit = 100,
   }) async {
     try {
+      final now = DateTime.now();
       final response = await SupabaseService.client
           .from(_tableName)
           .select(
             '*, employers(id, age, first_name, last_name, profile_picture_base64)',
           )
           .eq('status', 'active')
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false)
           .limit(limit);
       print("response.length");
       print(response);
-      return (response as List)
+      final jobs = (response as List)
           .map((data) => JobPosting.fromMap(data))
           .toList();
+      return jobs;
     } catch (e) {
       throw Exception('Failed to fetch recent job postings: $e');
     }
@@ -489,9 +604,12 @@ class JobPostingService {
     int limit = 50,
   }) async {
     try {
+      final now = DateTime.now();
       final response = await SupabaseService.client
           .from(_tableName)
           .select('*')
+          .eq('status', 'active')
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false)
           .limit(limit);
 
@@ -503,8 +621,7 @@ class JobPostingService {
         jobs = jobs
             .where(
               (job) =>
-                  (job.municipality ?? '').toLowerCase() ==
-                  municipality.toLowerCase(),
+                  job.municipality.toLowerCase() == municipality.toLowerCase(),
             )
             .toList();
       }
@@ -512,8 +629,7 @@ class JobPostingService {
       if (barangay != null && barangay.isNotEmpty) {
         jobs = jobs
             .where(
-              (job) =>
-                  (job.barangay ?? '').toLowerCase() == barangay.toLowerCase(),
+              (job) => job.barangay.toLowerCase() == barangay.toLowerCase(),
             )
             .toList();
       }
@@ -537,12 +653,15 @@ class JobPostingService {
           .where((skill) => skill.isNotEmpty)
           .toList();
 
+      final now = DateTime.now();
+
       final allJobsResponse = await SupabaseService.client
           .from(_tableName)
           .select(
             '*, employers(id, first_name, last_name, profile_picture_base64)',
           )
           .eq('status', 'active')
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false);
 
       var allJobs = (allJobsResponse as List)
@@ -553,16 +672,14 @@ class JobPostingService {
         allJobs = allJobs
             .where(
               (job) =>
-                  (job.municipality ?? '').toLowerCase() ==
-                  municipality.toLowerCase(),
+                  job.municipality.toLowerCase() == municipality.toLowerCase(),
             )
             .toList();
       }
       if (barangay != null && barangay.isNotEmpty) {
         allJobs = allJobs
             .where(
-              (job) =>
-                  (job.barangay ?? '').toLowerCase() == barangay.toLowerCase(),
+              (job) => job.barangay.toLowerCase() == barangay.toLowerCase(),
             )
             .toList();
       }
@@ -588,7 +705,7 @@ class JobPostingService {
 
         if (barangay != null &&
             barangay.isNotEmpty &&
-            (job.barangay ?? '').toLowerCase() == barangay.toLowerCase()) {
+            job.barangay.toLowerCase() == barangay.toLowerCase()) {
           matchScore += 3;
         }
 
@@ -617,6 +734,7 @@ class JobPostingService {
       final today = DateTime.now();
       final startOfDay = DateTime(today.year, today.month, today.day);
       final endOfDay = startOfDay.add(const Duration(days: 1));
+      final now = DateTime.now();
 
       final response = await SupabaseService.client
           .from(_tableName)
@@ -624,11 +742,13 @@ class JobPostingService {
           .eq('status', 'active')
           .gte('created_at', startOfDay.toIso8601String())
           .lt('created_at', endOfDay.toIso8601String())
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false);
 
-      return (response as List)
+      final jobs = (response as List)
           .map((data) => JobPosting.fromMap(data))
           .toList();
+      return jobs;
     } catch (e) {
       throw Exception('Failed to fetch today\'s job postings: $e');
     }
@@ -639,6 +759,7 @@ class JobPostingService {
   }) async {
     try {
       final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+      final now = DateTime.now();
 
       final response = await SupabaseService.client
           .from(_tableName)
@@ -650,6 +771,7 @@ class JobPostingService {
           ''')
           .eq('status', 'active')
           .gte('created_at', sevenDaysAgo.toIso8601String())
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
           .order('created_at', ascending: false);
 
       final jobsWithCounts = (response as List).map((data) {
@@ -664,7 +786,11 @@ class JobPostingService {
         return b.key.createdAt.compareTo(a.key.createdAt);
       });
 
-      return jobsWithCounts.take(limit).map((entry) => entry.key).toList();
+      final results = jobsWithCounts
+          .take(limit)
+          .map((entry) => entry.key)
+          .toList();
+      return results;
     } catch (e) {
       throw Exception('Failed to fetch trending job postings: $e');
     }
@@ -673,12 +799,24 @@ class JobPostingService {
   static Future<List<JobPosting>> getJobPostingsWithEmployer({
     int limit = 50,
   }) async {
-    final response = await SupabaseService.client
-        .from('job_postings')
-        .select('*, employers(*)')
-        .order('created_at', ascending: false)
-        .limit(limit);
+    try {
+      final now = DateTime.now();
+      final response = await SupabaseService.client
+          .from(_tableName)
+          .select(
+            '*, employers(id, first_name, last_name, profile_picture_base64)',
+          )
+          .eq('status', 'active')
+          .or('expires_at.is.null,expires_at.gt.${now.toIso8601String()}')
+          .order('created_at', ascending: false)
+          .limit(limit);
 
-    return (response as List).map((data) => JobPosting.fromMap(data)).toList();
+      final jobs = (response as List)
+          .map((data) => JobPosting.fromMap(data))
+          .toList();
+      return jobs;
+    } catch (e) {
+      throw Exception('Failed to fetch job postings with employer: $e');
+    }
   }
 }

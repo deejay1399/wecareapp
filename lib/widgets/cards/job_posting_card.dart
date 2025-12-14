@@ -73,6 +73,19 @@ class _JobPostingCardState extends State<JobPostingCard> {
     return '$difference ${LocalizationManager.translate('days_ago')}';
   }
 
+  String _formatExpirationDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    final hour12 = date.hour > 12
+        ? date.hour - 12
+        : (date.hour == 0 ? 12 : date.hour);
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    final hour = hour12.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year $hour:$minute $period';
+  }
+
   String _formatSalary() {
     return '₱${widget.jobPosting.salary.toStringAsFixed(0)}/${widget.jobPosting.salaryPeriod}';
   }
@@ -394,32 +407,90 @@ class _JobPostingCardState extends State<JobPostingCard> {
 
                 const SizedBox(height: 16),
 
-                // Bottom row with applications and date
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Bottom row with applications, date, and expiration
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.people_outline,
-                          size: 16,
-                          color: Colors.grey[600],
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: 16,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${widget.jobPosting.applicationsCount} ${LocalizationManager.translate('applications')}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
                         Text(
-                          '${widget.jobPosting.applicationsCount} ${LocalizationManager.translate('applications')}',
+                          _formatDate(widget.jobPosting.postedDate),
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[500],
                           ),
                         ),
                       ],
                     ),
-                    Text(
-                      _formatDate(widget.jobPosting.postedDate),
-                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                    ),
+                    if (widget.jobPosting.expiresAt != null &&
+                        widget.jobPosting.expiresAt!.isAfter(
+                          DateTime.now(),
+                        )) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: 16,
+                            color: Colors.orange[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Expires: ${_formatExpirationDate(widget.jobPosting.expiresAt!)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.orange[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else if (widget.jobPosting.expiresAt == null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: 16,
+                            color: Colors.green[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              LocalizationManager.translate(
+                                'no_expiration_date',
+                              ),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.green[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ],

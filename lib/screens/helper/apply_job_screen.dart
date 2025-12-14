@@ -139,13 +139,14 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${LocalizationManager.translate('failed_to_submit_application')}: $e',
+              LocalizationManager.translate('failed_to_submit_application'),
             ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
         );
       }
+      print('Error applying for job: $e');
     } finally {
       if (mounted) {
         setState(() {

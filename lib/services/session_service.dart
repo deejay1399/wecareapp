@@ -199,7 +199,7 @@ class SessionService {
     final prefs = await SharedPreferences.getInstance();
 
     // Clear subscription keys
-    final keys = await prefs.getKeys();
+    final keys = prefs.getKeys();
 
     for (final key in keys) {
       if (key.startsWith('subscription_$userId') ||

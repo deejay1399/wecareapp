@@ -44,7 +44,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _loadJobOffers() async {
     try {
-      final offers = await JobOfferService.getJobOffersForConversation(widget.conversation.id);
+      final offers = await JobOfferService.getJobOffersForConversation(
+        widget.conversation.id,
+      );
       if (mounted) {
         setState(() {
           _jobOffers = offers;
@@ -74,14 +76,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _loadMessages() async {
     try {
-      final messages = await DatabaseMessagingService.getConversationMessages(widget.conversation.id);
-      
+      final messages = await DatabaseMessagingService.getConversationMessages(
+        widget.conversation.id,
+      );
+
       if (mounted) {
         setState(() {
           _messages = messages;
           _isLoading = false;
         });
-        
+
         // Scroll to bottom after loading
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToBottom();
@@ -108,18 +112,18 @@ class _ChatScreenState extends State<ChatScreen> {
       final shouldScrollToBottom = _isAtBottom();
       final oldMessageCount = _messages.length;
       final newMessageCount = messages.length;
-      
+
       setState(() {
         _messages = messages;
       });
-      
+
       // Auto-scroll to bottom if user was already at bottom or if there are new messages
       if (shouldScrollToBottom || newMessageCount > oldMessageCount) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToBottom();
         });
       }
-      
+
       // If new messages arrived, mark them as read immediately since user is in chat
       if (newMessageCount > oldMessageCount) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -131,7 +135,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   bool _isAtBottom() {
     if (!_scrollController.hasClients) return true;
-    
+
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.offset;
     return (maxScroll - currentScroll) < 100.0; // Within 100 pixels of bottom
@@ -139,7 +143,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _markMessagesAsRead() async {
     try {
-      await DatabaseMessagingService.markMessagesAsRead(widget.conversation.id, widget.currentUserId);
+      await DatabaseMessagingService.markMessagesAsRead(
+        widget.conversation.id,
+        widget.currentUserId,
+      );
       // Force refresh conversations to update unread counts immediately
       RealtimeMessagingService.refreshConversations();
     } catch (e) {
@@ -170,7 +177,7 @@ class _ChatScreenState extends State<ChatScreen> {
         });
 
         _scrollToBottom();
-        
+
         // Force refresh to ensure real-time polling updates
         RealtimeMessagingService.refreshMessages();
       }
@@ -181,18 +188,19 @@ class _ChatScreenState extends State<ChatScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to send message: $e'),
+          const SnackBar(
+            content: Text('Failed to send message. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
       }
+      print('Error sending message: $e');
     }
   }
 
   Future<void> _shareCurrentLocation() async {
     if (_isShareLocation) return;
-    
+
     setState(() {
       _isShareLocation = true;
     });
@@ -200,7 +208,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       // Check if location permission is already granted
       final hasPermission = await LocationService.hasLocationPermission();
-      
+
       if (!hasPermission) {
         // Show permission dialog
         final shouldRequest = await _showLocationPermissionDialog();
@@ -216,7 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       // Get current location
       final locationData = await LocationService.getCurrentLocation();
-      
+
       if (locationData == null) {
         throw Exception('Unable to get current location');
       }
@@ -236,10 +244,10 @@ class _ChatScreenState extends State<ChatScreen> {
         });
 
         _scrollToBottom();
-        
+
         // Force refresh to ensure real-time polling updates
         RealtimeMessagingService.refreshMessages();
-        
+
         // Show success feedback
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -256,9 +264,10 @@ class _ChatScreenState extends State<ChatScreen> {
         });
 
         String errorMessage = 'Failed to share location';
-        
+
         if (e.toString().contains('permissions')) {
-          errorMessage = 'Location permission denied. Please enable location access in settings.';
+          errorMessage =
+              'Location permission denied. Please enable location access in settings.';
         } else if (e.toString().contains('disabled')) {
           errorMessage = 'Location services are disabled. Please enable GPS.';
         } else {
@@ -270,7 +279,7 @@ class _ChatScreenState extends State<ChatScreen> {
             content: Text(errorMessage),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
-            action: e.toString().contains('permissions') 
+            action: e.toString().contains('permissions')
                 ? SnackBarAction(
                     label: 'Settings',
                     textColor: Colors.white,
@@ -287,33 +296,34 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<bool> _showLocationPermissionDialog() async {
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.location_on, color: Color(0xFFE53E3E)),
-            SizedBox(width: 8),
-            Text('Share Location'),
-          ],
-        ),
-        content: const Text(
-          'WeCare needs location access to share your current location with the other person. This helps them find the exact work location.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1565C0),
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.location_on, color: Color(0xFFE53E3E)),
+                SizedBox(width: 8),
+                Text('Share Location'),
+              ],
             ),
-            child: const Text('Allow'),
+            content: const Text(
+              'WeCare needs location access to share your current location with the other person. This helps them find the exact work location.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1565C0),
+                ),
+                child: const Text('Allow'),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
   void _scrollToBottom() {
@@ -328,17 +338,26 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final participantName = widget.conversation.getParticipantName(widget.currentUserId);
-    final participantType = widget.conversation.getParticipantType(widget.currentUserId);
+    final participantName = widget.conversation.getParticipantName(
+      widget.currentUserId,
+    );
+    final participantType = widget.conversation.getParticipantType(
+      widget.currentUserId,
+    );
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        leading: widget.returnToConversationsList 
+        leading: widget.returnToConversationsList
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () {
-                  Navigator.popUntil(context, (route) => route.settings.name == '/conversations' || route.isFirst);
+                  Navigator.popUntil(
+                    context,
+                    (route) =>
+                        route.settings.name == '/conversations' ||
+                        route.isFirst,
+                  );
                 },
               )
             : null,
@@ -348,16 +367,14 @@ class _ChatScreenState extends State<ChatScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: participantType == 'Helper' 
+                color: participantType == 'Helper'
                     ? const Color(0xFFFF8A50).withValues(alpha: 0.1)
                     : const Color(0xFF1565C0).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
-                participantType == 'Helper' 
-                    ? Icons.handyman
-                    : Icons.business,
-                color: participantType == 'Helper' 
+                participantType == 'Helper' ? Icons.handyman : Icons.business,
+                color: participantType == 'Helper'
                     ? const Color(0xFFFF8A50)
                     : const Color(0xFF1565C0),
                 size: 20,
@@ -380,10 +397,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   Text(
                     widget.conversation.jobTitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -405,29 +419,30 @@ class _ChatScreenState extends State<ChatScreen> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _messages.isEmpty && _jobOffers.isEmpty
-                      ? _buildEmptyMessages()
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          itemCount: _messages.length + _jobOffers.length,
-                          itemBuilder: (context, index) {
-                            // First show job offers, then messages
-                            if (index < _jobOffers.length) {
-                              final jobOffer = _jobOffers[index];
-                              return _buildJobOfferCard(jobOffer);
-                            } else {
-                              final messageIndex = index - _jobOffers.length;
-                              final message = _messages[messageIndex];
-                              final isCurrentUser = message.senderId == widget.currentUserId;
-                              
-                              return MessageBubble(
-                                message: message,
-                                isCurrentUser: isCurrentUser,
-                                showSenderName: !isCurrentUser,
-                              );
-                            }
-                          },
-                        ),
+                  ? _buildEmptyMessages()
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      itemCount: _messages.length + _jobOffers.length,
+                      itemBuilder: (context, index) {
+                        // First show job offers, then messages
+                        if (index < _jobOffers.length) {
+                          final jobOffer = _jobOffers[index];
+                          return _buildJobOfferCard(jobOffer);
+                        } else {
+                          final messageIndex = index - _jobOffers.length;
+                          final message = _messages[messageIndex];
+                          final isCurrentUser =
+                              message.senderId == widget.currentUserId;
+
+                          return MessageBubble(
+                            message: message,
+                            isCurrentUser: isCurrentUser,
+                            showSenderName: !isCurrentUser,
+                          );
+                        }
+                      },
+                    ),
             ),
 
             // Message input
@@ -436,10 +451,7 @@ class _ChatScreenState extends State<ChatScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border(
-                  top: BorderSide(
-                    color: Colors.grey[200]!,
-                    width: 1,
-                  ),
+                  top: BorderSide(color: Colors.grey[200]!, width: 1),
                 ),
               ),
               child: SafeArea(
@@ -450,26 +462,30 @@ class _ChatScreenState extends State<ChatScreen> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: _isShareLocation 
+                        color: _isShareLocation
                             ? const Color(0xFFE53E3E).withValues(alpha: 0.1)
                             : Colors.grey[100],
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: _isShareLocation 
+                          color: _isShareLocation
                               ? const Color(0xFFE53E3E).withValues(alpha: 0.3)
                               : Colors.grey.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
                       child: IconButton(
-                        onPressed: _isShareLocation ? null : _shareCurrentLocation,
+                        onPressed: _isShareLocation
+                            ? null
+                            : _shareCurrentLocation,
                         icon: _isShareLocation
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE53E3E)),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFFE53E3E),
+                                  ),
                                 ),
                               )
                             : const Icon(
@@ -518,7 +534,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : const Icon(
@@ -583,8 +601,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-
-
   Widget _buildJobOfferCard(JobOffer jobOffer) {
     final isFromCurrentUser = jobOffer.employerId == widget.currentUserId;
     final canRespond = !isFromCurrentUser && jobOffer.isPending;
@@ -604,11 +620,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Icon(
                     Icons.work,
-                    color: jobOffer.isAccepted 
-                        ? Colors.green 
-                        : jobOffer.isRejected 
-                            ? Colors.red 
-                            : Colors.orange,
+                    color: jobOffer.isAccepted
+                        ? Colors.green
+                        : jobOffer.isRejected
+                        ? Colors.red
+                        : Colors.orange,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -621,13 +637,16 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: jobOffer.isAccepted 
-                          ? Colors.green.shade100 
-                          : jobOffer.isRejected 
-                              ? Colors.red.shade100 
-                              : Colors.orange.shade100,
+                      color: jobOffer.isAccepted
+                          ? Colors.green.shade100
+                          : jobOffer.isRejected
+                          ? Colors.red.shade100
+                          : Colors.orange.shade100,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -635,27 +654,24 @@ class _ChatScreenState extends State<ChatScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: jobOffer.isAccepted 
-                            ? Colors.green.shade700 
-                            : jobOffer.isRejected 
-                                ? Colors.red.shade700 
-                                : Colors.orange.shade700,
+                        color: jobOffer.isAccepted
+                            ? Colors.green.shade700
+                            : jobOffer.isRejected
+                            ? Colors.red.shade700
+                            : Colors.orange.shade700,
                       ),
                     ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Job details
-              Text(
-                jobOffer.description,
-                style: const TextStyle(fontSize: 14),
-              ),
-              
+              Text(jobOffer.description, style: const TextStyle(fontSize: 14)),
+
               const SizedBox(height: 8),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -670,24 +686,18 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   Text(
                     jobOffer.paymentFrequency,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Text(
                 'Location: ${jobOffer.location}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
-              
+
               // Action buttons for helpers
               if (canRespond) ...[
                 const SizedBox(height: 16),
@@ -724,38 +734,39 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-
-
   Future<void> _acceptJobOffer(JobOffer jobOffer) async {
     try {
       await JobOfferService.acceptJobOffer(jobOffer.id);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Job offer accepted! Your service posting has been paused.'),
+            content: Text(
+              'Job offer accepted! Your service posting has been paused.',
+            ),
             backgroundColor: Color(0xFF10B981),
           ),
         );
       }
-      
+
       // Refresh job offers
       _loadJobOffers();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to accept job offer: $e'),
+          const SnackBar(
+            content: Text('Failed to accept job offer. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
       }
+      print('Error accepting job offer: $e');
     }
   }
 
   Future<void> _rejectJobOffer(JobOffer jobOffer) async {
     String reasonText = '';
-    
+
     final reason = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -780,7 +791,10 @@ class _ChatScreenState extends State<ChatScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, reasonText.isEmpty ? 'No reason provided' : reasonText),
+            onPressed: () => Navigator.pop(
+              context,
+              reasonText.isEmpty ? 'No reason provided' : reasonText,
+            ),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Decline'),
           ),
@@ -791,26 +805,25 @@ class _ChatScreenState extends State<ChatScreen> {
     if (reason != null) {
       try {
         await JobOfferService.rejectJobOffer(jobOffer.id, reason);
-        
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Job offer declined.'),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Job offer declined.')));
         }
-        
+
         // Refresh job offers
         _loadJobOffers();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to decline job offer: $e'),
+            const SnackBar(
+              content: Text('Failed to decline job offer. Please try again.'),
               backgroundColor: Colors.red,
             ),
           );
         }
+        print('Error declining job offer: $e');
       }
     }
   }
